@@ -1,0 +1,122 @@
+{
+  "id": "omm-a4-center-visual-001",
+  "version": 1,
+  "title": "A4 Mind Map with Center Visual",
+  "paper": {
+    "kind": "a4-landscape",
+    "widthMm": 297,
+    "heightMm": 210
+  },
+  "organicSeed": "seed456",
+  "rootMap": {
+    "id": "map-002",
+    "title": "A4 Mind Map with Center Visual",
+    "center": {
+      "mode": "image",
+      "titleText": "Project Overview",
+      "imageRef": {
+        "assetId": "builtin-mandala-01"
+      },
+      "minColorCount": 4,
+      "complianceState": "compliant"
+    },
+    "children": [
+      {
+        "id": "node-plan",
+        "concept": "Planning",
+        "children": [
+          {
+            "id": "node-plan-a",
+            "concept": "Timeline"
+          },
+          {
+            "id": "node-plan-b",
+            "concept": "Resources"
+          }
+        ]
+      },
+      {
+        "id": "node-design",
+        "concept": "Design"
+      }
+    ]
+  },
+  "layout": {
+    "engineVersion": "0.1.0",
+    "measuredAt": "2026-04-27T23:30:00Z",
+    "viewport": {
+      "widthPx": 1188,
+      "heightPx": 840,
+      "viewBox": "0 0 1188 840"
+    },
+    "center": {
+      "box": { "x": 494, "y": 370, "width": 200, "height": 100 }
+    },
+    "nodes": {
+      "node-plan": {
+        "nodeId": "node-plan",
+        "textAnchor": { "x": 420, "y": 310 },
+        "textBox": { "x": 370, "y": 295, "width": 100, "height": 26 }
+      },
+      "node-design": {
+        "nodeId": "node-design",
+        "textAnchor": { "x": 770, "y": 420 },
+        "textBox": { "x": 720, "y": 405, "width": 100, "height": 26 }
+      },
+      "node-plan-a": {
+        "nodeId": "node-plan-a",
+        "textAnchor": { "x": 320, "y": 260 },
+        "textBox": { "x": 280, "y": 248, "width": 80, "height": 22 }
+      },
+      "node-plan-b": {
+        "nodeId": "node-plan-b",
+        "textAnchor": { "x": 340, "y": 320 },
+        "textBox": { "x": 290, "y": 308, "width": 100, "height": 22 }
+      }
+    },
+    "branches": {
+      "node-plan": {
+        "nodeId": "node-plan",
+        "branchPath": "M594,420 C580,380 480,340 440,315",
+        "textPath": "branch-text-node-plan",
+        "strokeWidthStart": 5,
+        "strokeWidthEnd": 2
+      },
+      "node-design": {
+        "nodeId": "node-design",
+        "branchPath": "M594,420 C610,440 730,420 750,420",
+        "textPath": "branch-text-node-design",
+        "strokeWidthStart": 5,
+        "strokeWidthEnd": 2
+      },
+      "node-plan-a": {
+        "nodeId": "node-plan-a",
+        "branchPath": "M420,310 C400,290 350,270 340,265",
+        "textPath": "branch-text-node-plan-a",
+        "strokeWidthStart": 3,
+        "strokeWidthEnd": 1.5
+      },
+      "node-plan-b": {
+        "nodeId": "node-plan-b",
+        "branchPath": "M420,310 C410,320 360,325 350,322",
+        "textPath": "branch-text-node-plan-b",
+        "strokeWidthStart": 3,
+        "strokeWidthEnd": 1.5
+      }
+    }
+  },
+  "assets": {
+    "images": [
+      {
+        "id": "builtin-mandala-01",
+        "mimeType": "image/svg+xml",
+        "source": "builtin",
+        "builtinId": "mandala-colorful"
+      }
+    ]
+  },
+  "meta": {
+    "createdAt": "2026-04-27T23:30:00Z",
+    "tool": "omm-cli"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "id": "omm-invalid-center-001",
+  "version": 1,
+  "title": "Missing Center Visual",
+  "paper": {
+    "kind": "a3-landscape",
+    "widthMm": 420,
+    "heightMm": 297
+  },
+  "organicSeed": "seed001",
+  "rootMap": {
+    "id": "map-err-002",
+    "title": "Missing Center Visual",
+    "center": "Just a plain string",
+    "children": [
+      {
+        "id": "node-1",
+        "concept": "Branch"
+      }
+    ]
+  },
+  "layout": {
+    "engineVersion": "0.1.0",
+    "measuredAt": "2026-04-27T23:00:00Z",
+    "viewport": {
+      "widthPx": 1680,
+      "heightPx": 1188,
+      "viewBox": "0 0 1680 1188"
+    },
+    "center": {
+      "box": { "x": 740, "y": 544, "width": 200, "height": 100 }
+    },
+    "nodes": {
+      "node-1": {
+        "nodeId": "node-1",
+        "textAnchor": { "x": 700, "y": 500 },
+        "textBox": { "x": 660, "y": 485, "width": 80, "height": 26 }
+      }
+    },
+    "branches": {
+      "node-1": {
+        "nodeId": "node-1",
+        "branchPath": "M840,594 C840,560 760,520 720,505",
+        "textPath": "branch-text-node-1",
+        "strokeWidthStart": 5,
+        "strokeWidthEnd": 2
+      }
+    }
+  },
+  "assets": {
+    "images": []
+  },
+  "meta": {
+    "createdAt": "2026-04-27T23:00:00Z"
+  }
+}

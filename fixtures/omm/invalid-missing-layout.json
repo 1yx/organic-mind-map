@@ -1,0 +1,36 @@
+{
+  "id": "omm-missing-layout-001",
+  "version": 1,
+  "title": "Missing Layout",
+  "paper": {
+    "kind": "a3-landscape",
+    "widthMm": 420,
+    "heightMm": 297
+  },
+  "organicSeed": "seed004",
+  "rootMap": {
+    "id": "map-err-005",
+    "title": "Missing Layout",
+    "center": {
+      "mode": "styled-text",
+      "titleText": "Central Topic",
+      "minColorCount": 3,
+      "complianceState": "compliant"
+    },
+    "children": [
+      {
+        "id": "node-1",
+        "concept": "Branch"
+      }
+    ]
+  },
+  "layout": {
+    "engineVersion": "0.1.0"
+  },
+  "assets": {
+    "images": []
+  },
+  "meta": {
+    "createdAt": "2026-04-27T23:00:00Z"
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "id": "omm-dup-ids-001",
+  "version": 1,
+  "title": "Duplicate Node IDs",
+  "paper": {
+    "kind": "a3-landscape",
+    "widthMm": 420,
+    "heightMm": 297
+  },
+  "organicSeed": "seed002",
+  "rootMap": {
+    "id": "map-err-003",
+    "title": "Duplicate IDs",
+    "center": {
+      "mode": "styled-text",
+      "titleText": "Central Topic",
+      "minColorCount": 3,
+      "complianceState": "compliant"
+    },
+    "children": [
+      {
+        "id": "dup-node",
+        "concept": "Branch One",
+        "children": [
+          {
+            "id": "dup-node",
+            "concept": "Duplicate ID Child"
+          }
+        ]
+      },
+      {
+        "id": "node-2",
+        "concept": "Branch Two"
+      }
+    ]
+  },
+  "layout": {
+    "engineVersion": "0.1.0",
+    "measuredAt": "2026-04-27T23:00:00Z",
+    "viewport": {
+      "widthPx": 1680,
+      "heightPx": 1188,
+      "viewBox": "0 0 1680 1188"
+    },
+    "center": {
+      "box": { "x": 740, "y": 544, "width": 200, "height": 100 }
+    },
+    "nodes": {
+      "dup-node": {
+        "nodeId": "dup-node",
+        "textAnchor": { "x": 700, "y": 460 },
+        "textBox": { "x": 660, "y": 445, "width": 80, "height": 26 }
+      },
+      "node-2": {
+        "nodeId": "node-2",
+        "textAnchor": { "x": 1000, "y": 560 },
+        "textBox": { "x": 960, "y": 545, "width": 80, "height": 26 }
+      }
+    },
+    "branches": {
+      "dup-node": {
+        "nodeId": "dup-node",
+        "branchPath": "M840,594 C840,550 760,480 720,465",
+        "textPath": "branch-text-dup-node",
+        "strokeWidthStart": 5,
+        "strokeWidthEnd": 2
+      },
+      "node-2": {
+        "nodeId": "node-2",
+        "branchPath": "M840,594 C840,620 960,580 980,565",
+        "textPath": "branch-text-node-2",
+        "strokeWidthStart": 5,
+        "strokeWidthEnd": 2
+      }
+    }
+  },
+  "assets": {
+    "images": []
+  },
+  "meta": {
+    "createdAt": "2026-04-27T23:00:00Z"
+  }
+}

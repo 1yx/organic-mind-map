@@ -1,0 +1,146 @@
+{
+  "id": "omm-minimal-a3-001",
+  "version": 1,
+  "title": "Minimal A3 Mind Map",
+  "paper": {
+    "kind": "a3-landscape",
+    "widthMm": 420,
+    "heightMm": 297
+  },
+  "organicSeed": "abc123",
+  "rootMap": {
+    "id": "map-001",
+    "title": "Minimal A3 Mind Map",
+    "center": {
+      "mode": "styled-text",
+      "titleText": "Central Topic",
+      "minColorCount": 3,
+      "complianceState": "compliant"
+    },
+    "children": [
+      {
+        "id": "node-branch-1",
+        "concept": "Branch One",
+        "children": [
+          {
+            "id": "node-sub-1a",
+            "concept": "Sub Topic A"
+          },
+          {
+            "id": "node-sub-1b",
+            "concept": "Sub Topic B"
+          }
+        ]
+      },
+      {
+        "id": "node-branch-2",
+        "concept": "Branch Two",
+        "children": [
+          {
+            "id": "node-sub-2a",
+            "concept": "Sub Topic C"
+          }
+        ]
+      },
+      {
+        "id": "node-branch-3",
+        "concept": "Branch Three"
+      }
+    ]
+  },
+  "layout": {
+    "engineVersion": "0.1.0",
+    "measuredAt": "2026-04-27T23:00:00Z",
+    "viewport": {
+      "widthPx": 1680,
+      "heightPx": 1188,
+      "viewBox": "0 0 1680 1188"
+    },
+    "center": {
+      "box": { "x": 740, "y": 544, "width": 200, "height": 100 }
+    },
+    "nodes": {
+      "node-branch-1": {
+        "nodeId": "node-branch-1",
+        "textAnchor": { "x": 650, "y": 460 },
+        "textBox": { "x": 580, "y": 440, "width": 140, "height": 30 }
+      },
+      "node-branch-2": {
+        "nodeId": "node-branch-2",
+        "textAnchor": { "x": 1030, "y": 560 },
+        "textBox": { "x": 960, "y": 540, "width": 140, "height": 30 }
+      },
+      "node-branch-3": {
+        "nodeId": "node-branch-3",
+        "textAnchor": { "x": 840, "y": 700 },
+        "textBox": { "x": 770, "y": 680, "width": 140, "height": 30 }
+      },
+      "node-sub-1a": {
+        "nodeId": "node-sub-1a",
+        "textAnchor": { "x": 480, "y": 380 },
+        "textBox": { "x": 430, "y": 365, "width": 100, "height": 25 }
+      },
+      "node-sub-1b": {
+        "nodeId": "node-sub-1b",
+        "textAnchor": { "x": 500, "y": 440 },
+        "textBox": { "x": 450, "y": 425, "width": 100, "height": 25 }
+      },
+      "node-sub-2a": {
+        "nodeId": "node-sub-2a",
+        "textAnchor": { "x": 1180, "y": 520 },
+        "textBox": { "x": 1130, "y": 505, "width": 100, "height": 25 }
+      }
+    },
+    "branches": {
+      "node-branch-1": {
+        "nodeId": "node-branch-1",
+        "branchPath": "M840,594 C840,550 740,500 700,470",
+        "textPath": "branch-text-node-branch-1",
+        "strokeWidthStart": 6,
+        "strokeWidthEnd": 2
+      },
+      "node-branch-2": {
+        "nodeId": "node-branch-2",
+        "branchPath": "M840,594 C840,620 960,580 1000,565",
+        "textPath": "branch-text-node-branch-2",
+        "strokeWidthStart": 6,
+        "strokeWidthEnd": 2
+      },
+      "node-branch-3": {
+        "nodeId": "node-branch-3",
+        "branchPath": "M840,594 C840,640 840,670 840,690",
+        "textPath": "branch-text-node-branch-3",
+        "strokeWidthStart": 6,
+        "strokeWidthEnd": 2
+      },
+      "node-sub-1a": {
+        "nodeId": "node-sub-1a",
+        "branchPath": "M650,460 C620,440 520,400 500,385",
+        "textPath": "branch-text-node-sub-1a",
+        "strokeWidthStart": 3,
+        "strokeWidthEnd": 1.5
+      },
+      "node-sub-1b": {
+        "nodeId": "node-sub-1b",
+        "branchPath": "M650,460 C630,470 530,440 520,440",
+        "textPath": "branch-text-node-sub-1b",
+        "strokeWidthStart": 3,
+        "strokeWidthEnd": 1.5
+      },
+      "node-sub-2a": {
+        "nodeId": "node-sub-2a",
+        "branchPath": "M1030,560 C1060,550 1140,530 1160,525",
+        "textPath": "branch-text-node-sub-2a",
+        "strokeWidthStart": 3,
+        "strokeWidthEnd": 1.5
+      }
+    }
+  },
+  "assets": {
+    "images": []
+  },
+  "meta": {
+    "createdAt": "2026-04-27T23:00:00Z",
+    "tool": "omm-cli"
+  }
+}

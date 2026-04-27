@@ -1,0 +1,82 @@
+{
+  "id": "omm-stale-ids-001",
+  "version": 1,
+  "title": "Stale Parent Child IDs",
+  "paper": {
+    "kind": "a3-landscape",
+    "widthMm": 420,
+    "heightMm": 297
+  },
+  "organicSeed": "seed003",
+  "rootMap": {
+    "id": "map-err-004",
+    "title": "Stale IDs",
+    "center": {
+      "mode": "styled-text",
+      "titleText": "Central Topic",
+      "minColorCount": 3,
+      "complianceState": "compliant"
+    },
+    "children": [
+      {
+        "id": "node-parent",
+        "concept": "Parent Branch",
+        "parentId": "map-err-004",
+        "childIds": ["node-child"],
+        "children": [
+          {
+            "id": "node-child",
+            "concept": "Child Branch",
+            "parentId": "node-parent"
+          }
+        ]
+      }
+    ]
+  },
+  "layout": {
+    "engineVersion": "0.1.0",
+    "measuredAt": "2026-04-27T23:00:00Z",
+    "viewport": {
+      "widthPx": 1680,
+      "heightPx": 1188,
+      "viewBox": "0 0 1680 1188"
+    },
+    "center": {
+      "box": { "x": 740, "y": 544, "width": 200, "height": 100 }
+    },
+    "nodes": {
+      "node-parent": {
+        "nodeId": "node-parent",
+        "textAnchor": { "x": 700, "y": 460 },
+        "textBox": { "x": 640, "y": 445, "width": 120, "height": 26 }
+      },
+      "node-child": {
+        "nodeId": "node-child",
+        "textAnchor": { "x": 540, "y": 400 },
+        "textBox": { "x": 490, "y": 388, "width": 100, "height": 22 }
+      }
+    },
+    "branches": {
+      "node-parent": {
+        "nodeId": "node-parent",
+        "branchPath": "M840,594 C840,550 760,480 720,465",
+        "textPath": "branch-text-node-parent",
+        "strokeWidthStart": 5,
+        "strokeWidthEnd": 2
+      },
+      "node-child": {
+        "nodeId": "node-child",
+        "branchPath": "M700,460 C660,440 580,410 560,405",
+        "textPath": "branch-text-node-child",
+        "strokeWidthStart": 3,
+        "strokeWidthEnd": 1.5
+      }
+    }
+  },
+  "assets": {
+    "images": []
+  },
+  "meta": {
+    "createdAt": "2026-04-27T23:00:00Z"
+  }
+}
