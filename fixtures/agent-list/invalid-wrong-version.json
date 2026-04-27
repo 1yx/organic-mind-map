@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "title": "Wrong Version",
+  "center": {
+    "concept": "测试"
+  },
+  "branches": [
+    { "concept": "分支A" }
+  ]
+}

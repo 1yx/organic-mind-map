@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "title": "商业模式分析",
+  "paper": "a4-landscape",
+  "center": {
+    "concept": "商业模式",
+    "visualHint": "商业中心"
+  },
+  "branches": [
+    {
+      "concept": "客户细分",
+      "children": [
+        {
+          "concept": "企业客户",
+          "children": [
+            { "concept": "中小企业" },
+            { "concept": "大型企业" }
+          ]
+        },
+        {
+          "concept": "个人用户",
+          "children": [
+            { "concept": "学生群体" },
+            { "concept": "职场人士" }
+          ]
+        }
+      ]
+    },
+    {
+      "concept": "价值主张",
+      "children": [
+        { "concept": "低成本", "children": [{ "concept": "自动化流程" }] },
+        { "concept": "差异化", "children": [{ "concept": "专利技术" }] }
+      ]
+    }
+  ]
+}

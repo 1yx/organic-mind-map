@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "title": "Product Strategy",
+  "paper": "a4-landscape",
+  "center": {
+    "concept": "PRODUCT STRATEGY",
+    "visualHint": "compass"
+  },
+  "branches": [
+    {
+      "concept": "MARKET FIT",
+      "children": [
+        {
+          "concept": "TARGET USERS",
+          "children": [
+            { "concept": "STARTUPS" },
+            { "concept": "ENTERPRISE" }
+          ]
+        },
+        {
+          "concept": "USE CASES",
+          "children": [
+            { "concept": "AUTOMATION" },
+            { "concept": "ANALYTICS" }
+          ]
+        }
+      ]
+    },
+    {
+      "concept": "TECH STACK",
+      "children": [
+        { "concept": "FRONTEND", "children": [{ "concept": "VUE" }] },
+        { "concept": "BACKEND", "children": [{ "concept": "NODE" }] }
+      ]
+    }
+  ]
+}

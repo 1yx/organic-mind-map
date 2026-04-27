@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "title": "Nesting Too Deep",
+  "center": {
+    "concept": "测试"
+  },
+  "branches": [
+    {
+      "concept": "L1",
+      "children": [
+        {
+          "concept": "L2",
+          "children": [
+            {
+              "concept": "L3",
+              "children": [
+                {
+                  "concept": "L4-TOO-DEEP"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

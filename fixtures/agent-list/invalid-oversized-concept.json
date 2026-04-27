@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "title": "Oversized Concepts",
+  "center": {
+    "concept": "测试"
+  },
+  "branches": [
+    {
+      "concept": "大语言模型提示词工程与自动化测试框架设计",
+      "children": []
+    }
+  ]
+}

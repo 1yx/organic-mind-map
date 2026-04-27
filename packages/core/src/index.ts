@@ -4,6 +4,9 @@
  * Environment-neutral. No Node or browser API dependencies.
  */
 
+// --- Agent List Contract ---
+export * from "./contract/index";
+
 // --- Document types (placeholder) ---
 
 export interface OmmDocument {
@@ -46,7 +49,6 @@ export function validateOmmDocument(doc: unknown): OmmDocument {
 // --- Seed utilities (placeholder) ---
 
 export function createSeed(input: string): string {
-  // Deterministic simple hash for seed IDs
   let hash = 0;
   for (let i = 0; i < input.length; i++) {
     const chr = input.charCodeAt(i);

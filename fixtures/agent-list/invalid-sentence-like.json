@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "title": "Sentence Like Concepts",
+  "center": {
+    "concept": "商业模式"
+  },
+  "branches": [
+    {
+      "concept": "我们需要先分析用户为什么会流失",
+      "children": []
+    },
+    {
+      "concept": "This is important because pricing affects conversion",
+      "children": []
+    }
+  ]
+}

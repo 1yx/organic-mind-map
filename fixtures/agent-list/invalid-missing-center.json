@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "title": "Missing Center",
+  "center": {
+    "concept": ""
+  },
+  "branches": [
+    { "concept": "分支A" }
+  ]
+}

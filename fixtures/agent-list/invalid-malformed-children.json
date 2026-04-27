@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "title": "Malformed Children",
+  "center": {
+    "concept": "测试"
+  },
+  "branches": [
+    {
+      "concept": "分支A",
+      "children": "not-an-array"
+    }
+  ]
+}
