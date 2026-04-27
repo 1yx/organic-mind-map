@@ -240,6 +240,23 @@ describe("validateAgentList", () => {
     expect(result.data!.branches[0].colorHint).toBe("#FF5733");
     expect(result.data!.branches[0].children![0].visualHint).toBe("气泡");
   });
+
+  it("rejects non-string visualHint with path-specific error", () => {
+    const input = {
+      version: 1 as const,
+      title: "Bad Hints",
+      center: { concept: "中心", visualHint: 42 },
+      branches: [
+        { concept: "B1", colorHint: true, children: [{ concept: "S1", visualHint: null }] },
+      ],
+    };
+    const result = validateAgentList(input);
+    expect(result.valid).toBe(false);
+    const paths = result.errors.map((e) => e.path);
+    expect(paths).toContain("center.visualHint");
+    expect(paths).toContain("branches[0].colorHint");
+    expect(paths).toContain("branches[0].children[0].visualHint");
+  });
 });
 
 describe("conceptUnitWidth", () => {

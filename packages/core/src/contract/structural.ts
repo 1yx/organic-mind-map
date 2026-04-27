@@ -81,7 +81,10 @@ function validateCenter(center: unknown): ValidationError[] {
     });
   }
 
-  // visualHint is optional — preserve if present, no validation needed
+  // visualHint is optional — type-check when present
+  if (c.visualHint !== undefined && typeof c.visualHint !== "string") {
+    errors.push({ path: "center.visualHint", message: "visualHint must be a string if provided" });
+  }
   return errors;
 }
 
@@ -122,8 +125,13 @@ function validateMainBranch(
     errors.push({ path: `${path}.concept`, message: "concept must be a non-empty string" });
   }
 
-  // Optional hints — preserve without rewriting
-  // colorHint is optional string on MainBranch
+  // Optional hints — type-check when present
+  if (b.visualHint !== undefined && typeof b.visualHint !== "string") {
+    errors.push({ path: `${path}.visualHint`, message: "visualHint must be a string if provided" });
+  }
+  if (b.colorHint !== undefined && typeof b.colorHint !== "string") {
+    errors.push({ path: `${path}.colorHint`, message: "colorHint must be a string if provided" });
+  }
 
   if (b.children !== undefined) {
     if (!Array.isArray(b.children)) {
@@ -155,6 +163,10 @@ function validateSubBranch(
     errors.push({ path: `${path}.concept`, message: "concept must be a non-empty string" });
   }
 
+  if (b.visualHint !== undefined && typeof b.visualHint !== "string") {
+    errors.push({ path: `${path}.visualHint`, message: "visualHint must be a string if provided" });
+  }
+
   if (b.children !== undefined) {
     if (!Array.isArray(b.children)) {
       errors.push({ path: `${path}.children`, message: "children must be an array" });
@@ -183,6 +195,10 @@ function validateLeafNode(
 
   if (typeof n.concept !== "string" || n.concept.trim().length === 0) {
     errors.push({ path: `${path}.concept`, message: "concept must be a non-empty string" });
+  }
+
+  if (n.visualHint !== undefined && typeof n.visualHint !== "string") {
+    errors.push({ path: `${path}.visualHint`, message: "visualHint must be a string if provided" });
   }
 
   // LeafNode must NOT have children — nesting deeper than 3 levels
