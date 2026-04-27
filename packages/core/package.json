@@ -1,0 +1,19 @@
+{
+  "name": "@omm/core",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Document types, validation, assets, paper specs, seed utilities",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@omm/renderer",
+  "version": "0.0.1",
+  "private": true,
+  "description": "SVG layout, rendering, and measurement modules",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@omm/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

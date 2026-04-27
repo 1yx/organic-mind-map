@@ -1,0 +1,24 @@
+{
+  "name": "@omm/cli",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Command parsing, file I/O, capacity checks, local HTTP server, preview orchestration",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit",
+    "test": "vitest run",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@omm/core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

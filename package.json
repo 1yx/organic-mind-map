@@ -1,0 +1,20 @@
+{
+  "name": "organic-mind-map",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Open-source Buzan-style organic mind map tool",
+  "scripts": {
+    "build": "pnpm -r run build",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
+    "dev:web": "pnpm --filter @omm/web dev",
+    "dev:cli": "pnpm --filter @omm/cli dev"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  }
+}
