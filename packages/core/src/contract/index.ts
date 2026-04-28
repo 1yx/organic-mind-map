@@ -27,7 +27,7 @@
  *
  * Validation layers:
  * 1. Structural: required fields, types, depth (max 3), array shape
- * 2. Quality: sentence-like concepts (Error), unit-width > 25 (Error)
+ * 2. Quality: sentence-like concepts (Error), unit-width \> 25 (Error)
  * 3. Capacity: total nodes, siblings, main branches against limits
  *
  * Note: Markdown outline parsing and direct LLM calls are outside this module.
@@ -43,16 +43,16 @@
  * ```
  */
 
-import type {
-  AgentMindMapList,
-  AgentListLimits,
-  ValidationError,
-  ValidationResult,
+import {
+  DEFAULT_LIMITS,
+  type AgentMindMapList,
+  type AgentListLimits,
+  type ValidationError,
+  type ValidationResult,
 } from "./types";
-import { DEFAULT_LIMITS } from "./types";
 import { validateStructural } from "./structural";
 import { validateQuality } from "./quality";
-import { validateCapacity, formatCapacityFeedback } from "./capacity";
+import { validateCapacity } from "./capacity";
 
 export { validateStructural } from "./structural";
 export { validateQuality } from "./quality";
@@ -98,6 +98,28 @@ export function validateAgentList(
 }
 
 /**
+ * Traverse sub-branches and their leaf children for a main branch.
+ */
+function traverseSubBranches(
+  children: import("./types").SubBranch[],
+  mainPath: string,
+  callback: (concept: string, path: string, depth: number) => void,
+): void {
+  for (let j = 0; j < children.length; j++) {
+    const sub = children[j];
+    const subPath = `${mainPath}.children[${j}]`;
+    callback(sub.concept, `${subPath}.concept`, 2);
+
+    if (sub.children) {
+      for (let k = 0; k < sub.children.length; k++) {
+        const leaf = sub.children[k];
+        callback(leaf.concept, `${subPath}.children[${k}].concept`, 3);
+      }
+    }
+  }
+}
+
+/**
  * Level-aware branch traversal that preserves sibling order
  * and reports stable path strings.
  */
@@ -115,18 +137,7 @@ export function traverseBranches(
     callback(main.concept, `${mainPath}.concept`, 1);
 
     if (main.children) {
-      for (let j = 0; j < main.children.length; j++) {
-        const sub = main.children[j];
-        const subPath = `${mainPath}.children[${j}]`;
-        callback(sub.concept, `${subPath}.concept`, 2);
-
-        if (sub.children) {
-          for (let k = 0; k < sub.children.length; k++) {
-            const leaf = sub.children[k];
-            callback(leaf.concept, `${subPath}.children[${k}].concept`, 3);
-          }
-        }
-      }
+      traverseSubBranches(main.children, mainPath, callback);
     }
   }
 }

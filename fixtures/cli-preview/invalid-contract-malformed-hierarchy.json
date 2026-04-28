@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "title": "Malformed Hierarchy",
+  "center": {
+    "concept": "测试中心"
+  },
+  "branches": [
+    {
+      "concept": "分支A",
+      "children": "not-an-array"
+    }
+  ]
+}

@@ -1,8 +1,8 @@
 /**
- * @omm/cli - Command parsing, validation, server startup, preview orchestration.
+ * \@omm/cli - Command parsing, validation, server startup, preview orchestration.
  */
 
-export async function runCli(argv: string[]): Promise<number> {
+export function runCli(argv: string[]): number {
   const command = argv[2] ?? "help";
 
   switch (command) {
@@ -32,7 +32,5 @@ export async function runCli(argv: string[]): Promise<number> {
 // Direct execution: tsx src/index.ts <args>
 const isDirectRun = import.meta.url === `file://${process.argv[1]}`;
 if (isDirectRun) {
-  runCli(process.argv).then((code) => {
-    process.exitCode = code;
-  });
+  process.exitCode = runCli(process.argv);
 }

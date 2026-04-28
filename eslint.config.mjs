@@ -77,6 +77,9 @@ export default [
       "coverage/**",
       // ESLint config itself — not in tsconfig, TSDoc comments cause warnings.
       "eslint.config.mjs",
+      // Config files not included in any tsconfig.
+      "vitest.config.ts",
+      "**/vite.config.ts",
     ],
   },
   {
