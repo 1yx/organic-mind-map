@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "title": "Unreachable SVG URL",
+  "paper": "a4-landscape",
+  "center": { "concept": "RESILIENCE", "svgUrl": "https://example.invalid/nonexistent-image-404.svg" },
+  "branches": [
+    { "concept": "FALLBACK TEST", "children": [{ "concept": "TEMPLATE" }] }
+  ]
+}

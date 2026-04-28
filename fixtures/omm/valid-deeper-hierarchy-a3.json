@@ -1,0 +1,421 @@
+{
+  "id": "omm-deeper-hierarchy-a3-001",
+  "version": 1,
+  "title": "Deeper Hierarchy A3 Mind Map",
+  "paper": {
+    "kind": "a3-landscape",
+    "widthMm": 420,
+    "heightMm": 297
+  },
+  "organicSeed": "deep123",
+  "rootMap": {
+    "id": "map-deep-001",
+    "title": "Deeper Hierarchy A3 Mind Map",
+    "center": {
+      "mode": "styled-text",
+      "titleText": "知识体系",
+      "minColorCount": 3,
+      "complianceState": "compliant"
+    },
+    "children": [
+      {
+        "id": "node-branch-1",
+        "concept": "自然科学",
+        "children": [
+          {
+            "id": "node-sub-1a",
+            "concept": "物理学",
+            "children": [
+              { "id": "node-leaf-1a1", "concept": "量子力学" },
+              { "id": "node-leaf-1a2", "concept": "相对论" },
+              { "id": "node-leaf-1a3", "concept": "热力学" }
+            ]
+          },
+          {
+            "id": "node-sub-1b",
+            "concept": "化学",
+            "children": [
+              { "id": "node-leaf-1b1", "concept": "有机化学" },
+              { "id": "node-leaf-1b2", "concept": "无机化学" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "node-branch-2",
+        "concept": "SCIENCE",
+        "children": [
+          {
+            "id": "node-sub-2a",
+            "concept": "MATHEMATICS",
+            "children": [
+              { "id": "node-leaf-2a1", "concept": "ALGEBRA" },
+              { "id": "node-leaf-2a2", "concept": "CALCULUS" }
+            ]
+          },
+          {
+            "id": "node-sub-2b",
+            "concept": "COMPUTING",
+            "children": [
+              { "id": "node-leaf-2b1", "concept": "ALGORITHMS" },
+              { "id": "node-leaf-2b2", "concept": "NETWORKS" },
+              { "id": "node-leaf-2b3", "concept": "DATABASES" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "node-branch-3",
+        "concept": "人文学科",
+        "children": [
+          {
+            "id": "node-sub-3a",
+            "concept": "哲学",
+            "children": [
+              { "id": "node-leaf-3a1", "concept": "伦理学" },
+              { "id": "node-leaf-3a2", "concept": "逻辑学" }
+            ]
+          },
+          {
+            "id": "node-sub-3b",
+            "concept": "历史",
+            "children": [
+              { "id": "node-leaf-3b1", "concept": "古代史" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "node-branch-4",
+        "concept": "ARTS",
+        "children": [
+          { "id": "node-sub-4a", "concept": "MUSIC" },
+          { "id": "node-sub-4b", "concept": "PAINTING" }
+        ]
+      }
+    ]
+  },
+  "layout": {
+    "engineVersion": "0.1.0",
+    "measuredAt": "2026-04-28T20:00:00Z",
+    "viewport": {
+      "widthPx": 1680,
+      "heightPx": 1188,
+      "viewBox": "0 0 1680 1188"
+    },
+    "center": {
+      "box": { "x": 740, "y": 544, "width": 200, "height": 100 }
+    },
+    "nodes": {
+      "node-branch-1": {
+        "nodeId": "node-branch-1",
+        "textAnchor": { "x": 600, "y": 400 },
+        "textBox": { "x": 540, "y": 385, "width": 120, "height": 30 }
+      },
+      "node-branch-2": {
+        "nodeId": "node-branch-2",
+        "textAnchor": { "x": 1080, "y": 400 },
+        "textBox": { "x": 1020, "y": 385, "width": 120, "height": 30 }
+      },
+      "node-branch-3": {
+        "nodeId": "node-branch-3",
+        "textAnchor": { "x": 600, "y": 700 },
+        "textBox": { "x": 540, "y": 685, "width": 120, "height": 30 }
+      },
+      "node-branch-4": {
+        "nodeId": "node-branch-4",
+        "textAnchor": { "x": 1080, "y": 700 },
+        "textBox": { "x": 1020, "y": 685, "width": 120, "height": 30 }
+      },
+      "node-sub-1a": {
+        "nodeId": "node-sub-1a",
+        "textAnchor": { "x": 420, "y": 320 },
+        "textBox": { "x": 380, "y": 308, "width": 80, "height": 24 }
+      },
+      "node-sub-1b": {
+        "nodeId": "node-sub-1b",
+        "textAnchor": { "x": 440, "y": 460 },
+        "textBox": { "x": 400, "y": 448, "width": 80, "height": 24 }
+      },
+      "node-sub-2a": {
+        "nodeId": "node-sub-2a",
+        "textAnchor": { "x": 1260, "y": 320 },
+        "textBox": { "x": 1200, "y": 308, "width": 120, "height": 24 }
+      },
+      "node-sub-2b": {
+        "nodeId": "node-sub-2b",
+        "textAnchor": { "x": 1260, "y": 460 },
+        "textBox": { "x": 1200, "y": 448, "width": 120, "height": 24 }
+      },
+      "node-sub-3a": {
+        "nodeId": "node-sub-3a",
+        "textAnchor": { "x": 420, "y": 640 },
+        "textBox": { "x": 380, "y": 628, "width": 80, "height": 24 }
+      },
+      "node-sub-3b": {
+        "nodeId": "node-sub-3b",
+        "textAnchor": { "x": 440, "y": 760 },
+        "textBox": { "x": 400, "y": 748, "width": 80, "height": 24 }
+      },
+      "node-sub-4a": {
+        "nodeId": "node-sub-4a",
+        "textAnchor": { "x": 1260, "y": 660 },
+        "textBox": { "x": 1220, "y": 648, "width": 80, "height": 24 }
+      },
+      "node-sub-4b": {
+        "nodeId": "node-sub-4b",
+        "textAnchor": { "x": 1260, "y": 740 },
+        "textBox": { "x": 1210, "y": 728, "width": 100, "height": 24 }
+      },
+      "node-leaf-1a1": {
+        "nodeId": "node-leaf-1a1",
+        "textAnchor": { "x": 280, "y": 280 },
+        "textBox": { "x": 240, "y": 268, "width": 80, "height": 22 }
+      },
+      "node-leaf-1a2": {
+        "nodeId": "node-leaf-1a2",
+        "textAnchor": { "x": 300, "y": 320 },
+        "textBox": { "x": 260, "y": 308, "width": 80, "height": 22 }
+      },
+      "node-leaf-1a3": {
+        "nodeId": "node-leaf-1a3",
+        "textAnchor": { "x": 280, "y": 360 },
+        "textBox": { "x": 240, "y": 348, "width": 80, "height": 22 }
+      },
+      "node-leaf-1b1": {
+        "nodeId": "node-leaf-1b1",
+        "textAnchor": { "x": 300, "y": 440 },
+        "textBox": { "x": 260, "y": 428, "width": 80, "height": 22 }
+      },
+      "node-leaf-1b2": {
+        "nodeId": "node-leaf-1b2",
+        "textAnchor": { "x": 300, "y": 480 },
+        "textBox": { "x": 260, "y": 468, "width": 80, "height": 22 }
+      },
+      "node-leaf-2a1": {
+        "nodeId": "node-leaf-2a1",
+        "textAnchor": { "x": 1400, "y": 290 },
+        "textBox": { "x": 1360, "y": 278, "width": 80, "height": 22 }
+      },
+      "node-leaf-2a2": {
+        "nodeId": "node-leaf-2a2",
+        "textAnchor": { "x": 1400, "y": 340 },
+        "textBox": { "x": 1360, "y": 328, "width": 80, "height": 22 }
+      },
+      "node-leaf-2b1": {
+        "nodeId": "node-leaf-2b1",
+        "textAnchor": { "x": 1400, "y": 430 },
+        "textBox": { "x": 1340, "y": 418, "width": 120, "height": 22 }
+      },
+      "node-leaf-2b2": {
+        "nodeId": "node-leaf-2b2",
+        "textAnchor": { "x": 1400, "y": 470 },
+        "textBox": { "x": 1340, "y": 458, "width": 120, "height": 22 }
+      },
+      "node-leaf-2b3": {
+        "nodeId": "node-leaf-2b3",
+        "textAnchor": { "x": 1400, "y": 510 },
+        "textBox": { "x": 1340, "y": 498, "width": 120, "height": 22 }
+      },
+      "node-leaf-3a1": {
+        "nodeId": "node-leaf-3a1",
+        "textAnchor": { "x": 280, "y": 610 },
+        "textBox": { "x": 240, "y": 598, "width": 80, "height": 22 }
+      },
+      "node-leaf-3a2": {
+        "nodeId": "node-leaf-3a2",
+        "textAnchor": { "x": 280, "y": 660 },
+        "textBox": { "x": 240, "y": 648, "width": 80, "height": 22 }
+      },
+      "node-leaf-3b1": {
+        "nodeId": "node-leaf-3b1",
+        "textAnchor": { "x": 300, "y": 780 },
+        "textBox": { "x": 260, "y": 768, "width": 80, "height": 22 }
+      }
+    },
+    "branches": {
+      "node-branch-1": {
+        "nodeId": "node-branch-1",
+        "branchPath": "M840,594 C820,540 680,440 640,410",
+        "textPath": "branch-text-node-branch-1",
+        "strokeWidthStart": 6,
+        "strokeWidthEnd": 2
+      },
+      "node-branch-2": {
+        "nodeId": "node-branch-2",
+        "branchPath": "M840,594 C860,540 1000,440 1040,410",
+        "textPath": "branch-text-node-branch-2",
+        "strokeWidthStart": 6,
+        "strokeWidthEnd": 2
+      },
+      "node-branch-3": {
+        "nodeId": "node-branch-3",
+        "branchPath": "M840,594 C820,640 680,680 640,700",
+        "textPath": "branch-text-node-branch-3",
+        "strokeWidthStart": 6,
+        "strokeWidthEnd": 2
+      },
+      "node-branch-4": {
+        "nodeId": "node-branch-4",
+        "branchPath": "M840,594 C860,640 1000,680 1040,700",
+        "textPath": "branch-text-node-branch-4",
+        "strokeWidthStart": 6,
+        "strokeWidthEnd": 2
+      },
+      "node-sub-1a": {
+        "nodeId": "node-sub-1a",
+        "branchPath": "M600,400 C560,370 460,340 440,325",
+        "textPath": "branch-text-node-sub-1a",
+        "strokeWidthStart": 3,
+        "strokeWidthEnd": 1.5
+      },
+      "node-sub-1b": {
+        "nodeId": "node-sub-1b",
+        "branchPath": "M600,400 C580,420 480,450 460,460",
+        "textPath": "branch-text-node-sub-1b",
+        "strokeWidthStart": 3,
+        "strokeWidthEnd": 1.5
+      },
+      "node-sub-2a": {
+        "nodeId": "node-sub-2a",
+        "branchPath": "M1080,400 C1120,370 1200,340 1220,325",
+        "textPath": "branch-text-node-sub-2a",
+        "strokeWidthStart": 3,
+        "strokeWidthEnd": 1.5
+      },
+      "node-sub-2b": {
+        "nodeId": "node-sub-2b",
+        "branchPath": "M1080,400 C1100,420 1200,450 1220,460",
+        "textPath": "branch-text-node-sub-2b",
+        "strokeWidthStart": 3,
+        "strokeWidthEnd": 1.5
+      },
+      "node-sub-3a": {
+        "nodeId": "node-sub-3a",
+        "branchPath": "M600,700 C560,680 460,660 440,645",
+        "textPath": "branch-text-node-sub-3a",
+        "strokeWidthStart": 3,
+        "strokeWidthEnd": 1.5
+      },
+      "node-sub-3b": {
+        "nodeId": "node-sub-3b",
+        "branchPath": "M600,700 C580,720 480,750 460,760",
+        "textPath": "branch-text-node-sub-3b",
+        "strokeWidthStart": 3,
+        "strokeWidthEnd": 1.5
+      },
+      "node-sub-4a": {
+        "nodeId": "node-sub-4a",
+        "branchPath": "M1080,700 C1120,680 1220,665 1240,660",
+        "textPath": "branch-text-node-sub-4a",
+        "strokeWidthStart": 3,
+        "strokeWidthEnd": 1.5
+      },
+      "node-sub-4b": {
+        "nodeId": "node-sub-4b",
+        "branchPath": "M1080,700 C1100,715 1220,735 1240,740",
+        "textPath": "branch-text-node-sub-4b",
+        "strokeWidthStart": 3,
+        "strokeWidthEnd": 1.5
+      },
+      "node-leaf-1a1": {
+        "nodeId": "node-leaf-1a1",
+        "branchPath": "M420,320 C380,300 320,290 300,285",
+        "textPath": "branch-text-node-leaf-1a1",
+        "strokeWidthStart": 2,
+        "strokeWidthEnd": 1
+      },
+      "node-leaf-1a2": {
+        "nodeId": "node-leaf-1a2",
+        "branchPath": "M420,320 C400,320 340,320 320,320",
+        "textPath": "branch-text-node-leaf-1a2",
+        "strokeWidthStart": 2,
+        "strokeWidthEnd": 1
+      },
+      "node-leaf-1a3": {
+        "nodeId": "node-leaf-1a3",
+        "branchPath": "M420,320 C400,340 320,355 300,360",
+        "textPath": "branch-text-node-leaf-1a3",
+        "strokeWidthStart": 2,
+        "strokeWidthEnd": 1
+      },
+      "node-leaf-1b1": {
+        "nodeId": "node-leaf-1b1",
+        "branchPath": "M440,460 C420,450 340,445 320,440",
+        "textPath": "branch-text-node-leaf-1b1",
+        "strokeWidthStart": 2,
+        "strokeWidthEnd": 1
+      },
+      "node-leaf-1b2": {
+        "nodeId": "node-leaf-1b2",
+        "branchPath": "M440,460 C420,470 340,475 320,480",
+        "textPath": "branch-text-node-leaf-1b2",
+        "strokeWidthStart": 2,
+        "strokeWidthEnd": 1
+      },
+      "node-leaf-2a1": {
+        "nodeId": "node-leaf-2a1",
+        "branchPath": "M1260,320 C1300,305 1360,295 1380,295",
+        "textPath": "branch-text-node-leaf-2a1",
+        "strokeWidthStart": 2,
+        "strokeWidthEnd": 1
+      },
+      "node-leaf-2a2": {
+        "nodeId": "node-leaf-2a2",
+        "branchPath": "M1260,320 C1300,335 1360,340 1380,340",
+        "textPath": "branch-text-node-leaf-2a2",
+        "strokeWidthStart": 2,
+        "strokeWidthEnd": 1
+      },
+      "node-leaf-2b1": {
+        "nodeId": "node-leaf-2b1",
+        "branchPath": "M1260,460 C1300,445 1340,435 1380,435",
+        "textPath": "branch-text-node-leaf-2b1",
+        "strokeWidthStart": 2,
+        "strokeWidthEnd": 1
+      },
+      "node-leaf-2b2": {
+        "nodeId": "node-leaf-2b2",
+        "branchPath": "M1260,460 C1300,470 1340,470 1380,470",
+        "textPath": "branch-text-node-leaf-2b2",
+        "strokeWidthStart": 2,
+        "strokeWidthEnd": 1
+      },
+      "node-leaf-2b3": {
+        "nodeId": "node-leaf-2b3",
+        "branchPath": "M1260,460 C1300,495 1340,505 1380,505",
+        "textPath": "branch-text-node-leaf-2b3",
+        "strokeWidthStart": 2,
+        "strokeWidthEnd": 1
+      },
+      "node-leaf-3a1": {
+        "nodeId": "node-leaf-3a1",
+        "branchPath": "M420,640 C380,625 320,615 300,615",
+        "textPath": "branch-text-node-leaf-3a1",
+        "strokeWidthStart": 2,
+        "strokeWidthEnd": 1
+      },
+      "node-leaf-3a2": {
+        "nodeId": "node-leaf-3a2",
+        "branchPath": "M420,640 C400,650 320,655 300,660",
+        "textPath": "branch-text-node-leaf-3a2",
+        "strokeWidthStart": 2,
+        "strokeWidthEnd": 1
+      },
+      "node-leaf-3b1": {
+        "nodeId": "node-leaf-3b1",
+        "branchPath": "M440,760 C420,770 340,775 320,780",
+        "textPath": "branch-text-node-leaf-3b1",
+        "strokeWidthStart": 2,
+        "strokeWidthEnd": 1
+      }
+    }
+  },
+  "assets": {
+    "images": []
+  },
+  "meta": {
+    "createdAt": "2026-04-28T20:00:00Z",
+    "tool": "omm-cli"
+  }
+}

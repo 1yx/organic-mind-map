@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "title": "Center Visual Hint Test",
+  "paper": "a4-landscape",
+  "center": { "concept": "SUSTAINABILITY", "visualHint": "earth" },
+  "branches": [
+    { "concept": "RENEWABLE ENERGY", "children": [{ "concept": "SOLAR" }, { "concept": "WIND" }] },
+    { "concept": "CONSERVATION", "children": [{ "concept": "WATER" }, { "concept": "FOREST" }] }
+  ]
+}

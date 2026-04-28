@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "title": "Deeper Hierarchy Map",
+  "paper": "a3-landscape",
+  "center": { "concept": "知识体系", "visualHint": "树形图" },
+  "branches": [
+    {
+      "concept": "自然科学",
+      "children": [
+        {
+          "concept": "物理学",
+          "children": [
+            { "concept": "量子力学" },
+            { "concept": "相对论" },
+            { "concept": "热力学" }
+          ]
+        },
+        {
+          "concept": "化学",
+          "children": [
+            { "concept": "有机化学" },
+            { "concept": "无机化学" }
+          ]
+        }
+      ]
+    },
+    {
+      "concept": "SCIENCE",
+      "children": [
+        {
+          "concept": "MATHEMATICS",
+          "children": [
+            { "concept": "ALGEBRA" },
+            { "concept": "CALCULUS" }
+          ]
+        },
+        {
+          "concept": "COMPUTING",
+          "children": [
+            { "concept": "ALGORITHMS" },
+            { "concept": "NETWORKS" },
+            { "concept": "DATABASES" }
+          ]
+        }
+      ]
+    },
+    {
+      "concept": "人文学科",
+      "children": [
+        { "concept": "哲学", "children": [{ "concept": "伦理学" }, { "concept": "逻辑学" }] },
+        { "concept": "历史", "children": [{ "concept": "古代史" }] }
+      ]
+    }
+  ]
+}
