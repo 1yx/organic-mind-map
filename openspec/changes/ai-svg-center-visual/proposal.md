@@ -47,4 +47,4 @@ Phase 1 avoids a heavy Node.js sanitizer and preserves the lightweight CLI bound
 
 * `organic-tree-contract`
 * `cli-preview-handoff`
-* `05-readonly-svg-renderer`
+* `readonly-svg-renderer`

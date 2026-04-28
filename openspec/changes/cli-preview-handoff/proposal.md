@@ -6,7 +6,7 @@ Implement the CLI command that validates agent-produced OrganicTree JSON, applie
 
 ## Why
 
-The CLI is not the final `.omm` generator. The browser owns ID generation, color assignment, DOM/SVG text measurement, layout, `.omm` assembly, and PNG export. The CLI should stay thin: read input, validate it, reject oversized content early, start the local preview service, and expose a payload the browser can consume.
+The CLI is not the final `.omm` generator. The browser owns ID generation, color assignment, Canvas 2D text measurement, collision-aware layout, `.omm` assembly, and PNG export. The CLI should stay thin: read input, validate it, reject oversized content early, start the local preview service, and expose a payload the browser can consume.
 
 Naming this change `cli-preview-handoff` avoids implying that the CLI produces a complete `.omm` document. A valid `OmmDocument` requires browser-computed layout coordinates and is only produced by the Web app during export.
 

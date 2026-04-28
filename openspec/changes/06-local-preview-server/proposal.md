@@ -35,4 +35,4 @@ The MVP user workflow starts from an Agent CLI + skill that produces OrganicTree
 
 ## Dependencies
 
-* `05-readonly-svg-renderer`
+* `readonly-svg-renderer`

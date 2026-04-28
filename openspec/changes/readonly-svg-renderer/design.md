@@ -1,8 +1,8 @@
-# 05-readonly-svg-renderer Design
+# readonly-svg-renderer Design
 
 ## Goal
 
-Render validated preview data or a `.omm` document into a read-only SVG scene that visually represents an Organic Mind Map on fixed A3/A4 landscape paper. The browser-side renderer owns real text measurement and final layout computation.
+Render validated preview data or a `.omm` document into a read-only SVG scene that visually represents an Organic Mind Map on fixed A3/A4 landscape paper. The browser-side renderer owns text measurement, seeded organic geometry, collision-aware layout, and final SVG rendering.
 
 ## Renderer Boundary
 
@@ -33,13 +33,16 @@ For Web integration, the renderer may also expose a render model for Vue compone
 
 ## Browser Measurement Responsibility
 
-Final layout depends on actual font metrics and SVG/DOM behavior. Therefore:
+Final layout depends on text metrics, branch geometry, and paper constraints. Therefore:
 
 * CLI does not compute final coordinates.
-* Browser preview measures text using real DOM/SVG APIs.
+* Browser preview measures layout-time text width with an offscreen Canvas 2D `CanvasRenderingContext2D.measureText()` adapter.
+* Layout solving must not mount hidden DOM/SVG text nodes or call SVG `getBBox()` in tight measurement loops.
 * Browser preview computes branch lengths, text clipping, and layout geometry.
 * Browser preview can produce the final downloadable `.omm` with computed layout if that artifact is needed.
 * Browser preview derives deterministic domain state from `PreviewPayload`; CLI does not assign IDs, colors, organic seed, or center visual fallback.
+
+SVG `textPath` remains the final rendering mechanism, but Canvas 2D measurement is the performance boundary for layout inference. Small sub-pixel differences are acceptable within the organic branch style.
 
 ## Coordinate System
 
@@ -62,24 +65,29 @@ When rendering a `PreviewPayload`, the browser must instantiate its in-memory do
 * use a lightweight synchronous non-cryptographic hash such as `cyrb53`
 * avoid `Math.random()` for seed generation
 * avoid async `window.crypto.subtle` in the first render path
-* derive node IDs, colors, and branch styling from the stable tree order and seed
+* derive node IDs, colors, and branch geometry parameters from the stable tree order and seed
+
+The seed must be applied before layout legality is evaluated. Seed-derived curvature, initial branch angle, taper, and length preference feed into geometry generation first; then bounding boxes and collision checks are computed from those seeded shapes.
 
 This keeps refreshes and fixture tests stable without adding a CLI `--seed` parameter.
 
 ## Layout Strategy
 
-MVP layout can be deterministic and heuristic:
+MVP layout is deterministic and collision-aware:
 
 1. Compute paper bounds and safe margins.
-2. Compute center visual box.
-3. Split main branches left/right or radial by count.
-4. Assign each main branch a color.
-5. Place first-level branches around the center.
-6. Place child branches recursively within each branch sector.
-7. Measure concept text in the browser and determine ideal branch length.
-8. Clamp visible text to available branch length.
+2. Derive seeded geometry parameters: branch angle, curvature, taper, and length preference.
+3. Measure concept text with Canvas 2D and determine ideal branch length.
+4. Compute center visual box.
+5. Split main branches left/right or radial by count.
+6. Place first-level branches around the center.
+7. Place child branches recursively within each branch sector.
+8. Generate conservative bounding boxes for text, center visual, branch shapes, and branch path envelopes.
+9. Run basic bounding-box collision detection and local spacing correction.
+10. Check paper boundaries and mark hard failure when content cannot be legally contained.
+11. Clamp visible text to available branch length only after legal geometry is established.
 
-The MVP does not need perfect global optimization. It must avoid obvious overlap for representative fixtures that pass CLI capacity checks.
+MVP layout must include bounding-box collision detection as a baseline. Simple sector assignment alone is not sufficient because branch curves and path text can otherwise cross or overlap.
 
 ## Organic Branch Shape
 
@@ -122,11 +130,13 @@ Phase 1 allows the controlled SVG to be single-color because many vector-library
 
 Use browser-derived `organicSeed` to derive stable minor variation:
 
+* initial branch angle preference
 * branch curvature
 * taper ratio
+* length preference
 * small control point offsets
 
-The seed must not change layout legality or cause overlap.
+Seed-derived geometry is generated before bounding boxes and collision checks. The layout solver must evaluate the final seeded geometry, not apply random perturbation after a legal layout has already been computed.
 
 ## Diagnostics
 
@@ -135,6 +145,8 @@ Diagnostics are for tests and development, not user-facing warnings:
 * clipped text count
 * missing asset fallback
 * layout overflow
+* bounding-box collision unresolved
+* branch/text crossing detected
 * invalid center fallback
 * hard layout failure
 
@@ -142,7 +154,8 @@ The preview should stay lightweight. Capacity failures should primarily be preve
 
 ## Risks
 
-* Spending too much time on perfect layout before the preview pipeline exists.
+* Spending too much time on perfect global optimization before the preview pipeline exists.
+* Underbuilding collision checks and producing visually broken overlaps.
 * Making renderer depend on browser-only APIs, which complicates testing.
 * Rendering text in boxes by accident.
 * Letting oversized inputs reach the renderer instead of being rejected earlier.
@@ -150,8 +163,9 @@ The preview should stay lightweight. Capacity failures should primarily be preve
 ## Decisions
 
 * SVG is the primary render target.
-* MVP layout is deterministic heuristic layout.
+* MVP layout is deterministic and includes bounding-box collision protection.
 * Text clipping is visible but not actively warned to users.
-* Browser-side DOM measurement is the source of truth for layout.
+* Browser-side Canvas 2D `measureText()` is the layout-time text measurement source.
 * Organic seed is derived from OrganicTree content using a synchronous stable hash such as `cyrb53`.
+* Seed-derived geometry parameters are instantiated before collision detection and layout solving.
 * Center visual selection prioritizes a successfully loaded controlled SVG URL and falls back to a deterministic hash-selected built-in template.

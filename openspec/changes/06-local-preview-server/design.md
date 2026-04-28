@@ -2,7 +2,7 @@
 
 ## Goal
 
-Provide the local Web server module used by `cli-preview-handoff` to preview validated `PreviewPayload` data or a `.omm` file using browser-side text measurement and the read-only SVG renderer. In the MVP, this module is usually invoked after Gemini CLI, Codex CLI, Claude Code, or another Agent CLI has called the agent skill and `cli-preview-handoff` has validated capacity.
+Provide the local Web server module used by `cli-preview-handoff` to preview validated `PreviewPayload` data or a `.omm` file using browser-side Canvas text measurement, collision-aware layout, and the read-only SVG renderer. In the MVP, this module is usually invoked after Gemini CLI, Codex CLI, Claude Code, or another Agent CLI has called the agent skill and `cli-preview-handoff` has validated capacity.
 
 ## Command Shape
 
@@ -43,7 +43,7 @@ The Web app should:
 * load the `.omm`
 * or load the validated preview payload from the CLI
 * validate local data shape or display a local error
-* measure text using the browser DOM/SVG environment
+* measure layout-time text width using browser Canvas 2D
 * solve layout in the browser
 * render the SVG preview
 * preserve A3/A4 paper aspect ratio
@@ -63,7 +63,7 @@ omm preview input.json
   -> local-preview-server starts HTTP listener
   -> browser loads preview app
   -> preview fetches payload/document JSON
-  -> browser measures text and computes layout
+  -> browser measures text with Canvas 2D and computes collision-aware layout
   -> renderer returns SVG
   -> page displays paper-proportional preview
 ```

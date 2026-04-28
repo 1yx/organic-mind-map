@@ -35,5 +35,5 @@ The MVP output artifact is a PNG image. Export must reflect the same paper-propo
 
 ## Dependencies
 
-* `05-readonly-svg-renderer`
+* `readonly-svg-renderer`
 * `06-local-preview-server`

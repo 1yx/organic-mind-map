@@ -4,7 +4,7 @@
 
 ---
 
-## 1. Node.js 端的 SVG 净化器是否会导致 CLI 体积严重膨胀？(Sanitization Overhead) [待决策]
+## 1. Node.js 端的 SVG 净化器是否会导致 CLI 体积严重膨胀？(Sanitization Overhead) [已决策]
 
 ### 发现的问题
 在 `design.md` 和 `spec.md` 中，要求 CLI（Node.js 端）执行“Strict SVG parse and serialize sanitization”，剥离 `<script>`、`foreignObject` 以及各种外部引用和事件绑定。
@@ -13,6 +13,11 @@
 * Node.js 原生并没有完整的 DOM 解析器。如果要实现严格且能防范各种 Edge Case 的防 XSS 净化（例如处理不规则的 XML 闭合、被编码的 payload），我们通常需要引入 `jsdom` 配合 `DOMPurify` 这样极其庞大和沉重的依赖。
 * 我们刚刚在前面的决策中为了保持 CLI 的“极度轻量化”而移除了 Puppeteer/Playwright。现在为了净化一个 SVG，而在 CLI 中引入完整的虚拟 DOM 解析库，这是否属于 MVP 阶段的**过度设计 (Over-engineering)**？
 * **替代方案探讨**：既然我们已经通过“严格的 URL 白名单（如只允许请求 `api.iconify.design`）”从源头上控制了输入，官方受控图库本身就是安全的，我们在 MVP 阶段是否可以信任受控图库的返回结果，仅做最基础的正则检测（如检测是否存在 `<script>`），从而免去引入沉重的解析器？
+
+### 决策记录
+* **决策结果**: 废弃在 CLI 端下载和净化 SVG 的方案。CLI 拼装的 `PreviewPayload` 中不应包含内联 DOM（`inlineSvg`），而是**直接包含该 SVG 的链接 (`svgUrl`)**。
+* **决策理由**: 这是最极简且高效的设计。既然图源已经是受控的硬编码白名单（如 Iconify，天生支持 CORS），我们完全可以信任它的安全性，省去在 Node.js 端引入沉重 DOM 解析库进行 XSS 净化的**过度设计**。这也彻底免除了 CLI 发起网络请求的负担。跨域导出 PNG 问题，只要前端在使用该 Link 时合理配置跨域属性即可解决。
+* **后续修改文档**: 更新 `ai-svg-center-visual` 的设计与任务文档，取消 CLI 的 SVG 下载、净化及内联（Inline）逻辑，明确规定 CLI 仅负责校验 URL 白名单并将 `svgUrl` 放入 Payload 传给浏览器端。
 
 ---
 

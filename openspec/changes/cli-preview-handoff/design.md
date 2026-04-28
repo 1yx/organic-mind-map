@@ -88,7 +88,8 @@ Browser owns:
 * branch style assignment
 * domain model instantiation
 * controlled center SVG loading and lightweight safety guard
-* DOM/SVG text measurement
+* Canvas 2D text measurement
+* collision-aware layout solving
 * layout solving
 * `OmmDocument` creation and export
 * PNG export

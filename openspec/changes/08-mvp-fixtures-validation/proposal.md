@@ -42,6 +42,6 @@ The Phase 1 MVP is a pipeline. It needs end-to-end confidence that an Agent CLI 
 ## Dependencies
 
 * `cli-preview-handoff`
-* `05-readonly-svg-renderer`
+* `readonly-svg-renderer`
 * `06-local-preview-server`
 * `07-png-export`

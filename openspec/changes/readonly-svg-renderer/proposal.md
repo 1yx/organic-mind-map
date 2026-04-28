@@ -1,4 +1,4 @@
-# 05-readonly-svg-renderer
+# readonly-svg-renderer
 
 ## Summary
 
@@ -6,7 +6,7 @@ Implement the browser-side read-only SVG renderer and layout engine for Phase 1 
 
 ## Why
 
-The core MVP value is seeing an Organic Mind Map style output from agent-generated data. Browser-side rendering owns real text measurement, layout solving, and the visual baseline before any editing features are added.
+The core MVP value is seeing an Organic Mind Map style output from agent-generated data. Browser-side rendering owns text measurement, layout solving, collision protection, and the visual baseline before any editing features are added.
 
 ## What Changes
 
@@ -18,10 +18,11 @@ The core MVP value is seeing an Organic Mind Map style output from agent-generat
   * tapered organic branch shapes
   * path text for concept units
   * basic child branch layout
+  * bounding-box collision detection and local spacing correction
   * stable organic variation from browser-derived `organicSeed`
 * Use read-only layout; no drag/drop or editable text.
 * Apply visible text clipping when concept text exceeds available branch length.
-* Use browser DOM/SVG text measurement for layout.
+* Use browser Canvas 2D `measureText()` for layout-time text measurement; do not mount hidden DOM/SVG text nodes during layout solving.
 * Provide the computed layout needed for final `.omm` download/export.
 
 ## Non-goals
@@ -37,6 +38,7 @@ The core MVP value is seeing an Organic Mind Map style output from agent-generat
 * Main branches are visibly color-distinct.
 * Branches are curved, tapered, and not boxed nodes.
 * Text appears along branch paths.
+* Representative fixtures avoid text/branch overlap through bounding-box collision checks.
 * Rendering is deterministic for the same `.omm`.
 * Rendering a `PreviewPayload` is deterministic across refreshes for the same OrganicTree content.
 * The renderer can report hard layout/capacity failure internally without adding complex user-facing warning UI.
