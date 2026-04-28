@@ -7,8 +7,8 @@
 
 import type { AgentCenter } from "@omm/core";
 import type { PreviewPayload } from "./types.js";
-import { cyrb53 } from "./seed.js";
 import { missingAssetFallbackDiagnostic } from "./diagnostics.js";
+import { isSvgSafe } from "./svg-loader.js";
 import type { RenderDiagnostic } from "./types.js";
 
 // ─── Built-in Center Visual Templates ──────────────────────────────────────
@@ -24,7 +24,9 @@ type BuiltinTemplateName = (typeof BUILTIN_CENTER_TEMPLATES)[number];
 /**
  * Select a deterministic built-in template from the content hash.
  */
-export function selectBuiltinTemplate(contentHash: number): BuiltinTemplateName {
+export function selectBuiltinTemplate(
+  contentHash: number,
+): BuiltinTemplateName {
   const index = Math.abs(contentHash) % BUILTIN_CENTER_TEMPLATES.length;
   return BUILTIN_CENTER_TEMPLATES[index]!;
 }
@@ -44,30 +46,46 @@ function generateMandalaOrganic(): string {
   <circle cx="100" cy="100" r="40" fill="none" stroke="#2ECC71" stroke-width="2" opacity="0.7"/>
   <circle cx="100" cy="100" r="20" fill="#F39C12" opacity="0.8"/>
   <circle cx="100" cy="100" r="8" fill="#9B59B6"/>
-  ${[0, 45, 90, 135, 180, 225, 270, 315].map(angle => {
-    const rad = (angle * Math.PI) / 180;
-    const x1 = 100 + 45 * Math.cos(rad);
-    const y1 = 100 + 45 * Math.sin(rad);
-    const x2 = 100 + 78 * Math.cos(rad);
-    const y2 = 100 + 78 * Math.sin(rad);
-    return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#E67E22" stroke-width="1.5" opacity="0.5"/>`;
-  }).join("\n  ")}
-  ${[0, 60, 120, 180, 240, 300].map(angle => {
-    const rad = (angle * Math.PI) / 180;
-    const cx = 100 + 50 * Math.cos(rad);
-    const cy = 100 + 50 * Math.sin(rad);
-    return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="6" fill="#1ABC9C" opacity="0.7"/>`;
-  }).join("\n  ")}
+  ${[0, 45, 90, 135, 180, 225, 270, 315]
+    .map((angle) => {
+      const rad = (angle * Math.PI) / 180;
+      const x1 = 100 + 45 * Math.cos(rad);
+      const y1 = 100 + 45 * Math.sin(rad);
+      const x2 = 100 + 78 * Math.cos(rad);
+      const y2 = 100 + 78 * Math.sin(rad);
+      return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#E67E22" stroke-width="1.5" opacity="0.5"/>`;
+    })
+    .join("\n  ")}
+  ${[0, 60, 120, 180, 240, 300]
+    .map((angle) => {
+      const rad = (angle * Math.PI) / 180;
+      const cx = 100 + 50 * Math.cos(rad);
+      const cy = 100 + 50 * Math.sin(rad);
+      return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="6" fill="#1ABC9C" opacity="0.7"/>`;
+    })
+    .join("\n  ")}
 </svg>`;
 }
 
 function generateRadialBloom(): string {
   const petalCount = 8;
-  const colors = ["#E74C3C", "#3498DB", "#2ECC71", "#F39C12", "#9B59B6", "#1ABC9C", "#E67E22", "#34495E"];
-  const petals = colors.slice(0, petalCount).map((color, i) => {
-    const angle = (i * 360) / petalCount;
-    return `<ellipse cx="100" cy="45" rx="18" ry="35" fill="${color}" opacity="0.5" transform="rotate(${angle} 100 100)"/>`;
-  }).join("\n  ");
+  const colors = [
+    "#E74C3C",
+    "#3498DB",
+    "#2ECC71",
+    "#F39C12",
+    "#9B59B6",
+    "#1ABC9C",
+    "#E67E22",
+    "#34495E",
+  ];
+  const petals = colors
+    .slice(0, petalCount)
+    .map((color, i) => {
+      const angle = (i * 360) / petalCount;
+      return `<ellipse cx="100" cy="45" rx="18" ry="35" fill="${color}" opacity="0.5" transform="rotate(${angle} 100 100)"/>`;
+    })
+    .join("\n  ");
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
   <circle cx="100" cy="100" r="95" fill="#FDF8F0" stroke="#E8DCC8" stroke-width="1"/>
@@ -78,19 +96,28 @@ function generateRadialBloom(): string {
 }
 
 function generateGeometricFlower(): string {
-  const colors = ["#E74C3C", "#3498DB", "#2ECC71", "#F39C12", "#9B59B6", "#1ABC9C"];
-  const shapes = colors.map((color, i) => {
-    const angle = (i * 60) * Math.PI / 180;
-    const cx = 100 + 45 * Math.cos(angle);
-    const cy = 100 + 45 * Math.sin(angle);
-    const sides = 3 + (i % 4);
-    const r = 12 + i * 2;
-    const points = Array.from({ length: sides }, (_, j) => {
-      const a = (j * 2 * Math.PI) / sides - Math.PI / 2;
-      return `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`;
-    }).join(" ");
-    return `<polygon points="${points}" fill="${color}" opacity="0.6"/>`;
-  }).join("\n  ");
+  const colors = [
+    "#E74C3C",
+    "#3498DB",
+    "#2ECC71",
+    "#F39C12",
+    "#9B59B6",
+    "#1ABC9C",
+  ];
+  const shapes = colors
+    .map((color, i) => {
+      const angle = (i * 60 * Math.PI) / 180;
+      const cx = 100 + 45 * Math.cos(angle);
+      const cy = 100 + 45 * Math.sin(angle);
+      const sides = 3 + (i % 4);
+      const r = 12 + i * 2;
+      const points = Array.from({ length: sides }, (_, j) => {
+        const a = (j * 2 * Math.PI) / sides - Math.PI / 2;
+        return `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`;
+      }).join(" ");
+      return `<polygon points="${points}" fill="${color}" opacity="0.6"/>`;
+    })
+    .join("\n  ");
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
   <circle cx="100" cy="100" r="95" fill="#F5F5F0" stroke="#DDD8D0" stroke-width="1"/>
@@ -110,7 +137,9 @@ const TEMPLATE_GENERATORS: Record<BuiltinTemplateName, () => string> = {
 /**
  * Generate SVG content for a built-in center visual template.
  */
-export function generateBuiltinCenterSvg(templateName: BuiltinTemplateName): string {
+export function generateBuiltinCenterSvg(
+  templateName: BuiltinTemplateName,
+): string {
   const generator = TEMPLATE_GENERATORS[templateName];
   if (!generator) {
     // Fallback to first template
@@ -148,18 +177,16 @@ export function resolveCenterVisualSync(
 
   // Try inline SVG first
   if (inlineSvg) {
-    // Basic safety check: must start with <svg
     const trimmed = inlineSvg.trimStart();
-    if (trimmed.startsWith("<svg")) {
+    if (trimmed.startsWith("<svg") && isSvgSafe(trimmed)) {
       return {
         svgContent: inlineSvg,
         usedFallback: false,
         diagnostics: [],
       };
     }
-    // Inline SVG doesn't look valid
     diagnostics.push(
-      missingAssetFallbackDiagnostic("inline SVG does not start with <svg"),
+      missingAssetFallbackDiagnostic("inline SVG failed safety check"),
     );
   }
 
@@ -170,7 +197,9 @@ export function resolveCenterVisualSync(
   if (inlineSvg || center.svgUrl) {
     diagnostics.push(
       missingAssetFallbackDiagnostic(
-        inlineSvg ? "inline SVG invalid" : "URL loading not available in sync context",
+        inlineSvg
+          ? "inline SVG invalid"
+          : "URL loading not available in sync context",
       ),
     );
   }
@@ -196,7 +225,7 @@ export async function resolveCenterVisualAsync(
   // 1. Try inline SVG
   if (payload.centerVisual?.inlineSvg) {
     const trimmed = payload.centerVisual.inlineSvg.trimStart();
-    if (trimmed.startsWith("<svg")) {
+    if (trimmed.startsWith("<svg") && isSvgSafe(trimmed)) {
       return {
         svgContent: payload.centerVisual.inlineSvg,
         usedFallback: false,
@@ -204,7 +233,7 @@ export async function resolveCenterVisualAsync(
       };
     }
     diagnostics.push(
-      missingAssetFallbackDiagnostic("inline SVG does not start with <svg"),
+      missingAssetFallbackDiagnostic("inline SVG failed safety check"),
     );
   }
 

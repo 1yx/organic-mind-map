@@ -10,11 +10,7 @@
  * A4 landscape viewBox: "0 0 2970 2100"
  */
 
-import type {
-  AgentMindMapList,
-  LayoutBox,
-  Point,
-} from "@omm/core";
+import type { AgentMindMapList, LayoutBox, Point } from "@omm/core";
 import type {
   TextMeasurementAdapter,
   TextMetrics,
@@ -33,13 +29,9 @@ import {
 } from "./seed.js";
 import { computePaperLayout, boxesOverlap } from "./diagnostics.js";
 import {
-  resolveCenterVisualSync,
-} from "./center-visual.js";
-import {
   clippedTextDiagnostic,
   layoutOverflowDiagnostic,
   unresolvedCollisionDiagnostic,
-  hardLayoutFailureDiagnostic,
 } from "./diagnostics.js";
 
 // ─── Default Text Measurement (heuristic) ──────────────────────────────────
@@ -51,10 +43,7 @@ import {
  */
 const CHAR_WIDTH_RATIO = 0.6;
 
-function defaultMeasure(
-  text: string,
-  fontSize: number,
-): TextMetrics {
+function defaultMeasure(text: string, fontSize: number): TextMetrics {
   const width = text.length * fontSize * CHAR_WIDTH_RATIO;
   const height = fontSize * 1.2;
   return {
@@ -87,7 +76,11 @@ export function createCanvasMeasurementAdapter(
     // Try OffscreenCanvas first (modern browsers)
     let ctx: {
       font: string;
-      measureText(text: string): { width: number; actualBoundingBoxAscent?: number; actualBoundingBoxDescent?: number };
+      measureText(text: string): {
+        width: number;
+        actualBoundingBoxAscent?: number;
+        actualBoundingBoxDescent?: number;
+      };
     } | null = null;
 
     if (typeof OffscreenCanvas !== "undefined") {
@@ -124,9 +117,9 @@ export function createCanvasMeasurementAdapter(
 // ─── Font Size by Depth ────────────────────────────────────────────────────
 
 const FONT_SIZES: Record<number, number> = {
-  1: 80,   // Main branch: large text
-  2: 56,   // Sub-branch: medium text
-  3: 42,   // Leaf: smaller text
+  1: 80, // Main branch: large text
+  2: 56, // Sub-branch: medium text
+  3: 42, // Leaf: smaller text
 };
 
 function getFontSize(depth: number): number {
@@ -136,9 +129,9 @@ function getFontSize(depth: number): number {
 // ─── Stroke Widths by Depth ────────────────────────────────────────────────
 
 const STROKE_WIDTHS: Record<number, { start: number; end: number }> = {
-  1: { start: 28, end: 8 },    // Main: thick taper
-  2: { start: 16, end: 4 },    // Sub: medium taper
-  3: { start: 10, end: 2 },    // Leaf: thin taper
+  1: { start: 28, end: 8 }, // Main: thick taper
+  2: { start: 16, end: 4 }, // Sub: medium taper
+  3: { start: 10, end: 2 }, // Leaf: thin taper
 };
 
 function getStrokeWidths(depth: number): { start: number; end: number } {
@@ -256,11 +249,14 @@ export function computeLayout(
   const organicSeed = contentHash;
 
   // 2. Paper layout
-  const { paperBounds, safeArea, viewBox, centerPoint } =
-    computePaperLayout(paperKind, marginRatio);
+  const { paperBounds, safeArea, viewBox, centerPoint } = computePaperLayout(
+    paperKind,
+    marginRatio,
+  );
 
   // 3. Center visual bounds
-  const centerVisualSize = Math.min(paperBounds.width, paperBounds.height) * 0.12;
+  const centerVisualSize =
+    Math.min(paperBounds.width, paperBounds.height) * 0.12;
   const centerBounds: LayoutBox = {
     x: centerPoint.x - centerVisualSize / 2,
     y: centerPoint.y - centerVisualSize / 2,
@@ -352,7 +348,8 @@ function placeBranch(
 
   // Main branch uses seeded geometry angle blended with sector angle
   const angleBlend = recursionDepth === 0 ? 0.7 : 0.5;
-  const baseAngle = sectorMid * angleBlend + node.geometry.angle * (1 - angleBlend);
+  const baseAngle =
+    sectorMid * angleBlend + node.geometry.angle * (1 - angleBlend);
 
   // Sub-branches spread within the parent sector
   let angle: number;
@@ -388,26 +385,38 @@ function placeBranch(
   };
 
   // Generate path
-  const pathData = node.depth === 1
-    ? generateCubicBezier(startPoint, endPoint, node.geometry.curvature, sector.side)
-    : generateQuadraticBezier(startPoint, endPoint, node.geometry.curvature);
+  const pathData =
+    node.depth === 1
+      ? generateCubicBezier(
+          startPoint,
+          endPoint,
+          node.geometry.curvature,
+          sector.side,
+        )
+      : generateQuadraticBezier(startPoint, endPoint, node.geometry.curvature);
 
-  // Text path (offset slightly above the branch for readability)
-  const textOffset = (getStrokeWidths(node.depth).start + getStrokeWidths(node.depth).end) / 2 + getFontSize(node.depth) * 0.3;
+  // Text path (offset perpendicular to the branch for readability)
+  const textOffset =
+    (getStrokeWidths(node.depth).start + getStrokeWidths(node.depth).end) / 2 +
+    getFontSize(node.depth) * 0.3;
   const perpX = -(endPoint.y - startPoint.y);
   const perpY = endPoint.x - startPoint.x;
   const perpLen = Math.sqrt(perpX * perpX + perpY * perpY) || 1;
-  const textPathData = generateQuadraticBezier(
-    {
-      x: startPoint.x + (perpX / perpLen) * textOffset,
-      y: startPoint.y + (perpY / perpLen) * textOffset,
-    },
-    {
-      x: endPoint.x + (perpX / perpLen) * textOffset,
-      y: endPoint.y + (perpY / perpLen) * textOffset,
-    },
-    node.geometry.curvature,
-  );
+
+  const tpStart: Point = {
+    x: startPoint.x + (perpX / perpLen) * textOffset,
+    y: startPoint.y + (perpY / perpLen) * textOffset,
+  };
+  const tpEnd: Point = {
+    x: endPoint.x + (perpX / perpLen) * textOffset,
+    y: endPoint.y + (perpY / perpLen) * textOffset,
+  };
+
+  // Left-side branches point backward — reverse text path so labels read left-to-right
+  const isLeftSide = Math.abs(angle) > Math.PI / 2;
+  const textPathData = isLeftSide
+    ? generateQuadraticBezier(tpEnd, tpStart, node.geometry.curvature)
+    : generateQuadraticBezier(tpStart, tpEnd, node.geometry.curvature);
 
   // Measure text
   const fontSize = getFontSize(node.depth);
@@ -425,7 +434,12 @@ function placeBranch(
       textMetrics.width,
     );
     diagnostics.push(
-      clippedTextDiagnostic(node.id, node.concept, branchLength * 0.95, textMetrics.width),
+      clippedTextDiagnostic(
+        node.id,
+        node.concept,
+        branchLength * 0.95,
+        textMetrics.width,
+      ),
     );
   }
 
@@ -472,7 +486,8 @@ function placeBranch(
 
   // Recurse into children
   if (node.children.length > 0) {
-    const childSectorSpan = (sector.angleEnd - sector.angleStart) / node.children.length;
+    const childSectorSpan =
+      (sector.angleEnd - sector.angleStart) / node.children.length;
     for (let c = 0; c < node.children.length; c++) {
       const child = node.children[c]!;
       const childSector: BranchSector = {
@@ -539,7 +554,11 @@ function isBoxContained(inner: LayoutBox, outer: LayoutBox): boolean {
 /**
  * Clamp text to fit within a maximum width by truncating with ellipsis.
  */
-function clampText(text: string, maxWidth: number, measuredWidth: number): string {
+function clampText(
+  text: string,
+  maxWidth: number,
+  measuredWidth: number,
+): string {
   if (measuredWidth <= maxWidth) return text;
   if (text.length <= 3) return text;
 
@@ -567,7 +586,7 @@ function clampText(text: string, maxWidth: number, measuredWidth: number): strin
 function detectCollisions(
   boxes: LayoutBox[],
   nodeOrder: string[],
-  branchGeometries: Record<string, BranchGeometry>,
+  _branchGeometries: Record<string, BranchGeometry>,
   diagnostics: RenderDiagnostic[],
 ): void {
   const minPadding = 20; // Minimum spacing between branches
@@ -584,9 +603,7 @@ function detectCollisions(
         const key = [nodeId1, nodeId2].sort().join(":");
         if (!collisionSet.has(key)) {
           collisionSet.add(key);
-          diagnostics.push(
-            unresolvedCollisionDiagnostic(nodeId1, nodeId2),
-          );
+          diagnostics.push(unresolvedCollisionDiagnostic(nodeId1, nodeId2));
         }
       }
     }

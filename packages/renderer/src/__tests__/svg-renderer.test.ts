@@ -10,15 +10,14 @@ import {
   generateBuiltinCenterSvg,
   BUILTIN_CENTER_TEMPLATES,
 } from "../center-visual";
-import {
-  computeLayout,
-} from "../layout";
-import {
-  stableSerializeTree,
-  deriveOrganicSeed,
-} from "../seed";
+import { computeLayout } from "../layout";
 import type { AgentMindMapList } from "@omm/core";
-import type { TextMeasurementAdapter, TextMetrics, LayoutGeometry, BranchGeometry } from "../types";
+import type {
+  TextMeasurementAdapter,
+  TextMetrics,
+  LayoutGeometry,
+  BranchGeometry,
+} from "../types";
 
 // ─── Fixture ───────────────────────────────────────────────────────────────
 
@@ -29,15 +28,11 @@ const SAMPLE_TREE: AgentMindMapList = {
   branches: [
     {
       concept: "Branch One",
-      children: [
-        { concept: "Sub 1A" },
-      ],
+      children: [{ concept: "Sub 1A" }],
     },
     {
       concept: "Branch Two",
-      children: [
-        { concept: "Sub 2A", children: [{ concept: "Leaf 2A1" }] },
-      ],
+      children: [{ concept: "Sub 2A", children: [{ concept: "Leaf 2A1" }] }],
     },
   ],
 };
@@ -57,7 +52,13 @@ function createMockMeasure(): TextMeasurementAdapter {
 
 function getSampleLayout(): LayoutGeometry {
   const measure = createMockMeasure();
-  const result = computeLayout(SAMPLE_TREE, "a3-landscape", "<svg></svg>", true, measure);
+  const result = computeLayout(
+    SAMPLE_TREE,
+    "a3-landscape",
+    "<svg></svg>",
+    true,
+    measure,
+  );
   return result.geometry;
 }
 
@@ -103,13 +104,16 @@ describe("renderSvg", () => {
     expect(svg).toContain('stroke="#CCCCCC"');
   });
 
-  it("renders branches with path data", () => {
+  it("renders branches with tapered path shapes", () => {
     const layout = getSampleLayout();
     const svg = renderSvg(layout);
     expect(svg).toContain("<!-- Branches -->");
     const branches = Object.values(layout.branches) as BranchGeometry[];
     for (const branch of branches) {
-      expect(svg).toContain(branch.branchPath);
+      // Each branch should have a path element using its color
+      expect(svg).toContain(`fill="${branch.color}"`);
+      // Text path should be present
+      expect(svg).toContain(branch.textPath);
     }
   });
 
@@ -214,7 +218,8 @@ describe("center visual", () => {
 
   describe("resolveCenterVisualSync", () => {
     it("uses inline SVG when provided and valid", () => {
-      const inlineSvg = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="blue"/></svg>';
+      const inlineSvg =
+        '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="blue"/></svg>';
       const result = resolveCenterVisualSync(
         { concept: "Test" },
         inlineSvg,
@@ -223,6 +228,29 @@ describe("center visual", () => {
       expect(result.svgContent).toBe(inlineSvg);
       expect(result.usedFallback).toBe(false);
       expect(result.diagnostics).toHaveLength(0);
+    });
+
+    it("rejects unsafe inline SVG with script tag", () => {
+      const unsafeSvg =
+        '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script><circle cx="12" cy="12" r="10"/></svg>';
+      const result = resolveCenterVisualSync(
+        { concept: "Test" },
+        unsafeSvg,
+        42,
+      );
+      expect(result.usedFallback).toBe(true);
+      expect(result.diagnostics.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("rejects unsafe inline SVG with event handler", () => {
+      const unsafeSvg =
+        '<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"><circle cx="12" cy="12" r="10"/></svg>';
+      const result = resolveCenterVisualSync(
+        { concept: "Test" },
+        unsafeSvg,
+        42,
+      );
+      expect(result.usedFallback).toBe(true);
     });
 
     it("falls back when inline SVG is invalid", () => {
