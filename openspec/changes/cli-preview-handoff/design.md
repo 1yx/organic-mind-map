@@ -4,7 +4,7 @@
 
 Implement a thin CLI handoff command for the MVP pipeline. The command validates OrganicTree input produced through an Agent CLI + skill workflow, applies defensive capacity checks, creates a `PreviewPayload`, and calls the local preview server module with that payload.
 
-The browser, not the CLI, performs domain-model instantiation, node ID generation, color assignment, deterministic organic seed derivation, center visual fallback selection, DOM-based text measurement, layout, final `.omm` assembly, `.omm` download/export, and PNG export.
+The browser, not the CLI, performs domain-model instantiation, node ID generation, color assignment, deterministic organic seed derivation, center visual fallback selection, Canvas 2D text measurement, layout, final `.omm` assembly, `.omm` download/export, and PNG export.
 
 ## Command Shape
 
@@ -76,7 +76,7 @@ CLI owns:
 * defensive capacity checks
 * hardcoded allowlist pass-through for optional center SVG URLs when `ai-svg-center-visual` is enabled
 * building `PreviewPayload`
-* calling the `06-local-preview-server` module with `PreviewPayload`
+* calling the `local-preview-server` module with `PreviewPayload`
 * exit codes and retry-friendly error messages
 
 Browser owns:
@@ -94,14 +94,15 @@ Browser owns:
 * `OmmDocument` creation and export
 * PNG export
 
-`06-local-preview-server` owns:
+`local-preview-server` owns:
 
 * HTTP server creation and lifecycle
-* Vite/static Web bundle mounting
+* production static Web bundle serving from prebuilt assets
 * host and port binding
 * port conflict handling
 * `/api/document` route mounting
-* console URL output
+* strict ready marker and console URL output
+* attached process lifecycle
 * serving the `PreviewPayload` provided by this change
 
 ## Capacity Checks
@@ -178,7 +179,7 @@ The CLI output is a `PreviewPayload` handed to the local preview server module. 
 * Reintroducing partial `OmmDocument` payloads without layout snapshots.
 * Splitting ID/color/domain logic across CLI and browser.
 * Accidentally moving text measurement and layout back into CLI.
-* Reintroducing local server internals into this change instead of keeping them in `06-local-preview-server`.
+* Reintroducing local server internals into this change instead of keeping them in `local-preview-server`.
 
 ## Decisions
 
@@ -186,5 +187,5 @@ The CLI output is a `PreviewPayload` handed to the local preview server module. 
 * The CLI is deterministic only as a validation and handoff layer.
 * Agent skill handles long-text compression under an outer Agent CLI workflow.
 * CLI performs I/O, validation, capacity checks, `PreviewPayload` creation, and calls the local preview server module.
-* `06-local-preview-server` owns HTTP server details and URL output.
-* Browser performs content-hash organic seed derivation, ID generation, color assignment, center visual fallback selection, real text measurement, layout, final `.omm` save/export, and PNG export.
+* `local-preview-server` owns HTTP server details and URL output.
+* Browser performs content-hash organic seed derivation, ID generation, color assignment, center visual fallback selection, Canvas 2D text measurement, layout, final `.omm` save/export, and PNG export.

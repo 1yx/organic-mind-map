@@ -31,8 +31,8 @@
 
 ## 5. Local Preview Server Handoff
 
-- [x] 5.1 Call the `06-local-preview-server` module with the validated `PreviewPayload`.
-- [x] 5.2 Treat HTTP listener creation, route mounting, port conflict handling, and URL printing as responsibilities of `06-local-preview-server`.
+- [x] 5.1 Call the `local-preview-server` module with the validated `PreviewPayload`.
+- [x] 5.2 Treat HTTP listener creation, route mounting, port conflict handling, attached process lifecycle, and ready-marker URL printing as responsibilities of `local-preview-server`.
 - [x] 5.3 Return exit code `3` only when the local preview server module reports a handoff failure.
 - [x] 5.4 Ensure the CLI does not compute DOM-dependent layout coordinates, `.omm` layout snapshots, or PNG export.
 
@@ -62,4 +62,4 @@
 - [x] 8.3 Document exit codes and error message shapes.
 - [x] 8.4 Document Agent CLI retry behavior for capacity failures.
 - [x] 8.5 Document that IDs, colors, organic seed derivation, center visual fallback, final `.omm` layout snapshots, and PNG export happen in the browser, not the CLI.
-- [x] 8.6 Document that HTTP listener setup, `/api/document`, port handling, and URL printing belong to `06-local-preview-server`.
+- [x] 8.6 Document that HTTP listener setup, `/api/document`, port handling, attached lifecycle, and ready-marker URL printing belong to `local-preview-server`.

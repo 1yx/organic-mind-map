@@ -28,7 +28,7 @@ MVP 包含：
 
 * **agent skill 输入协议**: 由 Gemini CLI / Codex CLI / Claude Code 等 Agent CLI 调用，将长文本切成符合“一个概念单元一分支”的简短层级列表。
 * **CLI 校验与启动器**: 接收简短层级列表，执行契约校验和容量阈值检查；超限时返回可供 Agent 重试的错误，合格时启动本地 Web。
-* **本地 Web 服务**: CLI 启动本地服务，将合格 payload 提供给浏览器。
+* **本地 Web 服务**: CLI 启动极简本地静态服务，将合格 payload 通过只读 `/api/document` 提供给浏览器。生产环境只托管预构建 `@omm/web/dist` 产物，不启动 Vite Dev Server，不做文件监听或热重载。
 * **浏览器端布局与只读 SVG 渲染**: 浏览器基于 Canvas 2D 文本测量、Seed 几何实例化和包围盒防碰撞生成布局，渲染 A3/A4 横向纸张、中心图像、多色主分支、锥形曲线、路径文字和基础素材。
 * **本地导出**: 从本地预览导出 `.omm` 与 PNG 图片。
 
@@ -78,7 +78,23 @@ MVP 不包含：
 * Pinia
 * Vite
 
-这些选型保持不变。MVP 的 Web 端是只读渲染预览，不需要完整编辑器状态；后续可视化编辑阶段再引入完整的编辑状态与命令模型。
+这些选型保持不变。Vite 只用于 Web 端开发和构建预编译静态资源；生产 `omm preview` 路径不得启动 Vite、Rollup、Webpack 等前端开发服务器。MVP 的 Web 端是只读渲染预览，不需要完整编辑器状态；后续可视化编辑阶段再引入完整的编辑状态与命令模型。
+
+### 3.1.1 本地预览服务生产边界
+
+`local-preview-server` 的生产职责必须保持极简：
+
+* 使用 Node.js 原生 `http` 或极轻量 HTTP 框架托管预构建静态资源。
+* 只暴露只读 `GET /api/document`，数据来自当前进程内存中的 `PreviewPayload` 或 `.omm`。
+* 不启动 Vite Dev Server，不在生产路径中携带前端构建工具链。
+* 不引入文件监听、WebSocket、SSE 或 live reload；需要重新加载时由用户手动刷新浏览器或重新运行命令。
+* `omm preview` 进程保持前台阻塞，不 detached fork。HTTP listener 成功后必须输出：
+
+```text
+[OMM_SERVER_READY] PID:<process.pid> <URL>
+```
+
+Agent CLI 可通过该标记解析 URL 和 PID，并在会话结束时用 PID 终止进程。
 
 ### 3.2 渲染层：主 SVG
 
