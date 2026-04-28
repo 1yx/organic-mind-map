@@ -2,7 +2,7 @@
  * Local preview server module.
  *
  * Starts a lightweight HTTP server that:
- * - Serves prebuilt @omm/web static assets from dist/
+ * - Serves prebuilt \@omm/web static assets from dist/
  * - Exposes GET /api/document with the process-scoped preview data
  * - Prints a machine-parseable ready marker: [OMM_SERVER_READY] PID:<pid> <URL>
  * - Binds to localhost by default
@@ -38,7 +38,7 @@ export type PreviewServerOptions = {
   host?: string;
   /** Port to bind to. Default: 5173. */
   port?: number;
-  /** Path to the prebuilt @omm/web dist directory. */
+  /** Path to the prebuilt \@omm/web dist directory. */
   webDistPath?: string;
 };
 

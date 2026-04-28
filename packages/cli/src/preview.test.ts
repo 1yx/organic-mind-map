@@ -101,6 +101,8 @@ function usePreviewLifecycle(): void {
   });
 }
 
+/** Minimal mock server object for spy return values. */
+const MOCK_SERVER = {} as Record<string, never>;
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -195,7 +197,7 @@ describe("previewCommand — payload shape", () => {
         port: 5173,
         url: "http://127.0.0.1:5173",
         pid: 12345,
-        server: {} as any,
+        server: MOCK_SERVER,
       });
 
     const code = await previewCommand([fixture("valid-handoff.json")]);
@@ -255,14 +257,14 @@ describe("previewCommand — forbidden artifacts", () => {
     let capturedPayload: unknown;
     const spy = vi
       .spyOn(serverModule, "startPreviewServerAsync")
-      .mockImplementation(async (p) => {
+      .mockImplementation((p) => {
         capturedPayload = p;
         return {
           host: "127.0.0.1",
           port: 5173,
           url: "http://127.0.0.1:5173",
           pid: 1,
-          server: {} as any,
+          server: MOCK_SERVER,
         };
       });
 
@@ -284,14 +286,14 @@ describe("previewCommand — flags", () => {
     let capturedPayload: unknown;
     const spy = vi
       .spyOn(serverModule, "startPreviewServerAsync")
-      .mockImplementation(async (p) => {
+      .mockImplementation((p) => {
         capturedPayload = p;
         return {
           host: "127.0.0.1",
           port: 5173,
           url: "http://127.0.0.1:5173",
           pid: 1,
-          server: {} as any,
+          server: MOCK_SERVER,
         };
       });
 
@@ -317,14 +319,14 @@ describe("previewCommand — port flag", () => {
     let capturedOptions: unknown;
     const spy = vi
       .spyOn(serverModule, "startPreviewServerAsync")
-      .mockImplementation(async (_p, opts) => {
+      .mockImplementation((_p, opts) => {
         capturedOptions = opts;
         return {
           host: "127.0.0.1",
           port: 5173,
           url: "http://127.0.0.1:5173",
           pid: 1,
-          server: {} as any,
+          server: MOCK_SERVER,
         };
       });
 
@@ -341,14 +343,14 @@ describe("previewCommand — port flag", () => {
     let capturedPayload: unknown;
     const spy = vi
       .spyOn(serverModule, "startPreviewServerAsync")
-      .mockImplementation(async (p) => {
+      .mockImplementation((p) => {
         capturedPayload = p;
         return {
           host: "127.0.0.1",
           port: 5173,
           url: "http://127.0.0.1:5173",
           pid: 1,
-          server: {} as any,
+          server: MOCK_SERVER,
         };
       });
 
@@ -369,14 +371,14 @@ describe("previewCommand — svgUrl allowlist (allowed)", () => {
     let capturedPayload: unknown;
     const serverSpy = vi
       .spyOn(serverModule, "startPreviewServerAsync")
-      .mockImplementation(async (p) => {
+      .mockImplementation((p) => {
         capturedPayload = p;
         return {
           host: "127.0.0.1",
           port: 5173,
           url: "http://127.0.0.1:5173",
           pid: 1,
-          server: {} as any,
+          server: MOCK_SERVER,
         };
       });
 
@@ -405,14 +407,14 @@ describe("previewCommand — svgUrl allowlist (rejected/absent)", () => {
     let capturedPayload: unknown;
     const serverSpy = vi
       .spyOn(serverModule, "startPreviewServerAsync")
-      .mockImplementation(async (p) => {
+      .mockImplementation((p) => {
         capturedPayload = p;
         return {
           host: "127.0.0.1",
           port: 5173,
           url: "http://127.0.0.1:5173",
           pid: 1,
-          server: {} as any,
+          server: MOCK_SERVER,
         };
       });
 
@@ -435,14 +437,14 @@ describe("previewCommand — svgUrl allowlist (rejected/absent)", () => {
     let capturedPayload: unknown;
     const serverSpy = vi
       .spyOn(serverModule, "startPreviewServerAsync")
-      .mockImplementation(async (p) => {
+      .mockImplementation((p) => {
         capturedPayload = p;
         return {
           host: "127.0.0.1",
           port: 5173,
           url: "http://127.0.0.1:5173",
           pid: 1,
-          server: {} as any,
+          server: MOCK_SERVER,
         };
       });
 

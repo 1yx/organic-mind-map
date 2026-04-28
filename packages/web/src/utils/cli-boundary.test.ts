@@ -92,10 +92,13 @@ describe("CLI boundary — package.json", () => {
 
   it("CLI package.json does not list puppeteer or playwright as dependencies", () => {
     if (!fs.existsSync(cliPkgPath)) return;
-    const pkg = JSON.parse(fs.readFileSync(cliPkgPath, "utf-8"));
+    const pkg = JSON.parse(fs.readFileSync(cliPkgPath, "utf-8")) as Record<
+      string,
+      unknown
+    >;
     const allDeps = {
-      ...pkg.dependencies,
-      ...pkg.devDependencies,
+      ...(pkg.dependencies as Record<string, unknown>),
+      ...(pkg.devDependencies as Record<string, unknown>),
     };
     expect(allDeps["puppeteer"]).toBeUndefined();
     expect(allDeps["playwright"]).toBeUndefined();

@@ -204,7 +204,16 @@ describe("preview-server — /api/document endpoint", () => {
     expect(res.status).toBe(200);
     expect(res.headers["content-type"]).toContain("application/json");
 
-    const data = JSON.parse(res.body);
+    const data = JSON.parse(res.body) as {
+      version: number;
+      source: string;
+      paper: string;
+      tree: {
+        title: string;
+        center: { concept: string };
+        branches: { concept: string }[];
+      };
+    };
     expect(data.version).toBe(1);
     expect(data.source).toBe("organic-tree");
     expect(data.paper).toBe("a3-landscape");
@@ -225,7 +234,16 @@ describe("preview-server — payload shape validation", () => {
     const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, { port: 0 });
 
     const res = await httpGet(`${result.url}/api/document`);
-    const data = JSON.parse(res.body);
+    const data = JSON.parse(res.body) as {
+      version: number;
+      source: string;
+      paper: string;
+      tree: {
+        title: string;
+        center: { concept: string };
+        branches: { concept: string }[];
+      };
+    };
 
     // Verify the payload has all fields needed by renderFromPreview
     expect(data).toHaveProperty("version", 1);
@@ -280,7 +298,12 @@ describe("preview-server — static assets & negative tests", () => {
     // Check /api/document returns JSON with paper
     const docRes = await httpGet(`${result.url}/api/document`);
     expect(docRes.status).toBe(200);
-    const doc = JSON.parse(docRes.body);
+    const doc = JSON.parse(docRes.body) as {
+      version: number;
+      source: string;
+      paper: string;
+      tree: { title: string };
+    };
     expect(doc.paper).toBe("a3-landscape"); // A3 landscape aspect: 420/297 ≈ 1.414
 
     await closeServer(result.server);

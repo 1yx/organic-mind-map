@@ -5,7 +5,7 @@
  *
  * These tests verify that:
  * - The renderer and export code use system font stacks
- * - No Web Font dependencies (@font-face, remote fonts, WOFF/WOFF2) are introduced
+ * - No Web Font dependencies (\@font-face, remote fonts, WOFF/WOFF2) are introduced
  */
 
 import { describe, it, expect } from "vitest";
