@@ -1,25 +1,40 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { useCenterVisual } from "./composables/center-visual.js";
 import {
   renderFromPreview,
+  renderFromOmm,
   createCanvasMeasurementAdapter,
   type PreviewPayload,
   type RenderResult,
 } from "@omm/renderer";
+import type { OmmDocument } from "@omm/core";
 
 // ─── State ──────────────────────────────────────────────────────────────
 
-const documentData = ref<PreviewPayload | null>(null);
+const documentData = ref<PreviewPayload | OmmDocument | null>(null);
 const error = ref<string | null>(null);
 const loading = ref(true);
 const renderResult = ref<RenderResult | null>(null);
 const renderError = ref<string | null>(null);
 
+// ─── Format Detection ──────────────────────────────────────────────────
+
+function isPreviewPayload(data: Record<string, unknown>): data is PreviewPayload {
+  return data.version === 1 && data.source === "organic-tree" && "tree" in data;
+}
+
+function isOmmDocument(data: Record<string, unknown>): data is OmmDocument {
+  return data.version === 1 && "rootMap" in data && "paper" in data;
+}
+
 // ─── Center Visual ──────────────────────────────────────────────────────
 
 const centerSvgUrl = computed(
-  () => documentData.value?.centerVisual?.svgUrl ?? null,
+  () => {
+    const d = documentData.value;
+    return d && "tree" in d ? d.centerVisual?.svgUrl ?? null : null;
+  },
 );
 const { inlineSvg, loading: svgLoading, fellBack } = useCenterVisual(centerSvgUrl);
 
@@ -31,8 +46,10 @@ const PAPER_ASPECT: Record<string, number> = {
 };
 
 const paperAspect = computed(() => {
-  const paper = documentData.value?.paper;
-  return paper ? (PAPER_ASPECT[paper] ?? 420 / 297) : 420 / 297;
+  const d = documentData.value;
+  if (!d) return 420 / 297;
+  const paper = "tree" in d ? d.paper : (d.paper as { kind: string }).kind;
+  return PAPER_ASPECT[paper] ?? 420 / 297;
 });
 
 // ─── Fetch & Render ─────────────────────────────────────────────────────
@@ -46,34 +63,66 @@ onMounted(async () => {
     }
     const data = await res.json();
 
-    // Basic validation: must have version, source, tree
-    if (!data || data.version !== 1 || !data.tree) {
-      throw new Error("Invalid document format: missing version or tree");
+    if (!data || data.version !== 1) {
+      throw new Error("Invalid document format: missing or unsupported version");
+    }
+    if (!isPreviewPayload(data) && !isOmmDocument(data)) {
+      throw new Error("Invalid document format: expected PreviewPayload or OmmDocument");
     }
 
-    documentData.value = data as PreviewPayload;
+    documentData.value = data;
   } catch (e) {
     error.value =
       e instanceof Error ? e.message : "Failed to load document from server.";
     loading.value = false;
-    return;
   }
+});
 
-  // Render using the SVG renderer
+// Re-render when document is loaded and center SVG is resolved
+watch(
+  [documentData, svgLoading, inlineSvg, fellBack],
+  ([doc, svgLoad, svg, fb]) => {
+    if (!doc || svgLoad) return;
+    tryRender(doc, svg, fb);
+  },
+);
+
+function tryRender(
+  doc: PreviewPayload | OmmDocument,
+  svg: string | null,
+  usedFallback: boolean,
+): void {
   try {
     const measure = createCanvasMeasurementAdapter();
     if (!measure) {
       throw new Error("Browser does not support Canvas 2D text measurement.");
     }
-    const result = renderFromPreview(documentData.value!, { measure });
+
+    let result: RenderResult;
+
+    if (isPreviewPayload(doc)) {
+      // Inject loaded SVG as inlineSvg so the renderer uses it
+      const payload: PreviewPayload = {
+        ...doc,
+        centerVisual: {
+          ...doc.centerVisual,
+          inlineSvg: svg ?? doc.centerVisual?.inlineSvg ?? undefined,
+        },
+      };
+      result = renderFromPreview(payload, { measure });
+    } else {
+      result = renderFromOmm(doc, { measure });
+    }
+
     renderResult.value = result;
+    renderError.value = null;
   } catch (e) {
     renderError.value =
       e instanceof Error ? e.message : "Renderer failed to produce SVG.";
   } finally {
     loading.value = false;
   }
-});
+}
 </script>
 
 <template>
