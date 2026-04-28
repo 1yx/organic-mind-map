@@ -26,7 +26,7 @@ const documentData = ref<PreviewPayload | null>(null);
 const error = ref<string | null>(null);
 
 const centerSvgUrl = computed(() => documentData.value?.centerVisual?.svgUrl ?? null);
-const { inlineSvg, loading: svgLoading, fellBack } = useCenterVisual(centerSvgUrl.value);
+const { inlineSvg, loading: svgLoading, fellBack } = useCenterVisual(centerSvgUrl);
 
 onMounted(async () => {
   try {

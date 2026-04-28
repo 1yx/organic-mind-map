@@ -16,7 +16,7 @@ export type SvgRenderModel = {
  */
 export function renderOmmToSvgModel(_doc: OmmDocument): SvgRenderModel {
   return {
-    svg: `<svg xmlns="http://www.w3.org/2000/svg"><text x="50%" y="50%"" text-anchor="middle">Placeholder Mind Map</text></svg>`,
+    svg: `<svg xmlns="http://www.w3.org/2000/svg"><text x="50%" y="50%" text-anchor="middle">Placeholder Mind Map</text></svg>`,
     viewBox: "0 0 800 600",
   };
 }

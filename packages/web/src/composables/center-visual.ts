@@ -9,7 +9,14 @@
  * Phase 1 accepts single-color SVGs from controlled sources.
  */
 
-import { ref, readonly, type Ref } from "vue";
+import {
+  ref,
+  readonly,
+  watch,
+  toValue,
+  type MaybeRefOrGetter,
+  type Ref,
+} from "vue";
 import { loadControlledSvg } from "@omm/renderer";
 
 export type CenterVisualState = {
@@ -22,46 +29,57 @@ export type CenterVisualState = {
 };
 
 /**
- * Create a center visual state that loads a controlled SVG URL.
+ * Create a center visual state that reactively loads a controlled SVG URL.
  *
- * @param svgUrl - The allowlisted SVG URL from PreviewPayload.centerVisual.svgUrl
+ * @param svgUrl - Reactive or static SVG URL (e.g. a computed ref)
  * @param options - Optional load options (timeout, max size)
  * @returns Reactive state for the center visual
  */
 export function useCenterVisual(
-  svgUrl: string | null | undefined,
+  svgUrl: MaybeRefOrGetter<string | null | undefined>,
   options?: { timeoutMs?: number; maxSizeBytes?: number },
 ): CenterVisualState {
   const inlineSvg = ref<string | null>(null);
   const loading = ref(false);
   const fellBack = ref(false);
 
-  if (!svgUrl) {
-    // No URL provided — use deterministic built-in fallback immediately
-    fellBack.value = true;
-    return { inlineSvg: readonly(inlineSvg), loading: readonly(loading), fellBack: readonly(fellBack) };
-  }
+  watch(
+    () => toValue(svgUrl),
+    (url) => {
+      inlineSvg.value = null;
+      fellBack.value = false;
 
-  // Async load the controlled SVG
-  loading.value = true;
-
-  loadControlledSvg(svgUrl, {
-    timeoutMs: options?.timeoutMs,
-    maxSizeBytes: options?.maxSizeBytes,
-  })
-    .then((svg) => {
-      if (svg) {
-        inlineSvg.value = svg;
-      } else {
+      if (!url) {
         fellBack.value = true;
+        return;
       }
-    })
-    .catch(() => {
-      fellBack.value = true;
-    })
-    .finally(() => {
-      loading.value = false;
-    });
 
-  return { inlineSvg: readonly(inlineSvg), loading: readonly(loading), fellBack: readonly(fellBack) };
+      loading.value = true;
+
+      loadControlledSvg(url, {
+        timeoutMs: options?.timeoutMs,
+        maxSizeBytes: options?.maxSizeBytes,
+      })
+        .then((svg) => {
+          if (svg) {
+            inlineSvg.value = svg;
+          } else {
+            fellBack.value = true;
+          }
+        })
+        .catch(() => {
+          fellBack.value = true;
+        })
+        .finally(() => {
+          loading.value = false;
+        });
+    },
+    { immediate: true },
+  );
+
+  return {
+    inlineSvg: readonly(inlineSvg),
+    loading: readonly(loading),
+    fellBack: readonly(fellBack),
+  };
 }

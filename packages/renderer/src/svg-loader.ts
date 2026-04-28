@@ -46,9 +46,6 @@ const UNSAFE_TAGS = [
   "base",
 ] as const;
 
-/** Event handler attribute prefixes. */
-const EVENT_ATTR_PREFIX = "on";
-
 /** Patterns that indicate external references or embedded raster data. */
 const UNSAFE_PATTERNS = [
   /<script[\s>]/i,
@@ -58,8 +55,8 @@ const UNSAFE_PATTERNS = [
   /<object[\s>]/i,
   /<applet[\s>]/i,
   /\bon\w+\s*=/i, // event handler attributes
-  /href\s*=\s*["']https?:\/\//i, // external href
-  /xlink:href\s*=\s*["']https?:\/\//i, // external xlink:href
+  /href\s*=\s*["'](?!#)[^"']+/i, // href with any non-fragment target
+  /xlink:href\s*=\s*["'](?!#)[^"']+/i, // xlink:href with any non-fragment target
   /url\s*\(\s*["']?(?:https?:\/\/|data:image)/i, // CSS url() with external or raster data
   /<image[\s][^>]*(?:href|xlink:href)\s*=\s*["']data:image/i, // embedded raster via image tag
   /<!\[CDATA\[\s*<script/i, // CDATA-wrapped scripts
