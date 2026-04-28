@@ -322,7 +322,7 @@ describe("previewCommand — flags", () => {
   });
 });
 
-describe("previewCommand — svgUrl allowlist (ai-svg-center-visual)", () => {
+describe("previewCommand — svgUrl allowlist (allowed)", () => {
   usePreviewLifecycle();
 
   it("populates centerVisual.svgUrl for allowlisted HTTPS URL", async () => {
@@ -338,7 +338,9 @@ describe("previewCommand — svgUrl allowlist (ai-svg-center-visual)", () => {
     expect(code).toBe(cliExitCode.OK);
 
     const payload = capturedPayload as Record<string, unknown>;
-    const centerVisual = payload.centerVisual as Record<string, unknown> | undefined;
+    const centerVisual = payload.centerVisual as
+      | Record<string, unknown>
+      | undefined;
     expect(centerVisual).toBeDefined();
     expect(centerVisual?.svgUrl).toBe(
       "https://api.iconify.design/fluent-emoji-flat/brain.svg",
@@ -347,6 +349,10 @@ describe("previewCommand — svgUrl allowlist (ai-svg-center-visual)", () => {
 
     serverSpy.mockRestore();
   });
+});
+
+describe("previewCommand — svgUrl allowlist (rejected/absent)", () => {
+  usePreviewLifecycle();
 
   it("omits centerVisual.svgUrl for non-allowlisted URL", async () => {
     const serverModule = await import("./preview-server.js");
@@ -357,12 +363,15 @@ describe("previewCommand — svgUrl allowlist (ai-svg-center-visual)", () => {
         capturedPayload = p;
       });
 
-    const code = await previewCommand([fixture("svg-url-non-allowlisted.json")]);
+    const code = await previewCommand([
+      fixture("svg-url-non-allowlisted.json"),
+    ]);
     expect(code).toBe(cliExitCode.OK);
 
     const payload = capturedPayload as Record<string, unknown>;
-    const centerVisual = payload.centerVisual as Record<string, unknown> | undefined;
-    // Non-allowlisted URL should be omitted — no centerVisual at all
+    const centerVisual = payload.centerVisual as
+      | Record<string, unknown>
+      | undefined;
     expect(centerVisual).toBeUndefined();
 
     serverSpy.mockRestore();

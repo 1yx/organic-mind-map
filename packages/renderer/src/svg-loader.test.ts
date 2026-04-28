@@ -10,7 +10,7 @@
 import { describe, it, expect } from "vitest";
 import { isSvgSafe, getUnsafeTags } from "../src/svg-loader";
 
-describe("isSvgSafe", () => {
+describe("isSvgSafe — accepts safe SVGs", () => {
   it("accepts a simple safe SVG", () => {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
       <circle cx="12" cy="12" r="10" fill="blue"/>
@@ -37,7 +37,9 @@ describe("isSvgSafe", () => {
     </svg>`;
     expect(isSvgSafe(svg)).toBe(true);
   });
+});
 
+describe("isSvgSafe — rejects dangerous tags", () => {
   it("rejects SVG containing <script> tag", () => {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg">
       <script>alert('xss')</script>
@@ -53,6 +55,30 @@ describe("isSvgSafe", () => {
     expect(isSvgSafe(svg)).toBe(false);
   });
 
+  it("rejects SVG with <iframe> tag", () => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg">
+      <foreignObject><iframe src="https://evil.com"/></foreignObject>
+    </svg>`;
+    expect(isSvgSafe(svg)).toBe(false);
+  });
+
+  it("rejects SVG with <embed> tag", () => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg">
+      <foreignObject><embed src="malware.swf"/></foreignObject>
+    </svg>`;
+    expect(isSvgSafe(svg)).toBe(false);
+  });
+
+  it("rejects SVG with CDATA-wrapped script", () => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg">
+      <![CDATA[<script>alert('xss')</script>]]>
+      <circle cx="12" cy="12" r="10"/>
+    </svg>`;
+    expect(isSvgSafe(svg)).toBe(false);
+  });
+});
+
+describe("isSvgSafe — rejects event handlers", () => {
   it("rejects SVG with onclick event handler", () => {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg">
       <circle cx="12" cy="12" r="10" onclick="alert('xss')"/>
@@ -66,7 +92,9 @@ describe("isSvgSafe", () => {
     </svg>`;
     expect(isSvgSafe(svg)).toBe(false);
   });
+});
 
+describe("isSvgSafe — rejects external references", () => {
   it("rejects SVG with external href reference", () => {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg">
       <a href="https://evil.com">
@@ -92,7 +120,9 @@ describe("isSvgSafe", () => {
     </svg>`;
     expect(isSvgSafe(svg)).toBe(false);
   });
+});
 
+describe("isSvgSafe — rejects embedded raster data", () => {
   it("rejects SVG with embedded raster data URL in image tag", () => {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg">
       <image href="data:image/png;base64,iVBORw0KGgo=" width="24" height="24"/>
@@ -116,33 +146,13 @@ describe("isSvgSafe", () => {
     </svg>`;
     expect(isSvgSafe(svg)).toBe(false);
   });
+});
 
-  it("rejects SVG with CDATA-wrapped script", () => {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg">
-      <![CDATA[<script>alert('xss')</script>]]>
-      <circle cx="12" cy="12" r="10"/>
-    </svg>`;
-    expect(isSvgSafe(svg)).toBe(false);
-  });
-
+describe("isSvgSafe — rejects non-SVG content", () => {
   it("rejects content that does not start with <svg", () => {
     expect(isSvgSafe("<html><body>not svg</body></html>")).toBe(false);
     expect(isSvgSafe("just some text")).toBe(false);
     expect(isSvgSafe("<div>html fragment</div>")).toBe(false);
-  });
-
-  it("rejects SVG with <iframe> tag", () => {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg">
-      <foreignObject><iframe src="https://evil.com"/></foreignObject>
-    </svg>`;
-    expect(isSvgSafe(svg)).toBe(false);
-  });
-
-  it("rejects SVG with <embed> tag", () => {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg">
-      <foreignObject><embed src="malware.swf"/></foreignObject>
-    </svg>`;
-    expect(isSvgSafe(svg)).toBe(false);
   });
 });
 

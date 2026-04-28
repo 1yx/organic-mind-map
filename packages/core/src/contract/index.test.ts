@@ -262,7 +262,7 @@ describe("validateAgentList — depth & capacity", () => {
   });
 });
 
-describe("validateAgentList — hints", () => {
+describe("validateAgentList — hints (visualHint/colorHint)", () => {
   it("preserves optional visualHint and colorHint in validated output", () => {
     const input = {
       version: 1 as const,
@@ -305,7 +305,9 @@ describe("validateAgentList — hints", () => {
     expect(paths).toContain("branches[0].colorHint");
     expect(paths).toContain("branches[0].children[0].visualHint");
   });
+});
 
+describe("validateAgentList — svgUrl", () => {
   it("preserves optional svgUrl in validated output", () => {
     const input = {
       version: 1 as const,
