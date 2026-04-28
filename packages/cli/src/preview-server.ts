@@ -14,10 +14,10 @@ export type PreviewServerOptions = {
   port?: number;
 };
 
-export async function startPreviewServer(
+export function startPreviewServer(
   payload: PreviewPayload,
   options?: PreviewServerOptions,
-): Promise<void> {
+): void {
   // Stub: in a full implementation this would start an HTTP server,
   // mount /api/document, and serve the web preview bundle.
   // For now, just log that the payload is ready for browser consumption.

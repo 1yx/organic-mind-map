@@ -273,7 +273,7 @@ export async function previewCommand(argv: string[]): Promise<number> {
   const payload = buildPayload(tree, args.paper);
 
   try {
-    await startPreviewServer(payload, { port: args.port });
+    startPreviewServer(payload, { port: args.port });
   } catch (err: unknown) {
     console.error(
       `Preview server error: ${err instanceof Error ? err.message : String(err)}`,

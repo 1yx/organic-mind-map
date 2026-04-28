@@ -223,7 +223,9 @@ describe("previewCommand — payload shape", () => {
     const serverModule = await import("./preview-server.js");
     const spy = vi
       .spyOn(serverModule, "startPreviewServer")
-      .mockRejectedValue(new Error("EADDRINUSE: port already in use"));
+      .mockImplementation(() => {
+        throw new Error("EADDRINUSE: port already in use");
+      });
 
     const { code, stderr } = await captureOutput(() =>
       previewCommand([fixture("valid-handoff.json")]),
@@ -246,7 +248,7 @@ describe("previewCommand — forbidden artifacts", () => {
     let capturedPayload: unknown;
     const spy = vi
       .spyOn(serverModule, "startPreviewServer")
-      .mockImplementation(async (p) => {
+      .mockImplementation((p) => {
         capturedPayload = p;
       });
 
@@ -268,7 +270,7 @@ describe("previewCommand — flags", () => {
     let capturedPayload: unknown;
     const spy = vi
       .spyOn(serverModule, "startPreviewServer")
-      .mockImplementation(async (p) => {
+      .mockImplementation((p) => {
         capturedPayload = p;
       });
 
@@ -290,7 +292,7 @@ describe("previewCommand — flags", () => {
     let capturedOptions: unknown;
     const spy = vi
       .spyOn(serverModule, "startPreviewServer")
-      .mockImplementation(async (_p, opts) => {
+      .mockImplementation((_p, opts) => {
         capturedOptions = opts;
       });
 
@@ -307,7 +309,7 @@ describe("previewCommand — flags", () => {
     let capturedPayload: unknown;
     const spy = vi
       .spyOn(serverModule, "startPreviewServer")
-      .mockImplementation(async (p) => {
+      .mockImplementation((p) => {
         capturedPayload = p;
       });
 

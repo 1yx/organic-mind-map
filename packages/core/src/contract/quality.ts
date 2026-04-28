@@ -21,12 +21,10 @@ export function validateQuality(
 ): ValidationError[] {
   const errors: ValidationError[] = [];
 
-  // Center concept
   errors.push(
     ...checkConcept(input.center.concept, "center.concept", maxUnitWidth),
   );
 
-  // Branches — level-aware traversal
   for (let i = 0; i < input.branches.length; i++) {
     const branch = input.branches[i];
     const path = `branches[${i}]`;
@@ -36,28 +34,35 @@ export function validateQuality(
     );
 
     if (branch.children) {
-      for (let j = 0; j < branch.children.length; j++) {
-        const sub = branch.children[j];
-        const subPath = `${path}.children[${j}]`;
+      errors.push(...checkSubBranches(branch.children, path, maxUnitWidth));
+    }
+  }
 
+  return errors;
+}
+
+function checkSubBranches(
+  children: AgentMindMapList["branches"][number]["children"],
+  parentPath: string,
+  maxUnitWidth: number,
+): ValidationError[] {
+  const errors: ValidationError[] = [];
+
+  for (let j = 0; j < children!.length; j++) {
+    const sub = children![j];
+    const subPath = `${parentPath}.children[${j}]`;
+
+    errors.push(
+      ...checkConcept(sub.concept, `${subPath}.concept`, maxUnitWidth),
+    );
+
+    if (sub.children) {
+      for (let k = 0; k < sub.children.length; k++) {
+        const leaf = sub.children[k];
+        const leafPath = `${subPath}.children[${k}]`;
         errors.push(
-          ...checkConcept(sub.concept, `${subPath}.concept`, maxUnitWidth),
+          ...checkConcept(leaf.concept, `${leafPath}.concept`, maxUnitWidth),
         );
-
-        if (sub.children) {
-          for (let k = 0; k < sub.children.length; k++) {
-            const leaf = sub.children[k];
-            const leafPath = `${subPath}.children[${k}]`;
-
-            errors.push(
-              ...checkConcept(
-                leaf.concept,
-                `${leafPath}.concept`,
-                maxUnitWidth,
-              ),
-            );
-          }
-        }
       }
     }
   }

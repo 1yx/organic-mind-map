@@ -1,14 +1,7 @@
 import type { OmmValidationIssue } from "./types";
 
-/**
- * Validates the document envelope (top-level required fields).
- *
- * Required fields: id, version (must be 1), title, paper, organicSeed,
- * rootMap, layout, assets, meta.
- *
- * organicSeed must be a non-empty string.
- * rootMap must be a single object, not an array.
- */
+const REQUIRED_STRINGS = ["id", "title", "organicSeed"] as const;
+
 export function validateEnvelope(doc: unknown): OmmValidationIssue[] {
   const issues: OmmValidationIssue[] = [];
 
@@ -23,8 +16,26 @@ export function validateEnvelope(doc: unknown): OmmValidationIssue[] {
 
   const d = doc as Record<string, unknown>;
 
-  // Required string fields
-  for (const field of ["id", "title", "organicSeed"] as const) {
+  issues.push(...validateRequiredStrings(d));
+  issues.push(...validateVersion(d));
+  issues.push(...validateRequiredObject(d, "paper", "envelope.missing_paper"));
+  issues.push(...validateRootMap(d));
+  issues.push(
+    ...validateRequiredObject(d, "layout", "envelope.missing_layout"),
+  );
+  issues.push(
+    ...validateRequiredObject(d, "assets", "envelope.missing_assets"),
+  );
+  issues.push(...validateRequiredObject(d, "meta", "envelope.missing_meta"));
+
+  return issues;
+}
+
+function validateRequiredStrings(
+  d: Record<string, unknown>,
+): OmmValidationIssue[] {
+  const issues: OmmValidationIssue[] = [];
+  for (const field of REQUIRED_STRINGS) {
     if (typeof d[field] !== "string" || (d[field] as string).length === 0) {
       issues.push({
         path: field,
@@ -33,66 +44,43 @@ export function validateEnvelope(doc: unknown): OmmValidationIssue[] {
       });
     }
   }
-
-  // Version must be 1
-  if (d.version !== 1) {
-    issues.push({
-      path: "version",
-      message: `Document version must be 1, got ${d.version}`,
-      code: "envelope.invalid_version",
-    });
-  }
-
-  // paper must be an object
-  if (!d.paper || typeof d.paper !== "object") {
-    issues.push({
-      path: "paper",
-      message: `"paper" must be an object`,
-      code: "envelope.missing_paper",
-    });
-  }
-
-  // rootMap must be an object (not array)
-  if (Array.isArray(d.rootMap)) {
-    issues.push({
-      path: "rootMap",
-      message: "rootMap must be a single object, not an array",
-      code: "envelope.multiple_maps",
-    });
-  } else if (!d.rootMap || typeof d.rootMap !== "object") {
-    issues.push({
-      path: "rootMap",
-      message: `"rootMap" must be an object`,
-      code: "envelope.missing_rootMap",
-    });
-  }
-
-  // layout must be an object
-  if (!d.layout || typeof d.layout !== "object") {
-    issues.push({
-      path: "layout",
-      message: `"layout" must be an object`,
-      code: "envelope.missing_layout",
-    });
-  }
-
-  // assets must be an object
-  if (!d.assets || typeof d.assets !== "object") {
-    issues.push({
-      path: "assets",
-      message: `"assets" must be an object`,
-      code: "envelope.missing_assets",
-    });
-  }
-
-  // meta must be an object
-  if (!d.meta || typeof d.meta !== "object") {
-    issues.push({
-      path: "meta",
-      message: `"meta" must be an object`,
-      code: "envelope.missing_meta",
-    });
-  }
-
   return issues;
+}
+
+function validateVersion(d: Record<string, unknown>): OmmValidationIssue[] {
+  if (d.version !== 1) {
+    return [
+      {
+        path: "version",
+        message: `Document version must be 1, got ${d.version}`,
+        code: "envelope.invalid_version",
+      },
+    ];
+  }
+  return [];
+}
+
+function validateRequiredObject(
+  d: Record<string, unknown>,
+  field: string,
+  code: string,
+): OmmValidationIssue[] {
+  const value = d[field];
+  if (!value || typeof value !== "object") {
+    return [{ path: field, message: `"${field}" must be an object`, code }];
+  }
+  return [];
+}
+
+function validateRootMap(d: Record<string, unknown>): OmmValidationIssue[] {
+  if (Array.isArray(d.rootMap)) {
+    return [
+      {
+        path: "rootMap",
+        message: "rootMap must be a single object, not an array",
+        code: "envelope.multiple_maps",
+      },
+    ];
+  }
+  return validateRequiredObject(d, "rootMap", "envelope.missing_rootMap");
 }

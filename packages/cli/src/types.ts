@@ -22,7 +22,7 @@ export type PreviewPayload = {
 
 /** Options accepted by the preview command. */
 export type PreviewOptions = {
-  /** Paper size, defaults to "a3-landscape". CLI flag > input contract > default. */
+  /** Paper size, defaults to "a3-landscape". CLI flag \> input contract \> default. */
   paper?: "a3-landscape" | "a4-landscape";
   /** Port forwarded to the local preview server (06-local-preview-server). */
   port?: number;

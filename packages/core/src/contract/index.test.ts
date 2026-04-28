@@ -4,13 +4,12 @@ import {
   traverseBranches,
   conceptUnitWidth,
   isSentenceLike,
-} from "./index";
-import {
   DEFAULT_LIMITS,
   validateCapacity,
   formatCapacityFeedback,
+  type AgentListLimits,
+  type AgentMindMapList,
 } from "./index";
-import type { AgentListLimits, AgentMindMapList } from "./index";
 
 // Inline fixtures for test isolation (no fs dependency)
 const fixtures: Record<string, unknown> = {
@@ -157,8 +156,7 @@ const fixtures: Record<string, unknown> = {
   },
 };
 
-describe("validateAgentList", () => {
-  // 5.1 Valid minimal and representative fixtures pass
+describe("validateAgentList — valid inputs", () => {
   it("accepts valid Chinese concept-unit fixture", () => {
     const result = validateAgentList(fixtures["valid-chinese.json"]);
     expect(result.valid).toBe(true);
@@ -187,8 +185,9 @@ describe("validateAgentList", () => {
     });
     expect(result.valid).toBe(true);
   });
+});
 
-  // 5.2 Unsupported contract version
+describe("validateAgentList — version & structure", () => {
   it("rejects unsupported contract version with version path error", () => {
     const result = validateAgentList(fixtures["invalid-wrong-version.json"]);
     expect(result.valid).toBe(false);
@@ -196,7 +195,6 @@ describe("validateAgentList", () => {
     expect(result.errors[0].message).toContain("Unsupported contract version");
   });
 
-  // 5.3 Malformed hierarchy errors include precise branch paths
   it("rejects missing center concept with center.concept path", () => {
     const result = validateAgentList(fixtures["invalid-missing-center.json"]);
     expect(result.valid).toBe(false);
@@ -210,19 +208,18 @@ describe("validateAgentList", () => {
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.path.includes("children"))).toBe(true);
   });
+});
 
-  // 5.4 Sentence-like concepts fail as Error
+describe("validateAgentList — quality", () => {
   it("rejects Chinese sentence-like concept as Error", () => {
     const result = validateAgentList(fixtures["invalid-sentence-like.json"]);
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.message.includes("sentence"))).toBe(
       true,
     );
-    // Ensure no rewriting — data should be null
     expect(result.data).toBeNull();
   });
 
-  // 5.5 Concepts exceeding unit-width 25 fail as Error
   it("rejects concept exceeding unit-width 25", () => {
     const result = validateAgentList(
       fixtures["invalid-oversized-concept.json"],
@@ -233,8 +230,9 @@ describe("validateAgentList", () => {
     );
     expect(result.data).toBeNull();
   });
+});
 
-  // 5.6 Nesting deeper than 3 levels fails
+describe("validateAgentList — depth & capacity", () => {
   it("rejects nesting deeper than 3 levels", () => {
     const result = validateAgentList(fixtures["invalid-deep-nesting.json"]);
     expect(result.valid).toBe(false);
@@ -243,7 +241,6 @@ describe("validateAgentList", () => {
     ).toBe(true);
   });
 
-  // 5.7 Oversized input fails with retry-friendly capacity feedback
   it("rejects oversized input with capacity feedback", () => {
     const strictLimits: AgentListLimits = { ...DEFAULT_LIMITS, maxNodes: 10 };
     const result = validateAgentList(
@@ -263,8 +260,9 @@ describe("validateAgentList", () => {
     expect(msg).toContain("exceeds");
     expect(msg).toContain("regenerate a shorter concept list");
   });
+});
 
-  // 5.8 Optional hints are preserved
+describe("validateAgentList — hints", () => {
   it("preserves optional visualHint and colorHint in validated output", () => {
     const input = {
       version: 1 as const,

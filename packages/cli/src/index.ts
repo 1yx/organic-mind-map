@@ -33,7 +33,7 @@ export async function runCli(argv: string[]): Promise<number> {
 // Direct execution: tsx src/index.ts <args>
 const isDirectRun = import.meta.url === `file://${process.argv[1]}`;
 if (isDirectRun) {
-  runCli(process.argv).then((code) => {
+  void runCli(process.argv).then((code) => {
     process.exitCode = code;
   });
 }

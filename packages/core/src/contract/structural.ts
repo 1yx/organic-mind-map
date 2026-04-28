@@ -5,14 +5,7 @@
  * preserves optional hints without semantic rewriting.
  */
 
-import type {
-  AgentMindMapList,
-  AgentCenter,
-  MainBranch,
-  SubBranch,
-  LeafNode,
-  ValidationError,
-} from "./types";
+import type { ValidationError } from "./types";
 
 /**
  * Validate the structure of an agent list input.
@@ -128,35 +121,44 @@ function validateMainBranch(branch: unknown, path: string): ValidationError[] {
     });
   }
 
-  // Optional hints — type-check when present
-  if (b.visualHint !== undefined && typeof b.visualHint !== "string") {
+  validateHints(b, path, errors);
+  errors.push(...validateChildren(b.children, path, validateSubBranch));
+
+  return errors;
+}
+
+function validateHints(
+  obj: Record<string, unknown>,
+  path: string,
+  errors: ValidationError[],
+): void {
+  if (obj.visualHint !== undefined && typeof obj.visualHint !== "string") {
     errors.push({
       path: `${path}.visualHint`,
       message: "visualHint must be a string if provided",
     });
   }
-  if (b.colorHint !== undefined && typeof b.colorHint !== "string") {
+  if (obj.colorHint !== undefined && typeof obj.colorHint !== "string") {
     errors.push({
       path: `${path}.colorHint`,
       message: "colorHint must be a string if provided",
     });
   }
+}
 
-  if (b.children !== undefined) {
-    if (!Array.isArray(b.children)) {
-      errors.push({
-        path: `${path}.children`,
-        message: "children must be an array",
-      });
-    } else {
-      for (let j = 0; j < b.children.length; j++) {
-        errors.push(
-          ...validateSubBranch(b.children[j], `${path}.children[${j}]`),
-        );
-      }
-    }
+function validateChildren(
+  children: unknown,
+  path: string,
+  validateChild: (child: unknown, childPath: string) => ValidationError[],
+): ValidationError[] {
+  if (children === undefined) return [];
+  if (!Array.isArray(children)) {
+    return [{ path: `${path}.children`, message: "children must be an array" }];
   }
-
+  const errors: ValidationError[] = [];
+  for (let i = 0; i < children.length; i++) {
+    errors.push(...validateChild(children[i], `${path}.children[${i}]`));
+  }
   return errors;
 }
 
@@ -177,27 +179,8 @@ function validateSubBranch(branch: unknown, path: string): ValidationError[] {
     });
   }
 
-  if (b.visualHint !== undefined && typeof b.visualHint !== "string") {
-    errors.push({
-      path: `${path}.visualHint`,
-      message: "visualHint must be a string if provided",
-    });
-  }
-
-  if (b.children !== undefined) {
-    if (!Array.isArray(b.children)) {
-      errors.push({
-        path: `${path}.children`,
-        message: "children must be an array",
-      });
-    } else {
-      for (let k = 0; k < b.children.length; k++) {
-        errors.push(
-          ...validateLeafNode(b.children[k], `${path}.children[${k}]`),
-        );
-      }
-    }
-  }
+  validateHints(b, path, errors);
+  errors.push(...validateChildren(b.children, path, validateLeafNode));
 
   return errors;
 }
@@ -226,7 +209,6 @@ function validateLeafNode(node: unknown, path: string): ValidationError[] {
     });
   }
 
-  // LeafNode must NOT have children — nesting deeper than 3 levels
   if (n.children !== undefined) {
     errors.push({
       path: `${path}.children`,
