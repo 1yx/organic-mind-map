@@ -146,12 +146,14 @@ interface CenterVisual {
   titleText: string
   imageRef?: AssetRef
   visualHint?: string
-  minColorCount: number
+  minColorCount?: number
   complianceState: "draft" | "needs-visuals" | "compliant"
 }
 ```
 
 MVP generates a compliant center through a built-in template or styled built-in composition. User-uploaded center or node images are not part of Phase 1.
+
+Long-term strict mode can require at least three colors for compliant center visuals. Phase 1 allows a single-color controlled SVG center visual when it is still a real image or visual symbol rather than plain text.
 
 ## Asset Handling
 

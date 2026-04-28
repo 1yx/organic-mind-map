@@ -4,10 +4,10 @@
 
 ---
 
-## 1. UX 体验断层：用户如何获取“Agent 列表”？[已决策]
+## 1. UX 体验断层：用户如何获取“OrganicTree”？[已决策]
 
 ### 发现的问题
-`02-agent-list-contract` 规定了将长文本转化为列表的契约，但 `04-cli-generate-omm` 明确说明 CLI 只是读取列表，“No AI API calls”。这意味着在 MVP 阶段，系统并不负责调用大模型。
+`organic-tree-contract` 规定了将长文本转化为 OrganicTree 树状结构的契约，但 `cli-preview-handoff` 明确说明 CLI 只是读取该结构，“No AI API calls”。这意味着在 MVP 阶段，系统并不负责调用大模型。
 
 ### 苏格拉底式问题
 * 如果 CLI 不调用 AI，用户是通过什么途径（例如手动在 ChatGPT 里输入 Prompt 拿到 JSON，再保存为文件喂给 CLI）来完成从长文本到 `.omm` 的转换的？
@@ -16,15 +16,15 @@
 
 ### 决策记录
 * **决策结果**: MVP 阶段的工作流建立在 **Agent CLI + Agent Skill** 的编排之上，当前外层 Agent CLI 包括 Gemini CLI / Codex CLI / Claude Code。
-* **决策理由**: 我们所规划的真实场景是由 Agent CLI 作为编排层来调用本项目的 `skill`（如 `@openspec/changes/02-agent-list-contract` 中定义的）。由 Skill 调用大模型并生成简短的契约列表，随后自动将其传递给本项目的 CLI 工具（如 `omm preview`），接着启动 Web 服务进行本地预览。因此，这并非割裂的“手动复制粘贴”体验，而是一套顺畅的、基于 Agent 工具链串联的自动化“文本 -> 导图 -> 预览”全链路。
-* **后续修改文档**: 可以在相关文档（如 `PRD` 或 `04-cli-generate-omm` 的背景说明）中补充这个完整的端到端用例，以打消关于“用户体验断层”的疑虑。
+* **决策理由**: 我们所规划的真实场景是由 Agent CLI 作为编排层来调用本项目的 `skill`（如 `@openspec/changes/organic-tree-contract` 中定义的）。由 Skill 调用大模型并生成简短的契约树，随后自动将其传递给本项目的 CLI 工具（如 `omm preview`），接着启动 Web 服务进行本地预览。因此，这并非割裂的“手动复制粘贴”体验，而是一套顺畅的、基于 Agent 工具链串联的自动化“文本 -> 导图 -> 预览”全链路。
+* **后续修改文档**: 可以在相关文档（如 `PRD` 或 `cli-preview-handoff` 的背景说明）中补充这个完整的端到端用例，以打消关于“用户体验断层”的疑虑。
 
 ---
 
 ## 2. 文本测量与布局责任的错位 (Text Measurement & Layout) [已决策]
 
 ### 发现的问题
-根据 `TECH_DESIGN.md`，博赞导图的“线字等长”和“留白保护”强依赖于**真实的文本测量 (Text Measurement)**。然而，`04-cli-generate-omm` 负责生成 `.omm` 文件，而 `05-readonly-svg-renderer`（在浏览器中运行）负责渲染。`.omm` 文件似乎只保存了逻辑树和 `organicSeed`，并不包含具体的坐标。
+根据 `TECH_DESIGN.md`，博赞导图的“线字等长”和“留白保护”强依赖于**真实的文本测量 (Text Measurement)**。然而，`cli-preview-handoff` 只负责把 OrganicTree 交给浏览器，而 `05-readonly-svg-renderer`（在浏览器中运行）负责渲染。`.omm` 文件似乎只保存了逻辑树和 `organicSeed`，并不包含具体的坐标。
 
 ### 苏格拉底式问题
 * 如果 CLI 不知道具体的字体渲染尺寸，它如何判断生成的节点数量是否超出了 A3/A4 纸张的物理边界（空间耗尽）？
@@ -34,7 +34,7 @@
 ### 决策记录
 * **决策结果**: 动态计算布局和真实的文本测量是**浏览器端**的责任。产品的数据流并非“CLI 直接生成最终排版好的 `.omm` 然后用浏览器仅仅当看图器打开”，而是“**CLI 读取数据并唤起浏览器 -> 浏览器基于 DOM 进行真实的文本测量和布局动态生成 -> 随后用户可以从浏览器将结果下载到本地保存为 `.omm` 格式的文件**”。
 * **决策理由**: 这是解决文本渲染依赖 DOM 环境（字体、像素、抗锯齿等）唯一且最优雅的方案。不在 CLI 中集成笨重的 Headless Browser，而是直接利用用户系统中已有的真实浏览器去承担“布局求解器 (Layout Engine)”和“文本测量”的工作。这样既保证了“线字等长”和空间检测的精准度，也为后续在浏览器内加入编辑能力（Phase 2/3）打好了完全一致的布局底座基础。
-* **后续修改文档**: 必须大幅度修正 `04-cli-generate-omm` 和 `06-local-preview-server` 的职责边界。CLI 的 `generate` 阶段不再写入最终带有坐标/计算结果的 `.omm` 实体，而是作为一个服务启动器，将 Agent 输出的 JSON 数据喂给前端浏览器。浏览器内的应用接收数据、完成核心计算排版后，提供**下载/导出 `.omm` 文件**的能力。
+* **后续修改文档**: 必须大幅度修正 `cli-preview-handoff` 和 `06-local-preview-server` 的职责边界。CLI 阶段不再写入最终带有坐标/计算结果的 `.omm` 实体，而是作为一个服务启动器，将 Agent 输出的 JSON 数据喂给前端浏览器。浏览器内的应用接收数据、完成核心计算排版后，提供**下载/导出 `.omm` 文件**的能力。
 
 ---
 
@@ -84,7 +84,7 @@
 ### 决策记录
 * **决策结果**: 对于系统提供的“内置免费模板”或基础素材，`.omm` 文件中**仅保存模板 ID 的引用**，不进行 Base64 编码内嵌。只有当用户上传**本地自定义图片**时，才使用 Base64 数据全量内嵌保存。
 * **决策理由**: “模板 ID 的引用机制”能极大程度保持 `.omm` 文件的轻量化，避免结构化文档因为几张固定素材被反复复制而出现无意义的急剧膨胀。由于 Web 渲染器（前端 JS）负责加载和排版，具体的“模板 ID”与实际图像资源（如 URL、SVG 图标、图片数据）的映射关系完全可以内置、收敛在 Web 端的静态资源或 JS 映射表中。这样既满足了轻量、高效、易分发的原子化文件管理需求，也兼顾了用户自定义创作时的文件完整性（`OPEN_QUESTIONS_2.md` 中的要求：单文件发给别人时不能丢失个性化图片）。
-* **后续修改文档**: 在 `03-omm-document-format` 的 `Asset Handling` 设计中，明确区分 `AssetManifest` 里 `builtin` 资源（仅保存 ID）和 `uploaded` 资源（保存 Base64 数据）的存储策略。
+* **后续修改文档**: 在 `omm-document-format` 的 `Asset Handling` 设计中，明确区分 `AssetManifest` 里 `builtin` 资源（仅保存 ID）和 `uploaded` 资源（保存 Base64 数据）的存储策略。
 
 ---
 
@@ -101,4 +101,4 @@
 ### 决策记录
 * **决策结果**: 不在浏览器端实现复杂的异常降级 UI（如灾难警告弹窗），而是将防线前置：**在调用 CLI 阶段进行内容容量的防御性拦截，超出限制则直接打回给外层 Agent CLI 重新生成。**
 * **决策理由**: 浏览器端的 SVG 渲染器在 MVP 阶段只需保持轻量纯粹的“渲染者”角色。如果 JSON 内容过于庞大而导致渲染不可控，真正的源头在于外层 Agent CLI / Skill 产物没有遵循精简契约。通过在 CLI 级别对生成的契约列表或 `.omm` 文档进行快速的结构检查（例如限制最大深度、最大节点数、单节点最大字数估算），不仅保护了前端不会因渲染计算资源耗尽而崩溃，更能利用大模型的重试机制（Reflection / Error Feedback）迫使 AI 自我纠正并返回更符合“博赞纯正性”精简结构的列表。
-* **后续修改文档**: 在 `04-cli-generate-omm` 或 `02-agent-list-contract` 中补充结构和体积的“阈值检查（Threshold Check）”机制，如果超出阈值，抛出带明确错误信息的异常，供外层 Agent CLI（Gemini CLI / Codex CLI / Claude Code）捕获并重试。浏览器端只负责尽力渲染合规体积内的数据即可。
+* **后续修改文档**: 在 `cli-preview-handoff` 或 `organic-tree-contract` 中补充结构和体积的“阈值检查（Threshold Check）”机制，如果超出阈值，抛出带明确错误信息的异常，供外层 Agent CLI（Gemini CLI / Codex CLI / Claude Code）捕获并重试。浏览器端只负责尽力渲染合规体积内的数据即可。

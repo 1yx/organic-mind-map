@@ -206,7 +206,7 @@ interface CenterVisual {
   titleText: string
   imageRef?: AssetRef
   stylePreset?: CenterStylePreset
-  minColorCount: number
+  minColorCount?: number
   composition: CenterComposition
   complianceState: "draft" | "needs-visuals" | "compliant"
 }
@@ -218,7 +218,7 @@ interface CenterVisual {
 * 多色艺术化文字或视觉构图
 * 图文混合中心构图
 
-合格中心图像必须至少 3 色，并具备明确图像化轮廓或视觉符号组合。免费版应通过基础中心模板、图标拼贴、多色视觉构图、本地上传图片或图文混合完成，不依赖 Plus AI。
+长期严格模式下，合格中心图像必须至少 3 色，并具备明确图像化轮廓或视觉符号组合。Phase 1 为兼容受控网络矢量图库和 AI SVG 选择结果，允许中心 SVG 为单色；但中心仍必须是图像或明确视觉符号，不能退化为普通纯文字中心。
 
 ### 4.5 资源模型
 
@@ -690,7 +690,7 @@ interface MeasurementService {
 * 基础符号库
 * 基础中心图模板
 * 预生成免费模板图像
-* 本地图片上传
+* (本地图片上传推迟至 Phase 2)
 * 严格博赞核心编辑能力
 * 本地启发式关键词建议
 * 固定纸张 SVG / PNG / PDF 导出
@@ -797,3 +797,5 @@ interface MeasurementService {
 * 导出驱动一致性
 
 只要这 5 条站稳，后续 UI、动画、模板和 AI 增强才能建立在可靠底座上。
+
+。

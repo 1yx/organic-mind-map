@@ -25,9 +25,9 @@ The system SHALL restrict MVP `.omm` paper specs to A3 landscape or A4 landscape
 ### Requirement: Center visual object
 The system SHALL require a center visual object instead of a plain center text string.
 
-#### Scenario: Compliant center visual
-- **WHEN** `rootMap.center` includes a supported `mode`, `titleText`, `minColorCount`, and `complianceState: "compliant"`
-- **THEN** validation accepts the center visual when referenced built-in assets are valid
+#### Scenario: Phase 1 compliant center visual
+- **WHEN** `rootMap.center` includes a supported image or visual-symbol `mode` and `complianceState: "compliant"`
+- **THEN** validation accepts the center visual when referenced built-in assets are valid, even if the SVG is single-color
 
 #### Scenario: Missing center visual
 - **WHEN** `rootMap.center` is missing or only represented as a plain string

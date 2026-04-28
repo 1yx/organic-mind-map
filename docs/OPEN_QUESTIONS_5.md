@@ -1,4 +1,4 @@
-# 开放性问题 (Agent List Contract 设计)
+# 开放性问题 (OrganicTree Contract 设计)
 
 本文件记录从 `@openspec/changes/agent-list-contract/**` 的提案与设计审查中发现的架构设计缺陷、风险及待决策点。
 

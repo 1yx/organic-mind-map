@@ -10,6 +10,12 @@ Thumbs.db
 .idea/
 .#*
 
+# AI agents
+.claude/
+.codex/
+.gemini/
+.pi/
+
 # Python
 __pycache__/
 *.py[cod]

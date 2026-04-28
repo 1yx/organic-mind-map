@@ -10,12 +10,12 @@ The current MVP is not a visual editor. The Phase 1 flow is:
 
 ```text
 Agent CLI + skill
-  -> concise agent list
+  -> concise OrganicTree (JSON)
   -> project CLI validation and capacity checks
-  -> local Web preview server
+  -> CLI passes PreviewPayload (OrganicTree + IDs/Colors) to local Web preview server
   -> browser-side DOM/SVG measurement and layout
-  -> read-only SVG preview
-  -> .omm and PNG export from the browser
+  -> read-only SVG preview (Organic Mind Map / OMM)
+  -> .omm (OmmDocument with layout snapshot) and PNG export from the browser
 ```
 
 Do not add `.omm` visual editing, drag/drop editing, undo/redo, path text editing, presentation playback, cloud sync, accounts, or Plus services to MVP changes unless a change document explicitly asks for it.
@@ -172,3 +172,4 @@ Preserve existing user edits. If the worktree is dirty, assume changes are inten
 Use ASCII unless the file already uses Chinese or another non-ASCII language. Chinese product docs may continue in Chinese.
 
 Do not add speculative features just because they appear in the long-term roadmap. Phase 1 work should stay focused on the validated MVP path.
+ because they appear in the long-term roadmap. Phase 1 work should stay focused on the validated MVP path.
