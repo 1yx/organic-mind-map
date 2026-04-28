@@ -81,6 +81,14 @@ function validateCenter(center: unknown): ValidationError[] {
       message: "visualHint must be a string if provided",
     });
   }
+
+  // svgUrl is optional — type-check when present
+  if (c.svgUrl !== undefined && typeof c.svgUrl !== "string") {
+    errors.push({
+      path: "center.svgUrl",
+      message: "svgUrl must be a string if provided",
+    });
+  }
   return errors;
 }
 

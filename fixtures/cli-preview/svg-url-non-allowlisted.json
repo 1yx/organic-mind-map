@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "title": "Non-allowlisted URL",
+  "center": {
+    "concept": "BRAIN",
+    "svgUrl": "https://evil.com/malware.svg"
+  },
+  "branches": [
+    { "concept": "NEUROSCIENCE" }
+  ]
+}

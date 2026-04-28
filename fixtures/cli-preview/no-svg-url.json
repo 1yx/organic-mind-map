@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "title": "No SVG URL",
+  "center": {
+    "concept": "BRAIN"
+  },
+  "branches": [
+    { "concept": "NEUROSCIENCE" }
+  ]
+}

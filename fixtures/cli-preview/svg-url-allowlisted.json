@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "title": "SVG URL Test",
+  "center": {
+    "concept": "BRAIN",
+    "svgUrl": "https://api.iconify.design/fluent-emoji-flat/brain.svg"
+  },
+  "branches": [
+    { "concept": "NEUROSCIENCE" }
+  ]
+}

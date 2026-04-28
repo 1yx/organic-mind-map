@@ -24,6 +24,7 @@ import {
 } from "@omm/core";
 
 import { startPreviewServer } from "./preview-server.js";
+import { isAllowedSvgUrl } from "./svg-allowlist.js";
 import {
   cliExitCode,
   type PreviewPayload,
@@ -89,7 +90,11 @@ function normalizeConcepts(input: AgentMindMapList): AgentMindMapList {
   return {
     ...input,
     title: normalize(input.title),
-    center: { ...input.center, concept: normalize(input.center.concept) },
+    center: {
+      ...input.center,
+      concept: normalize(input.center.concept),
+      svgUrl: input.center.svgUrl,
+    },
     branches: input.branches.map((branch) => ({
       ...branch,
       concept: normalize(branch.concept),
@@ -229,7 +234,10 @@ function buildPayload(
   const normalised = normalizeConcepts(tree);
   const paper = paperOverride ?? normalised.paper ?? "a3-landscape";
 
-  return {
+  // Check center svgUrl against allowlist (tasks 2.1-2.3, 4.2)
+  const allowedUrl = isAllowedSvgUrl(normalised.center.svgUrl);
+
+  const payload: PreviewPayload = {
     version: 1,
     source: "organic-tree",
     paper,
@@ -241,6 +249,16 @@ function buildPayload(
         }
       : undefined,
   };
+
+  // Only populate centerVisual when svgUrl is allowlisted (task 4.2)
+  if (allowedUrl) {
+    payload.centerVisual = {
+      svgUrl: allowedUrl,
+      source: "ai-svg",
+    };
+  }
+
+  return payload;
 }
 
 // ---------------------------------------------------------------------------

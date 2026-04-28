@@ -12,6 +12,7 @@ export type PreviewPayload = {
   tree: AgentMindMapList;
   centerVisual?: {
     inlineSvg?: string;
+    svgUrl?: string;
     source?: "ai-svg";
   };
   meta?: {

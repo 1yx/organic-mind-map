@@ -25,6 +25,8 @@ export type AgentMindMapList = {
 export type AgentCenter = {
   concept: string;
   visualHint?: string;
+  /** Optional controlled SVG URL from an allowlisted HTTPS source. */
+  svgUrl?: string;
 };
 
 export type MainBranch = {

@@ -305,6 +305,47 @@ describe("validateAgentList — hints", () => {
     expect(paths).toContain("branches[0].colorHint");
     expect(paths).toContain("branches[0].children[0].visualHint");
   });
+
+  it("preserves optional svgUrl in validated output", () => {
+    const input = {
+      version: 1 as const,
+      title: "SVG URL Test",
+      center: {
+        concept: "AI STRATEGY",
+        svgUrl: "https://api.iconify.design/fluent-emoji-flat/brain.svg",
+      },
+      branches: [{ concept: "ML MODELS" }],
+    };
+    const result = validateAgentList(input);
+    expect(result.valid).toBe(true);
+    expect(result.data!.center.svgUrl).toBe(
+      "https://api.iconify.design/fluent-emoji-flat/brain.svg",
+    );
+  });
+
+  it("accepts valid input without svgUrl", () => {
+    const input = {
+      version: 1 as const,
+      title: "No SVG URL",
+      center: { concept: "中心" },
+      branches: [{ concept: "B1" }],
+    };
+    const result = validateAgentList(input);
+    expect(result.valid).toBe(true);
+    expect(result.data!.center.svgUrl).toBeUndefined();
+  });
+
+  it("rejects non-string svgUrl with path-specific error", () => {
+    const input = {
+      version: 1 as const,
+      title: "Bad SVG URL",
+      center: { concept: "中心", svgUrl: 12345 },
+      branches: [{ concept: "B1" }],
+    };
+    const result = validateAgentList(input);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.path === "center.svgUrl")).toBe(true);
+  });
 });
 
 describe("conceptUnitWidth", () => {

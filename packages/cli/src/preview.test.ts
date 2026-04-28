@@ -321,3 +321,68 @@ describe("previewCommand — flags", () => {
     spy.mockRestore();
   });
 });
+
+describe("previewCommand — svgUrl allowlist (ai-svg-center-visual)", () => {
+  usePreviewLifecycle();
+
+  it("populates centerVisual.svgUrl for allowlisted HTTPS URL", async () => {
+    const serverModule = await import("./preview-server.js");
+    let capturedPayload: unknown;
+    const serverSpy = vi
+      .spyOn(serverModule, "startPreviewServer")
+      .mockImplementation((p) => {
+        capturedPayload = p;
+      });
+
+    const code = await previewCommand([fixture("svg-url-allowlisted.json")]);
+    expect(code).toBe(cliExitCode.OK);
+
+    const payload = capturedPayload as Record<string, unknown>;
+    const centerVisual = payload.centerVisual as Record<string, unknown> | undefined;
+    expect(centerVisual).toBeDefined();
+    expect(centerVisual?.svgUrl).toBe(
+      "https://api.iconify.design/fluent-emoji-flat/brain.svg",
+    );
+    expect(centerVisual?.source).toBe("ai-svg");
+
+    serverSpy.mockRestore();
+  });
+
+  it("omits centerVisual.svgUrl for non-allowlisted URL", async () => {
+    const serverModule = await import("./preview-server.js");
+    let capturedPayload: unknown;
+    const serverSpy = vi
+      .spyOn(serverModule, "startPreviewServer")
+      .mockImplementation((p) => {
+        capturedPayload = p;
+      });
+
+    const code = await previewCommand([fixture("svg-url-non-allowlisted.json")]);
+    expect(code).toBe(cliExitCode.OK);
+
+    const payload = capturedPayload as Record<string, unknown>;
+    const centerVisual = payload.centerVisual as Record<string, unknown> | undefined;
+    // Non-allowlisted URL should be omitted — no centerVisual at all
+    expect(centerVisual).toBeUndefined();
+
+    serverSpy.mockRestore();
+  });
+
+  it("omits centerVisual when no svgUrl is provided", async () => {
+    const serverModule = await import("./preview-server.js");
+    let capturedPayload: unknown;
+    const serverSpy = vi
+      .spyOn(serverModule, "startPreviewServer")
+      .mockImplementation((p) => {
+        capturedPayload = p;
+      });
+
+    const code = await previewCommand([fixture("no-svg-url.json")]);
+    expect(code).toBe(cliExitCode.OK);
+
+    const payload = capturedPayload as Record<string, unknown>;
+    expect(payload.centerVisual).toBeUndefined();
+
+    serverSpy.mockRestore();
+  });
+});
