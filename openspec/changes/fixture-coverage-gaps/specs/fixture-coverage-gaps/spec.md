@@ -22,6 +22,10 @@ The project SHALL include hostile fixtures that verify unsafe inputs are rejecte
 - **WHEN** validation or preview preparation receives a fixture containing `javascript:`, `data:text/html`, protocol-relative, or otherwise unsafe center visual URLs
 - **THEN** the input is rejected with path-specific errors or the center visual is downgraded to the built-in fallback without script execution
 
+#### Scenario: Unreachable SVG URL fixture falls back safely
+- **WHEN** browser preview receives `poison-unreachable-svg-url.json` with a center visual URL that returns 404 or times out
+- **THEN** the preview falls back to the built-in hash template image without white screen, JavaScript crash, or blocked preview startup
+
 #### Scenario: Text injection fixture stays inert
 - **WHEN** validation or rendering receives concept text containing script-like markup or URL-like attack strings
 - **THEN** the renderer escapes the text as inert content and does not create executable SVG or HTML
@@ -30,16 +34,20 @@ The project SHALL include hostile fixtures that verify unsafe inputs are rejecte
 - **WHEN** CLI preview receives an oversized mostly-whitespace or invalid nested payload beyond the MVP byte-size limit
 - **THEN** the command fails before renderer handoff with a structured, regeneration-oriented error
 
-### Requirement: OMM runtime artifact negative fixtures
-The project SHALL include `.omm` negative fixtures for runtime artifacts that must not persist in the document model.
+### Requirement: OMM runtime artifact fixtures
+The project SHALL include `.omm` negative and repair fixtures for runtime artifacts that must not persist in the document model.
 
-#### Scenario: Web font declaration fixture is rejected or normalized
+#### Scenario: Web font declaration fixture is rejected
 - **WHEN** `.omm` validation loads a document containing external web font declarations, `@font-face`, WOFF/WOFF2 references, or remote font metadata
-- **THEN** validation rejects the document or normalizes it to the approved system font stack before rendering/export
+- **THEN** validation fails fast with a path-specific error and does not attempt custom font normalization
 
-#### Scenario: Missing organic seed fixture fails or repairs deterministically
-- **WHEN** `.omm` validation loads a document without `organicSeed`
-- **THEN** validation fails with a path-specific error or recomputes a deterministic replacement seed through an explicitly tested repair path
+#### Scenario: Missing organic seed with layout snapshot repairs without relayout
+- **WHEN** `.omm` validation loads a document without `organicSeed` but with a complete layout snapshot
+- **THEN** validation or repair backfills a deterministic `cyrb53` seed from the current document content without invoking layout recomputation or changing saved coordinates and paths
+
+#### Scenario: Missing organic seed without layout snapshot does not silently repair
+- **WHEN** `.omm` validation loads a document without `organicSeed` and without a complete layout snapshot
+- **THEN** validation fails with a path-specific error or enters an explicitly tested full regeneration path
 
 ### Requirement: Fixture terminology remains OrganicTree aligned
 Fixture names, directories, tests, and documentation SHALL use `OrganicTree` terminology for model inputs and SHALL NOT reintroduce `agent-list` naming.

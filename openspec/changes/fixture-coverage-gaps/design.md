@@ -13,8 +13,8 @@ The current repository already contains fixtures for valid OrganicTree inputs, i
 **Goals:**
 
 * Add stress fixtures that exercise bounding-box collision behavior under dense sibling and unbalanced-tree pressure.
-* Add poison fixtures for unsafe protocols, text injection, and oversized mostly-empty payloads.
-* Add `.omm` negative fixtures for forbidden web font declarations and missing `organicSeed`.
+* Add poison fixtures for unsafe protocols, unreachable SVG URL fallback, text injection, and oversized mostly-empty payloads.
+* Add `.omm` negative/repair fixtures for forbidden web font declarations and missing `organicSeed`.
 * Extend tests so invalid or dangerous inputs fail before unsafe rendering, while safe fallback paths remain renderable.
 * Preserve the `OrganicTree` terminology and `fixtures/organic-tree/` directory convention.
 
@@ -47,15 +47,21 @@ They should not depend on image-perfect snapshots because the organic renderer i
 
 ### Poison fixtures fail at the earliest safe boundary
 
-Unsafe URL protocols and malformed center visual data should be rejected before inline rendering or downgraded to the built-in center template. Oversized payloads should be rejected before expensive renderer handoff, ideally before or immediately after JSON parse with a clear byte-size or capacity error.
+Unsafe URL protocols and malformed center visual data should be rejected before inline rendering or downgraded to the built-in center template. Unreachable SVG URLs should exercise the browser-owned loading failure path and prove the preview falls back to the built-in hash template without white screen or JavaScript crash. Oversized payloads should be rejected before expensive renderer handoff, ideally before or immediately after JSON parse with a clear byte-size or capacity error.
 
 This keeps the browser preview from becoming the first line of defense for obviously hostile payloads.
 
-### `.omm` runtime artifacts are contract violations
+### `.omm` runtime artifacts fail fast
 
-`.omm` documents must not persist external web font declarations or omit `organicSeed`. Tests should prove forbidden font metadata is rejected or normalized to the system font stack, and missing seed files fail validation or are explicitly repaired by a deterministic recompute path.
+`.omm` documents must not persist external web font declarations. Tests should prove forbidden font metadata is rejected by strict schema validation rather than parsed and normalized by custom repair logic.
 
-If implementation chooses repair for missing `organicSeed`, that behavior must be deterministic and covered by a test; silent non-determinism is not acceptable.
+This keeps font safety in the document contract: unsupported font fields, remote font URLs, `@font-face`, WOFF/WOFF2 references, and ad hoc font metadata are invalid input, not data to clean up after parsing.
+
+### Missing `organicSeed` must not trigger relayout when layout exists
+
+If an `.omm` document is missing `organicSeed` but has a complete layout snapshot, validation/repair may silently backfill the seed with a deterministic `cyrb53` hash over the current document content. This repair must not invoke the layout engine, recompute coordinates, overwrite paths, or otherwise mutate the saved layout snapshot.
+
+The saved physical coordinates and paths are the source of truth for an exported `.omm`. Only when the layout snapshot is missing or invalid may the system reject the file or enter a full layout regeneration path.
 
 ### Do not add heavyweight browser automation for this change
 
@@ -65,8 +71,9 @@ Renderer smoke and validation tests are enough for this layer. Browser export be
 
 * **Risk: Stress fixtures become too strict while layout is still evolving.** -> Mitigate by asserting structural renderability and diagnostic thresholds rather than exact geometry.
 * **Risk: Oversized payload fixtures slow the test suite.** -> Mitigate by using generated test data or a compact fixture that simulates the size boundary without committing a huge file.
-* **Risk: Font handling differs between `.omm` validation and Web rendering.** -> Mitigate by centralizing system font enforcement and testing both document validation and export serialization boundaries.
-* **Risk: Poison fixtures duplicate existing allowlist tests.** -> Mitigate by separating CLI URL allowlist tests from browser/renderer fallback and text-injection tests.
+* **Risk: Font handling differs between `.omm` validation and Web rendering.** -> Mitigate by failing fast in `.omm` schema validation and keeping renderer/export code on the approved system font stack.
+* **Risk: Missing seed repair accidentally changes a saved map.** -> Mitigate by asserting that seed backfill never recomputes layout or changes saved coordinates/paths when a complete layout snapshot exists.
+* **Risk: Poison fixtures duplicate existing allowlist tests.** -> Mitigate by separating CLI URL allowlist tests from browser/renderer fallback, network failure fallback, and text-injection tests.
 
 ## Migration Plan
 

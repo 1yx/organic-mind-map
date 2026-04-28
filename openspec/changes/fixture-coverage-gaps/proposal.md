@@ -9,13 +9,13 @@ This change adds hostile and edge-case fixture coverage so Phase 1 validates not
 ## What Changes
 
 * Add collision stress fixtures for extreme sibling density and highly unbalanced trees.
-* Add poison fixtures for unsafe URL protocols, text injection cases, and oversized whitespace or invalid nested payloads.
-* Add `.omm` negative fixtures for forbidden web font declarations and missing `organicSeed`.
+* Add poison fixtures for unsafe URL protocols, unreachable SVG URL fallback, text injection cases, and oversized whitespace or invalid nested payloads.
+* Add `.omm` negative/repair fixtures for forbidden web font declarations and missing `organicSeed`.
 * Add validation and smoke coverage that proves:
   * dense fixtures remain renderable without obvious overlap failures,
-  * unsafe center visual inputs fall back to built-in center templates,
+  * unsafe or unreachable center visual inputs fall back to built-in center templates,
   * oversized payloads fail before renderer handoff with retry-oriented errors,
-  * `.omm` files reject or normalize forbidden runtime artifacts.
+  * `.omm` files fail fast on forbidden runtime artifacts and repair missing seed only when that does not alter saved layout snapshots.
 * Keep fixture terminology aligned with `OrganicTree`; no `agent-list` naming is reintroduced.
 
 ## Capabilities
@@ -33,5 +33,5 @@ This change adds hostile and edge-case fixture coverage so Phase 1 validates not
 * Affects fixture files under `fixtures/organic-tree/` and `fixtures/omm/`.
 * Affects validation tests in core/CLI and renderer smoke tests.
 * May require explicit payload byte-size limits before JSON parsing or before preview handoff.
-* May require `.omm` validation to reject missing `organicSeed` and forbidden font declarations.
+* May require `.omm` validation to reject forbidden font declarations and deterministically backfill missing `organicSeed` from document content when a complete layout snapshot already exists.
 * Does not add CLI one-shot PNG export, browser automation dependencies, or visual pixel snapshot requirements.
