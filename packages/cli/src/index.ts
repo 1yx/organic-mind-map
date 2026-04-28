@@ -2,7 +2,7 @@
  * \@omm/cli - Command parsing, validation, server startup, preview orchestration.
  */
 
-export function runCli(argv: string[]): number {
+export async function runCli(argv: string[]): Promise<number> {
   const command = argv[2] ?? "help";
 
   switch (command) {
@@ -15,9 +15,10 @@ export function runCli(argv: string[]): number {
       console.log("  help            Show this help message");
       return 0;
 
-    case "preview":
-      console.log("Preview mode — not yet implemented");
-      return 1;
+    case "preview": {
+      const { previewCommand } = await import("./preview.js");
+      return previewCommand(argv.slice(3));
+    }
 
     case "validate":
       console.log("Validate mode — not yet implemented");
@@ -32,5 +33,7 @@ export function runCli(argv: string[]): number {
 // Direct execution: tsx src/index.ts <args>
 const isDirectRun = import.meta.url === `file://${process.argv[1]}`;
 if (isDirectRun) {
-  process.exitCode = runCli(process.argv);
+  runCli(process.argv).then((code) => {
+    process.exitCode = code;
+  });
 }
