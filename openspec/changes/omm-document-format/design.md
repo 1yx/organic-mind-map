@@ -159,6 +159,8 @@ Long-term strict mode can require at least three colors for compliant center vis
 
 Phase 1 `.omm` avoids Base64 image bloat by supporting built-in assets only. User-uploaded center images and node images are deferred beyond MVP.
 
+AI-selected controlled SVG URLs from preview payloads are not persisted as external URL-only document truth. If the browser cannot convert a loaded SVG into an approved self-contained center visual representation during export, the exported `.omm` should reference the deterministic built-in fallback instead.
+
 Built-in assets:
 
 * store a stable built-in asset ID only

@@ -49,6 +49,8 @@ Export must work with self-contained assets:
 
 If external images are ever allowed, they must not taint canvas. MVP should avoid external image dependencies for export.
 
+For `ai-svg-center-visual`, the browser must not draw an uncontrolled external image element directly into the export canvas. It should export a browser-safe rendered SVG result after the controlled SVG has loaded and passed lightweight checks, or export the deterministic built-in fallback when the SVG is not ready or is rejected.
+
 ## Implementation Approach
 
 Browser-side approach:

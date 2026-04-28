@@ -108,13 +108,15 @@ Render center visual after branches so it retains visual weight.
 
 MVP center options:
 
-* sanitized inline SVG supplied by `PreviewPayload.centerVisual.inlineSvg`
+* browser-loaded controlled SVG supplied by `PreviewPayload.centerVisual.svgUrl`
 * built-in multi-color visual template selected deterministically from content hash
 * hybrid title + simple shapes
 
 Plain text center is not compliant.
 
-If `inlineSvg` is present, the renderer should prioritize it so PNG export does not depend on external URLs and does not taint canvas. Phase 1 allows this SVG to be single-color because many controlled vector-library assets are monochrome. If no inline SVG is present, selection of a built-in center template must be deterministic from the same OrganicTree content hash used for organic seed derivation.
+If `svgUrl` is present and passes the hardcoded controlled-source rule, the browser may fetch it asynchronously, apply a lightweight guard for obvious unsafe SVG content, and render the result as the center visual. If loading fails, times out, or fails the guard, selection of a built-in center template must be deterministic from the same OrganicTree content hash used for organic seed derivation.
+
+Phase 1 allows the controlled SVG to be single-color because many vector-library assets are monochrome. The renderer should not attempt automatic multi-color recoloring of arbitrary SVG paths in Phase 1.
 
 ## Organic Seed
 
@@ -152,4 +154,4 @@ The preview should stay lightweight. Capacity failures should primarily be preve
 * Text clipping is visible but not actively warned to users.
 * Browser-side DOM measurement is the source of truth for layout.
 * Organic seed is derived from OrganicTree content using a synchronous stable hash such as `cyrb53`.
-* Center visual selection prioritizes sanitized inline SVG and falls back to a deterministic hash-selected built-in template.
+* Center visual selection prioritizes a successfully loaded controlled SVG URL and falls back to a deterministic hash-selected built-in template.

@@ -205,6 +205,7 @@ interface CenterVisual {
   mode: "image" | "styled-text" | "hybrid"
   titleText: string
   imageRef?: AssetRef
+  svgUrl?: string
   stylePreset?: CenterStylePreset
   minColorCount?: number
   composition: CenterComposition
@@ -219,6 +220,14 @@ interface CenterVisual {
 * 图文混合中心构图
 
 长期严格模式下，合格中心图像必须至少 3 色，并具备明确图像化轮廓或视觉符号组合。Phase 1 为兼容受控网络矢量图库和 AI SVG 选择结果，允许中心 SVG 为单色；但中心仍必须是图像或明确视觉符号，不能退化为普通纯文字中心。
+
+Phase 1 的 AI SVG 中心图采用轻量边界：
+
+* Agent skill 可以为中心主题提供 `svgUrl`。
+* CLI 只做字段类型、HTTPS URL 形态和硬编码受控源白名单校验，不执行网络 fetch、SVG 净化、缓存或内联。
+* 浏览器负责异步加载该受控 URL，并做轻量安全检测；发现 `<script>`、`foreignObject`、事件属性、外部引用、CSS `url(...)` 或嵌入式位图数据时直接拒绝。
+* 加载失败、超时、非 SVG 响应或检测失败时，浏览器使用内容哈希选择的内置中心图模板。
+* Phase 1 不做自动 SVG 多色重绘；真正的多色中心图补全放到 Phase 2 的高级模板、AI 生图或 Plus 视觉增强能力中。
 
 ### 4.5 资源模型
 
@@ -596,7 +605,7 @@ interface MeasurementService {
    对长文本做关键词压缩。
 
 5. **中心图像构建**
-   为中心主题生成艺术化中心构图工作流。
+   为中心主题生成艺术化中心构图工作流。MVP 中 Agent 可提供受控 SVG URL，CLI 不下载图像，浏览器异步加载并在失败时回退到内置模板。
 
 6. **博赞重排**
    应用颜色、边界、分支方向、留白、线字等长规则。

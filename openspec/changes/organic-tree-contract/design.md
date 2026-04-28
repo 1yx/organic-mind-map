@@ -26,6 +26,7 @@ interface AgentMindMapList {
 interface AgentCenter {
   concept: string
   visualHint?: string
+  svgUrl?: string
 }
 
 interface MainBranch {
@@ -50,6 +51,8 @@ interface LeafNode {
 Why explicit 3-level types instead of recursive `children?: AgentBranch[]`: mainstream LLM structured output (Function Calling) is fragile with unbounded recursive types. Limiting to 3 explicit levels (`MainBranch -> SubBranch -> LeafNode`) dramatically reduces JSON corruption risk and aligns with the visual carrying capacity of a single A3/A4 sheet.
 
 The contract is not a general outline format. It is a generation-ready input format for `.omm`.
+
+When `ai-svg-center-visual` is enabled, `center.svgUrl` is optional and may point to a controlled open vector source selected by the outer agent skill. Validation preserves it when it is a string, while source allowlist handling belongs to the preview handoff/browser rendering changes.
 
 ## Agent Orchestration Role
 

@@ -54,7 +54,7 @@ interface PreviewPayload {
   paper: "a3-landscape" | "a4-landscape"
   tree: OrganicTree
   centerVisual?: {
-    inlineSvg?: string
+    svgUrl?: string
     source?: "ai-svg"
   }
   meta?: {
@@ -64,7 +64,7 @@ interface PreviewPayload {
 }
 ```
 
-The payload contains validated semantic input, minimal preview options, and optional sanitized inline center SVG when a later `ai-svg-center-visual` step succeeds. The browser receives it, builds its own in-memory model, derives a deterministic seed from the OrganicTree content, assigns stable node IDs, assigns colors, chooses a center visual fallback when needed, computes layout, and exports the final `OmmDocument`.
+The payload contains validated semantic input, minimal preview options, and an optional allowlisted center SVG URL when a later `ai-svg-center-visual` step succeeds. The CLI does not fetch or sanitize this SVG. The browser receives the payload, builds its own in-memory model, derives a deterministic seed from the OrganicTree content, assigns stable node IDs, assigns colors, loads the controlled center SVG or chooses a fallback when needed, computes layout, and exports the final `OmmDocument`.
 
 ## Responsibility Boundary
 
@@ -74,6 +74,7 @@ CLI owns:
 * JSON parsing
 * OrganicTree structural and quality validation
 * defensive capacity checks
+* hardcoded allowlist pass-through for optional center SVG URLs when `ai-svg-center-visual` is enabled
 * building `PreviewPayload`
 * calling the `06-local-preview-server` module with `PreviewPayload`
 * exit codes and retry-friendly error messages
@@ -86,6 +87,7 @@ Browser owns:
 * center visual fallback selection
 * branch style assignment
 * domain model instantiation
+* controlled center SVG loading and lightweight safety guard
 * DOM/SVG text measurement
 * layout solving
 * `OmmDocument` creation and export

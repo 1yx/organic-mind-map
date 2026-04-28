@@ -67,11 +67,11 @@ The system SHALL support selecting A3 landscape or A4 landscape paper as preview
 - **THEN** the CLI exits with code `1` and reports the invalid option
 
 ### Requirement: No domain assembly in CLI
-The system SHALL NOT assign node IDs, organic seeds, colors, center visual fallbacks, branch styles, final layout coordinates, `.omm` layout snapshots, or PNG export inside the CLI.
+The system SHALL NOT assign node IDs, organic seeds, colors, center visual fallbacks, branch styles, final layout coordinates, `.omm` layout snapshots, PNG export, or network image fetching inside the CLI.
 
 #### Scenario: Valid payload handoff
 - **WHEN** the CLI successfully validates and capacity-checks input
-- **THEN** it hands off semantic data without generated node IDs, branch colors, organic seed, fallback center visual IDs, or final layout coordinates
+- **THEN** it hands off semantic data without generated node IDs, branch colors, organic seed, fallback center visual IDs, final layout coordinates, or fetched image content
 
 #### Scenario: PNG export requested from CLI
 - **WHEN** a user requests one-shot PNG export from the CLI

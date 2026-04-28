@@ -16,7 +16,7 @@
 
 ---
 
-## 2. 本地 CLI 的白名单硬编码导致的僵化 (Hardcoded Allowlist) [待决策]
+## 2. 本地 CLI 的白名单硬编码导致的僵化 (Hardcoded Allowlist) [已决策]
 
 ### 发现的问题
 `design.md` 提到使用 “configured controlled HTTPS sources... initially Iconify-compatible endpoints or another explicit allowlist.” 来限制 CLI 只能抓取安全的受控图源。
@@ -24,6 +24,11 @@
 ### 苏格拉底式问题
 * 作为一个运行在用户本地电脑上的 CLI 工具，如果把 URL 白名单硬编码在代码里，当未来我们需要增加新的优质开源图库，或者原有图库的 API 域名发生变更时，是否意味着所有用户都必须强制升级 CLI 版本才能继续使用 AI 配图功能？
 * 我们是否应该允许大模型在返回 `iconUrl` 的同时，CLI 通过某种轻量级的动态配置（例如读取项目根目录下的 `.ommrc` 或拉取一个极小的在线配置清单）来决定白名单，以保证工具的灵活性？或者在 MVP 阶段，干脆只硬编码允许一个绝对稳定的源（如 Iconify）并明确拒绝其他一切来源？
+
+### 决策记录
+* **决策结果**: 在 MVP 阶段，采用最直接的方案：**在 CLI 代码内部维护一个简单的硬编码白名单列表（Hardcoded Allowlist），不提供动态配置（如 `.ommrc`）能力。**
+* **决策理由**: 动态配置虽然灵活，但也极大地增加了配置解析、错误处理以及潜在的安全越权攻击面（恶意项目如果通过 `.ommrc` 悄悄注入恶意站点，CLI 的下载机制就会被滥用）。由于我们的“官方受控图库”本就旨在提供最稳定、最核心的基础图形（如 Iconify 这样极其成熟稳定的开源服务），将其域名硬编码能最大程度保证 MVP 管线的纯粹与极度安全。未来即便图库需要变更或扩充，通过发布新的 CLI 版本来更新白名单，也是一种更加稳妥可控的集中式治理手段。
+* **后续修改文档**: 在 `ai-svg-center-visual` 的设计规范中，明确移除“可配置（configured）”的表述，确认为一个内部的、硬编码的 `Explicit Allowlist`。
 
 ---
 
@@ -43,7 +48,7 @@
 
 ---
 
-## 4. CLI 异步 Fetch 带来的体验阻塞 (Fetch Latency & Startup Blocking) [待决策]
+## 4. CLI 异步 Fetch 带来的体验阻塞 (Fetch Latency & Startup Blocking) [已决策]
 
 ### 发现的问题
 `cli-preview-handoff` 增强了异步 Fetch 步骤：“If the fetch fails or times out, omit inlineSvg and let the browser gracefully fallback”。
@@ -52,3 +57,8 @@
 * 在用户敲下 `omm preview` 到浏览器自动弹出的这个黄金体验窗口期，如果用户的网络连接特定的图库 API 较慢，CLI 是否会阻塞等待？
 * 设定的超时时间（Timeout）应该是多少才不会让用户觉得“CLI 卡死了”？（例如严格限制在 1.5 秒或 2 秒内？）
 * 这种由于网络波动导致的“有时能看到 AI 图，有时弹出来的是内置模板”的非确定性体验，是否会增加用户在 MVP 阶段对产品稳定性的疑虑？
+
+### 决策记录
+* **决策结果**: 随着问题 1 决定 CLI 仅传递 URL Link，CLI 端不再负责发起 Fetch 请求，因此**CLI 端的网络阻塞问题自动消失，该痛点废弃**。网络请求及其失败处理下放给前端浏览器。
+* **决策理由**: 既然 CLI 不再负责下载图片，自然彻底排除了用户在终端中遇到“网络阻塞假死”的风险。前端浏览器拥有极其完善的异步网络处理机制，如果浏览器端请求该 Link 失败或超时，可以非常平滑地降级回内置的哈希模板图，从而提供远比 CLI “直接报错退出”更好、更柔性的用户体验。
+* **后续修改文档**: 在 `ai-svg-center-visual` 的设计规范中，移除关于 CLI 端的 Fetch 逻辑、超时控制及异常报错退出（Exit Code）等设定。明确将图片加载及失败降级（Fallback）交还给前端 Web 渲染器处理。遇到网络故障，直接返回特定的错误码（Exit Code）并附带明确的网络报错信息，中断整个流程，不再唤起浏览器。

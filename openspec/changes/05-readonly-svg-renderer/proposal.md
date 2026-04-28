@@ -13,7 +13,7 @@ The core MVP value is seeing an Organic Mind Map style output from agent-generat
 * Render one preview payload or `.omm` as an A3/A4 horizontal SVG scene.
 * Include:
   * paper background and boundary
-  * center visual from sanitized inline SVG or deterministic built-in template fallback
+  * center visual from a browser-loaded controlled SVG URL or deterministic built-in template fallback
   * ordered main branches with distinct colors
   * tapered organic branch shapes
   * path text for concept units

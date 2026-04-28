@@ -12,7 +12,7 @@ The system SHALL define a stable JSON contract named `AgentMindMapList` for agen
 - **THEN** validation fails with an error pointing to `version`
 
 ### Requirement: Center concept and visual hint
-The system SHALL require the agent list to include a center concept and SHALL allow an optional center visual hint for later center visual selection.
+The system SHALL require the agent list to include a center concept and SHALL allow optional center visual hints for later center visual selection.
 
 #### Scenario: Center concept is missing
 - **WHEN** an input JSON omits `center.concept` or provides an empty `center.concept`
@@ -21,6 +21,10 @@ The system SHALL require the agent list to include a center concept and SHALL al
 #### Scenario: Center visual hint is provided
 - **WHEN** an input JSON includes `center.visualHint`
 - **THEN** validation preserves the hint for downstream preview payload generation
+
+#### Scenario: Center SVG URL is provided
+- **WHEN** an input JSON includes `center.svgUrl`
+- **THEN** validation preserves the URL for downstream preview payload generation
 
 ### Requirement: Hierarchical branch structure
 The system SHALL represent map content as ordered hierarchical branches using explicit 3-level types: `MainBranch`, `SubBranch`, and `LeafNode`. No recursive types are used.
