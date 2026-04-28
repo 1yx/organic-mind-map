@@ -25,7 +25,9 @@ export type PreviewPayload = {
 export type PreviewOptions = {
   /** Paper size, defaults to "a3-landscape". CLI flag \> input contract \> default. */
   paper?: "a3-landscape" | "a4-landscape";
-  /** Port forwarded to the local preview server (06-local-preview-server). */
+  /** Host forwarded to the local preview server. Default: "127.0.0.1". */
+  host?: string;
+  /** Port forwarded to the local preview server. */
   port?: number;
   /** Path to the input JSON file. When absent, stdin is checked. */
   input?: string;
