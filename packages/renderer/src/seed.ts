@@ -5,13 +5,7 @@
  * Environment-neutral — no DOM, Canvas, or network dependencies.
  */
 
-import type {
-  AgentMindMapList,
-  AgentCenter,
-  MainBranch,
-  SubBranch,
-  LeafNode,
-} from "@omm/core";
+import type { AgentMindMapList, MainBranch } from "@omm/core";
 import type {
   BranchColorPalette,
   SeededGeometry,
@@ -119,8 +113,23 @@ export function createSeededPRNG(seed: number): () => number {
 // ─── Node ID Generation ────────────────────────────────────────────────────
 
 /**
- * Generate stable node IDs "n-{index}" for a flat traversal of the tree.
- * Returns an ordered array of { id, concept, depth } entries.
+ * Push leaf node entries and return the updated index counter.
+ */
+function pushLeafEntries(
+  leaves: Array<{ concept: string }>,
+  nodes: Array<{ id: string; concept: string; depth: number }>,
+  index: number,
+): number {
+  for (const leaf of leaves) {
+    nodes.push({ id: `n-${index}`, concept: leaf.concept, depth: 3 });
+    index++;
+  }
+  return index;
+}
+
+/**
+ * Generate stable node IDs "n-index" for a flat traversal of the tree.
+ * Returns an ordered array of entries with id, concept, depth.
  */
 export function generateNodeIds(tree: AgentMindMapList): Array<{
   id: string;
@@ -139,12 +148,8 @@ export function generateNodeIds(tree: AgentMindMapList): Array<{
       for (const sub of branch.children) {
         nodes.push({ id: `n-${index}`, concept: sub.concept, depth: 2 });
         index++;
-
         if (sub.children) {
-          for (const leaf of sub.children) {
-            nodes.push({ id: `n-${index}`, concept: leaf.concept, depth: 3 });
-            index++;
-          }
+          index = pushLeafEntries(sub.children, nodes, index);
         }
       }
     }
@@ -183,13 +188,86 @@ export function assignMainBranchColors(
 export function generateSeededGeometry(rng: () => number): SeededGeometry {
   return {
     angle: rng() * Math.PI * 2,
-    curvature: 0.2 + rng() * 0.6,      // 0.2–0.8
-    taper: 0.3 + rng() * 0.5,          // 0.3–0.8
+    curvature: 0.2 + rng() * 0.6, // 0.2–0.8
+    taper: 0.3 + rng() * 0.5, // 0.3–0.8
     lengthPreference: 0.8 + rng() * 0.5, // 0.8–1.3
   };
 }
 
 // ─── Full Layout Tree Builder ──────────────────────────────────────────────
+
+/**
+ * Push leaf nodes for a sub-branch onto the parent and flat result list.
+ */
+function pushLeafNodes(
+  branches: MainBranch[],
+  context: {
+    branchIdx: number;
+    subIdx: number;
+    subNode: LayoutNode;
+    mainColor: string;
+    rng: () => number;
+    result: LayoutNode[];
+  },
+): void {
+  const { branchIdx, subIdx, subNode, mainColor, rng, result } = context;
+  const sub = branches[branchIdx]!.children![subIdx]!;
+  if (!sub.children) return;
+  for (let k = 0; k < sub.children.length; k++) {
+    const leaf = sub.children[k]!;
+    const leafNode: LayoutNode = {
+      id: `n-${getNodeIndexWithLeaf(branches, { branchIdx, subIdx, leafIdx: k })}`,
+      concept: leaf.concept,
+      depth: 3,
+      parentId: subNode.id,
+      color: mainColor,
+      geometry: generateSeededGeometry(rng),
+      children: [],
+    };
+    subNode.children.push(leafNode);
+    result.push(leafNode);
+  }
+}
+
+/**
+ * Build sub-branch and leaf LayoutNodes for a single main branch.
+ */
+function buildSubBranches(
+  mainBranches: MainBranch[],
+  context: {
+    branchIdx: number;
+    mainNode: LayoutNode;
+    mainColor: string;
+    rng: () => number;
+    result: LayoutNode[];
+  },
+): void {
+  const { branchIdx, mainNode, mainColor, rng, result } = context;
+  const main = mainBranches[branchIdx]!;
+  if (!main.children) return;
+  for (let j = 0; j < main.children.length; j++) {
+    const sub = main.children[j]!;
+    const subNode: LayoutNode = {
+      id: `n-${getNodeIndexWithSub(mainBranches, branchIdx, j)}`,
+      concept: sub.concept,
+      depth: 2,
+      parentId: mainNode.id,
+      color: mainColor,
+      geometry: generateSeededGeometry(rng),
+      children: [],
+    };
+    mainNode.children.push(subNode);
+    result.push(subNode);
+    pushLeafNodes(mainBranches, {
+      branchIdx,
+      subIdx: j,
+      subNode,
+      mainColor,
+      rng,
+      result,
+    });
+  }
+}
 
 /**
  * Build a complete LayoutNode tree from an AgentMindMapList,
@@ -215,40 +293,13 @@ export function buildLayoutTree(
       children: [],
     };
     result.push(mainNode);
-
-    if (main.children) {
-      for (let j = 0; j < main.children.length; j++) {
-        const sub = main.children[j]!;
-        const subNode: LayoutNode = {
-          id: `n-${getNodeIndexWithSub(mainBranches, i, j)}`,
-          concept: sub.concept,
-          depth: 2,
-          parentId: mainNode.id,
-          color: mainColors[i]!, // inherit main branch color
-          geometry: generateSeededGeometry(rng),
-          children: [],
-        };
-        mainNode.children.push(subNode);
-        result.push(subNode);
-
-        if (sub.children) {
-          for (let k = 0; k < sub.children.length; k++) {
-            const leaf = sub.children[k]!;
-            const leafNode: LayoutNode = {
-              id: `n-${getNodeIndexWithLeaf(mainBranches, i, j, k)}`,
-              concept: leaf.concept,
-              depth: 3,
-              parentId: subNode.id,
-              color: mainColors[i]!,
-              geometry: generateSeededGeometry(rng),
-              children: [],
-            };
-            subNode.children.push(leafNode);
-            result.push(leafNode);
-          }
-        }
-      }
-    }
+    buildSubBranches(mainBranches, {
+      branchIdx: i,
+      mainNode,
+      mainColor: mainColors[i]!,
+      rng,
+      result,
+    });
   }
 
   return result;
@@ -291,10 +342,9 @@ function getNodeIndexWithSub(
 
 function getNodeIndexWithLeaf(
   branches: MainBranch[],
-  branchIdx: number,
-  subIdx: number,
-  leafIdx: number,
+  context: { branchIdx: number; subIdx: number; leafIdx: number },
 ): number {
+  const { branchIdx, subIdx, leafIdx } = context;
   let idx = getNodeIndexWithSub(branches, branchIdx, subIdx);
   idx++;
   return idx + leafIdx;
@@ -313,7 +363,7 @@ function getNodeIndexWithLeaf(
  */
 export function assignBranchSectors(
   branchCount: number,
-  seed: number,
+  _seed: number,
 ): BranchSector[] {
   const sectors: BranchSector[] = [];
   const rightCount = Math.ceil(branchCount / 2);
@@ -322,16 +372,13 @@ export function assignBranchSectors(
   // Right side: angles from -π/3 to π/3 (spread around 0)
   const rightStart = -Math.PI / 3;
   const rightEnd = Math.PI / 3;
-  const rightStep = rightCount > 1
-    ? (rightEnd - rightStart) / (rightCount - 1)
-    : 0;
+  const rightStep =
+    rightCount > 1 ? (rightEnd - rightStart) / (rightCount - 1) : 0;
 
   // Left side: angles from 2π/3 to 4π/3 (spread around π)
   const leftStart = (2 * Math.PI) / 3;
   const leftEnd = (4 * Math.PI) / 3;
-  const leftStep = leftCount > 1
-    ? (leftEnd - leftStart) / (leftCount - 1)
-    : 0;
+  const leftStep = leftCount > 1 ? (leftEnd - leftStart) / (leftCount - 1) : 0;
 
   let rightIdx = 0;
   let leftIdx = 0;
@@ -339,9 +386,7 @@ export function assignBranchSectors(
   for (let i = 0; i < branchCount; i++) {
     if (i % 2 === 0 && rightIdx < rightCount) {
       // Even-indexed branches go right
-      const angle = rightCount > 1
-        ? rightStart + rightStep * rightIdx
-        : 0;
+      const angle = rightCount > 1 ? rightStart + rightStep * rightIdx : 0;
       sectors.push({
         angleStart: angle - Math.PI / 6,
         angleEnd: angle + Math.PI / 6,
@@ -350,9 +395,7 @@ export function assignBranchSectors(
       rightIdx++;
     } else if (leftIdx < leftCount) {
       // Odd-indexed branches go left
-      const angle = leftCount > 1
-        ? leftStart + leftStep * leftIdx
-        : Math.PI;
+      const angle = leftCount > 1 ? leftStart + leftStep * leftIdx : Math.PI;
       sectors.push({
         angleStart: angle - Math.PI / 6,
         angleEnd: angle + Math.PI / 6,

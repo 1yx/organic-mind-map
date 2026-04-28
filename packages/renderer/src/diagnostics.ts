@@ -19,8 +19,6 @@ import type {
   RenderDiagnostic,
   RenderDiagnosticKind,
   LayoutGeometry,
-  BranchGeometry,
-  CenterGeometry,
 } from "./types.js";
 
 // ─── Diagnostic Helpers ────────────────────────────────────────────────────
@@ -50,11 +48,11 @@ export function createDiagnostic(
 export function clippedTextDiagnostic(
   nodeId: string,
   concept: string,
-  maxWidth: number,
-  measuredWidth: number,
+  sizes: { maxWidth: number; measuredWidth: number },
 ): RenderDiagnostic {
-  return createDiagnostic("clipped-text",
-    `Text "${concept}" on node ${nodeId} was clipped: measured width ${measuredWidth.toFixed(1)} exceeds available width ${maxWidth.toFixed(1)}.`,
+  return createDiagnostic(
+    "clipped-text",
+    `Text "${concept}" on node ${nodeId} was clipped: measured width ${sizes.measuredWidth.toFixed(1)} exceeds available width ${sizes.maxWidth.toFixed(1)}.`,
     { nodeId, severity: "info" },
   );
 }
@@ -65,7 +63,8 @@ export function clippedTextDiagnostic(
 export function missingAssetFallbackDiagnostic(
   reason: string,
 ): RenderDiagnostic {
-  return createDiagnostic("missing-asset-fallback",
+  return createDiagnostic(
+    "missing-asset-fallback",
     `Center visual asset unavailable (${reason}); using deterministic built-in fallback.`,
     { severity: "info" },
   );
@@ -74,10 +73,9 @@ export function missingAssetFallbackDiagnostic(
 /**
  * Create a layout-overflow diagnostic.
  */
-export function layoutOverflowDiagnostic(
-  nodeId?: string,
-): RenderDiagnostic {
-  return createDiagnostic("layout-overflow",
+export function layoutOverflowDiagnostic(nodeId?: string): RenderDiagnostic {
+  return createDiagnostic(
+    "layout-overflow",
     `Branch ${nodeId ?? "(unknown)"} extends beyond paper safe area.`,
     { nodeId, severity: "warning" },
   );
@@ -90,7 +88,8 @@ export function unresolvedCollisionDiagnostic(
   nodeId1: string,
   nodeId2: string,
 ): RenderDiagnostic {
-  return createDiagnostic("unresolved-collision",
+  return createDiagnostic(
+    "unresolved-collision",
     `Unresolved overlap between nodes ${nodeId1} and ${nodeId2}.`,
     { severity: "warning" },
   );
@@ -103,7 +102,8 @@ export function branchTextCrossingDiagnostic(
   branchId: string,
   textId: string,
 ): RenderDiagnostic {
-  return createDiagnostic("branch-text-crossing",
+  return createDiagnostic(
+    "branch-text-crossing",
     `Branch ${branchId} path crosses text area of node ${textId}.`,
     { severity: "warning" },
   );
@@ -112,10 +112,9 @@ export function branchTextCrossingDiagnostic(
 /**
  * Create a hard-layout-failure diagnostic.
  */
-export function hardLayoutFailureDiagnostic(
-  reason: string,
-): RenderDiagnostic {
-  return createDiagnostic("hard-layout-failure",
+export function hardLayoutFailureDiagnostic(reason: string): RenderDiagnostic {
+  return createDiagnostic(
+    "hard-layout-failure",
     `Layout computation failed: ${reason}`,
     { severity: "error" },
   );
@@ -126,11 +125,7 @@ export function hardLayoutFailureDiagnostic(
 /**
  * Check if two axis-aligned bounding boxes overlap.
  */
-export function boxesOverlap(
-  a: LayoutBox,
-  b: LayoutBox,
-  padding = 0,
-): boolean {
+export function boxesOverlap(a: LayoutBox, b: LayoutBox, padding = 0): boolean {
   // Padding shrinks each box inward, so effective area is reduced.
   // Two boxes overlap if their shrunk areas still intersect.
   return (
@@ -143,7 +138,7 @@ export function boxesOverlap(
 
 /**
  * Find all pairs of overlapping bounding boxes.
- * Returns array of [indexA, indexB] pairs (A < B).
+ * Returns array of [indexA, indexB] pairs (A \< B).
  */
 export function findOverlaps(
   boxes: LayoutBox[],
@@ -235,7 +230,12 @@ export function computePaperLayout(
   };
 
   const spec = specs[paperKind]!;
-  const paperBounds: LayoutBox = { x: 0, y: 0, width: spec.width, height: spec.height };
+  const paperBounds: LayoutBox = {
+    x: 0,
+    y: 0,
+    width: spec.width,
+    height: spec.height,
+  };
 
   const mx = spec.width * marginRatio;
   const my = spec.height * marginRatio;

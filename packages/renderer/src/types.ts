@@ -70,11 +70,14 @@ export type TextMeasurementAdapter = {
    * Measure a text string with the given font parameters.
    * All sizes are in the SVG coordinate system (10 units = 1mm).
    */
-  measureText(text: string, options: {
-    fontSize: number;
-    fontFamily?: string;
-    fontWeight?: string;
-  }): TextMetrics;
+  measureText(
+    text: string,
+    options: {
+      fontSize: number;
+      fontFamily?: string;
+      fontWeight?: string;
+    },
+  ): TextMetrics;
 };
 
 // ─── Diagnostics ───────────────────────────────────────────────────────────
@@ -185,6 +188,6 @@ export type LayoutNode = {
 /** Sector assigned to a main branch for child placement. */
 export type BranchSector = {
   angleStart: number; // radians
-  angleEnd: number;   // radians
+  angleEnd: number; // radians
   side: "left" | "right";
 };
