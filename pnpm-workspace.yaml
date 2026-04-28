@@ -11,4 +11,5 @@ allowBuilds:
   l: true
   s: true
   u: true
+approveBuildsFor: simple-git-hooks
 approveBuildsOnInstall: true

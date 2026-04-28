@@ -18,9 +18,13 @@
     "node": ">=20",
     "pnpm": ">=9"
   },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm lint && pnpm test"
+  },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "esbuild"
+      "esbuild",
+      "simple-git-hooks"
     ]
   },
   "devDependencies": {
@@ -33,6 +37,7 @@
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-tsdoc": "^0.5.2",
     "globals": "^17.5.0",
-    "prettier": "^3.8.3"
+    "prettier": "^3.8.3",
+    "simple-git-hooks": "^2.13.1"
   }
 }
