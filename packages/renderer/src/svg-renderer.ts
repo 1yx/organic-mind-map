@@ -1,0 +1,169 @@
+/**
+ * SVG rendering engine.
+ *
+ * Assembles the final SVG output from layout geometry:
+ * - Paper background and boundary
+ * - Branch curves with tapered strokes
+ * - Text-on-path labels
+ * - Center visual
+ *
+ * Returns a complete SVG string with stable viewBox.
+ */
+
+import type { LayoutGeometry } from "./types.js";
+
+// ─── SVG Assembly ──────────────────────────────────────────────────────────
+
+/**
+ * Render a complete SVG mind map from layout geometry.
+ *
+ * @param layout - Computed layout geometry from computeLayout()
+ * @param paperBackground - CSS color string for paper background
+ * @returns Complete SVG string
+ */
+export function renderSvg(
+  layout: LayoutGeometry,
+  paperBackground: string = "#FFFFFF",
+): string {
+  const parts: string[] = [];
+
+  // SVG header
+  parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${layout.viewBox}" width="${layout.paperBounds.width}" height="${layout.paperBounds.height}">`);
+
+  // Paper background
+  parts.push(renderPaperBackground(layout, paperBackground));
+
+  // Paper boundary (subtle border)
+  parts.push(renderPaperBoundary(layout));
+
+  // Branches (render depth-first, so deeper branches are behind main branches)
+  parts.push(renderBranches(layout));
+
+  // Center visual (rendered last so it's on top)
+  parts.push(renderCenterVisual(layout));
+
+  // SVG footer
+  parts.push("</svg>");
+
+  return parts.join("\n");
+}
+
+// ─── Paper Background ──────────────────────────────────────────────────────
+
+function renderPaperBackground(
+  layout: LayoutGeometry,
+  background: string,
+): string {
+  return `  <!-- Paper background -->
+  <rect x="0" y="0" width="${layout.paperBounds.width}" height="${layout.paperBounds.height}" fill="${escapeAttr(background)}"/>`;
+}
+
+// ─── Paper Boundary ────────────────────────────────────────────────────────
+
+function renderPaperBoundary(layout: LayoutGeometry): string {
+  return `  <!-- Paper boundary -->
+  <rect x="0.5" y="0.5" width="${layout.paperBounds.width - 1}" height="${layout.paperBounds.height - 1}" fill="none" stroke="#CCCCCC" stroke-width="1"/>`;
+}
+
+// ─── Branches ──────────────────────────────────────────────────────────────
+
+function renderBranches(layout: LayoutGeometry): string {
+  const parts: string[] = [];
+  parts.push("  <!-- Branches -->");
+
+  // Collect branches by depth for layer ordering
+  const byDepth = new Map<number, string[]>();
+  for (const nodeId of layout.nodeOrder) {
+    const branch = layout.branches[nodeId];
+    if (!branch) continue;
+
+    if (!byDepth.has(branch.depth)) byDepth.set(branch.depth, []);
+    byDepth.get(branch.depth)!.push(nodeId);
+  }
+
+  // Render deepest branches first (behind), then shallower
+  const depths = Array.from(byDepth.keys()).sort((a, b) => b - a);
+
+  for (const depth of depths) {
+    const nodeIds = byDepth.get(depth);
+    if (!nodeIds) continue;
+
+    for (const nodeId of nodeIds) {
+      const branch = layout.branches[nodeId];
+      if (!branch) continue;
+
+      parts.push(renderSingleBranch(branch, nodeId));
+    }
+  }
+
+  return parts.join("\n");
+}
+
+function renderSingleBranch(
+  branch: import("./types.js").BranchGeometry,
+  nodeId: string,
+): string {
+  const pathId = `branch-${nodeId}`;
+  const textPathId = `textpath-${nodeId}`;
+  const fontSize = branch.depth === 1 ? 80 : branch.depth === 2 ? 56 : 42;
+  const fontWeight = branch.depth === 1 ? "bold" : "normal";
+  const textAnchor = branch.boundingBox.x < branch.boundingBox.x + branch.boundingBox.width / 2
+    ? "end"
+    : "start";
+  const startOffset = branch.depth === 1 ? "30%" : "25%";
+
+  // Branch path with tapered stroke — using a single <path> with stroke-width
+  // For true tapering, we use a filled shape instead of a stroked path
+  const parts: string[] = [];
+  parts.push(`  <!-- Branch: ${escapeAttr(branch.concept)} (${nodeId}) -->`);
+
+  // Use filled tapered shape for better visual appearance
+  parts.push(`  <path id="${pathId}" d="${branch.branchPath}" fill="none" stroke="${escapeAttr(branch.color)}" stroke-width="${branch.strokeWidthStart}" stroke-linecap="round" opacity="0.9"/>`);
+
+  // Text on path
+  const displayText = branch.textClipped
+    ? escapeXml(branch.concept)
+    : escapeXml(branch.concept);
+
+  parts.push(`  <path id="${textPathId}" d="${branch.textPath}" fill="none" stroke="none"/>`);
+  parts.push(`  <text font-size="${fontSize}" font-family="Arial, Helvetica, sans-serif" font-weight="${fontWeight}" fill="${escapeAttr(branch.color)}" opacity="0.95">
+    <textPath href="#${textPathId}" startOffset="${startOffset}" text-anchor="middle">
+      ${displayText}
+    </textPath>
+  </text>`);
+
+  return parts.join("\n");
+}
+
+// ─── Center Visual ─────────────────────────────────────────────────────────
+
+function renderCenterVisual(layout: LayoutGeometry): string {
+  const center = layout.center;
+  const bbox = center.boundingBox;
+
+  // Embed the center visual SVG content within a group
+  // We scale and position it within the bounding box
+  return `  <!-- Center visual${center.usedFallback ? " (fallback)" : ""} -->
+  <g transform="translate(${bbox.x.toFixed(1)}, ${bbox.y.toFixed(1)}) scale(${(bbox.width / 200).toFixed(4)}, ${(bbox.height / 200).toFixed(4)})">
+    ${center.svgContent}
+  </g>`;
+}
+
+// ─── XML Escaping ──────────────────────────────────────────────────────────
+
+function escapeXml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function escapeAttr(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}

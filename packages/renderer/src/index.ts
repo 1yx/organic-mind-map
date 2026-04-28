@@ -1,10 +1,12 @@
 /**
- * \@omm/renderer - SVG layout, rendering, and measurement.
+ * @omm/renderer - SVG layout, rendering, and measurement.
  *
- * Consumes validated data from \@omm/core and produces SVG render models.
+ * Consumes validated data from @omm/core and produces SVG render models.
  */
 
 import type { OmmDocument } from "@omm/core";
+
+// ─── Existing API (backward compatible) ────────────────────────────────────
 
 export type SvgRenderModel = {
   svg: string;
@@ -24,3 +26,81 @@ export function renderOmmToSvgModel(_doc: OmmDocument): SvgRenderModel {
 // --- SVG Loading & Safety Guard ---
 export { loadControlledSvg, isSvgSafe, getUnsafeTags } from "./svg-loader.js";
 export type { SvgLoadOptions } from "./svg-loader.js";
+
+// ─── New Renderer API ─────────────────────────────────────────────────────
+
+// --- Types ---
+export type {
+  PreviewPayload,
+  RenderInput,
+  RenderResult,
+  RenderOptions,
+  RenderDiagnostic,
+  RenderDiagnosticKind,
+  TextMeasurementAdapter,
+  TextMetrics,
+  LayoutGeometry,
+  BranchGeometry,
+  CenterGeometry,
+  BranchColorPalette,
+  SeededGeometry,
+  LayoutNode,
+  BranchSector,
+} from "./types.js";
+
+// --- Seed & Determinism ---
+export {
+  cyrb53,
+  stableSerializeTree,
+  deriveOrganicSeed,
+  createSeededPRNG,
+  generateNodeIds,
+  assignMainBranchColors,
+  generateSeededGeometry,
+  buildLayoutTree,
+  assignBranchSectors,
+  MAIN_BRANCH_COLORS,
+} from "./seed.js";
+
+// --- Layout ---
+export {
+  computeLayout,
+  createDefaultMeasurementAdapter,
+  createCanvasMeasurementAdapter,
+} from "./layout.js";
+
+// --- SVG Rendering ---
+export { renderSvg } from "./svg-renderer.js";
+
+// --- Center Visual ---
+export {
+  resolveCenterVisualSync,
+  resolveCenterVisualAsync,
+  selectBuiltinTemplate,
+  generateBuiltinCenterSvg,
+  BUILTIN_CENTER_TEMPLATES,
+} from "./center-visual.js";
+export type { CenterVisualResult } from "./center-visual.js";
+
+// --- Diagnostics ---
+export {
+  createDiagnostic,
+  clippedTextDiagnostic,
+  missingAssetFallbackDiagnostic,
+  layoutOverflowDiagnostic,
+  unresolvedCollisionDiagnostic,
+  branchTextCrossingDiagnostic,
+  hardLayoutFailureDiagnostic,
+  boxesOverlap,
+  findOverlaps,
+  buildLayoutSnapshot,
+  computePaperLayout,
+} from "./diagnostics.js";
+
+// --- Main Entry Points ---
+export {
+  renderFromPreview,
+  renderFromPreviewAsync,
+  renderFromOmm,
+  render,
+} from "./render.js";
