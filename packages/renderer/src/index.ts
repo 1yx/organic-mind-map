@@ -1,7 +1,7 @@
 /**
- * @omm/renderer - SVG layout, rendering, and measurement.
+ * \@omm/renderer - SVG layout, rendering, and measurement.
  *
- * Consumes validated data from @omm/core and produces SVG render models.
+ * Consumes validated data from \@omm/core and produces SVG render models.
  */
 
 import type { OmmDocument } from "@omm/core";

@@ -3,11 +3,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import {
-  renderFromPreview,
-  renderFromOmm,
-  render,
-} from "../render";
+import { renderFromPreview, renderFromOmm, render } from "../render";
 import type {
   PreviewPayload,
   TextMeasurementAdapter,
@@ -51,7 +47,10 @@ const FULL_PAYLOAD: PreviewPayload = {
         concept: "Operations",
         children: [
           { concept: "Processes" },
-          { concept: "Tools", children: [{ concept: "Software" }, { concept: "Hardware" }] },
+          {
+            concept: "Tools",
+            children: [{ concept: "Software" }, { concept: "Hardware" }],
+          },
         ],
       },
       {
@@ -64,7 +63,8 @@ const FULL_PAYLOAD: PreviewPayload = {
     ],
   },
   centerVisual: {
-    inlineSvg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><circle cx="100" cy="100" r="90" fill="#F39C12"/><circle cx="100" cy="100" r="50" fill="#E74C3C"/><circle cx="100" cy="100" r="20" fill="#3498DB"/></svg>',
+    inlineSvg:
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><circle cx="100" cy="100" r="90" fill="#F39C12"/><circle cx="100" cy="100" r="50" fill="#E74C3C"/><circle cx="100" cy="100" r="20" fill="#3498DB"/></svg>',
     source: "ai-svg",
   },
   meta: {
@@ -139,7 +139,7 @@ function createMockMeasure(): TextMeasurementAdapter {
 
 // ─── Integration Tests ─────────────────────────────────────────────────────
 
-describe("renderFromPreview integration", () => {
+describe("renderFromPreview - basic output", () => {
   it("7.1: returns a valid RenderResult with SVG, viewBox, diagnostics, and layout", () => {
     const result = renderFromPreview(MINIMAL_PAYLOAD, {
       measure: createMockMeasure(),
@@ -177,7 +177,9 @@ describe("renderFromPreview integration", () => {
 
     expect(result.viewBox).toBe("0 0 2970 2100");
   });
+});
 
+describe("renderFromPreview - center visual", () => {
   it("7.3: contains center visual in SVG output", () => {
     const result = renderFromPreview(MINIMAL_PAYLOAD, {
       measure: createMockMeasure(),
@@ -201,10 +203,13 @@ describe("renderFromPreview integration", () => {
     });
 
     expect(result.layout.center.usedFallback).toBe(true);
-    const fills = result.layout.center.svgContent.match(/fill="([^"]+)"/g) || [];
+    const fills =
+      result.layout.center.svgContent.match(/fill="([^"]+)"/g) || [];
     expect(fills.length).toBeGreaterThanOrEqual(3);
   });
+});
 
+describe("renderFromPreview - branches", () => {
   it("7.4: renders all branch concepts as text on path", () => {
     const result = renderFromPreview(FULL_PAYLOAD, {
       measure: createMockMeasure(),
@@ -256,7 +261,9 @@ describe("renderFromPreview integration", () => {
       expect(result.svg).toContain(branch.color);
     }
   });
+});
 
+describe("renderFromPreview - layout geometry", () => {
   it("7.6: layout geometry has all required fields", () => {
     const result = renderFromPreview(FULL_PAYLOAD, {
       measure: createMockMeasure(),
@@ -310,7 +317,9 @@ describe("renderFromPreview integration", () => {
       }
     }
   });
+});
 
+describe("renderFromPreview - determinism", () => {
   it("7.8: deterministic rendering produces identical output", () => {
     const measure = createMockMeasure();
     const a = renderFromPreview(FULL_PAYLOAD, { measure });
@@ -420,7 +429,7 @@ describe("layout snapshot export", () => {
   });
 });
 
-describe("edge cases", () => {
+describe("edge cases - simple trees", () => {
   it("handles tree with only one branch", () => {
     const payload: PreviewPayload = {
       version: 1,
@@ -453,7 +462,9 @@ describe("edge cases", () => {
     expect(result.svg).toContain("<svg");
     expect(result.svg).toContain("Center visual");
   });
+});
 
+describe("edge cases - text handling", () => {
   it("handles deeply nested text gracefully", () => {
     const payload: PreviewPayload = {
       version: 1,
@@ -470,7 +481,9 @@ describe("edge cases", () => {
               {
                 concept: "Another Extremely Long Sub-Branch Label For Testing",
                 children: [
-                  { concept: "A Leaf Node With Even More Text Content To Test" },
+                  {
+                    concept: "A Leaf Node With Even More Text Content To Test",
+                  },
                 ],
               },
             ],
@@ -480,7 +493,9 @@ describe("edge cases", () => {
     };
     const result = renderFromPreview(payload, { measure: createMockMeasure() });
     expect(result.svg).toContain("<svg");
-    const clippedDiags = result.diagnostics.filter((d: { kind: string }) => d.kind === "clipped-text");
+    const clippedDiags = result.diagnostics.filter(
+      (d: { kind: string }) => d.kind === "clipped-text",
+    );
     expect(clippedDiags.length).toBeGreaterThanOrEqual(0);
   });
 });

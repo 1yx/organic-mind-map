@@ -27,8 +27,9 @@ import {
   buildLayoutTree,
   assignBranchSectors,
 } from "./seed.js";
-import { computePaperLayout, boxesOverlap } from "./diagnostics.js";
 import {
+  computePaperLayout,
+  boxesOverlap,
   clippedTextDiagnostic,
   layoutOverflowDiagnostic,
   unresolvedCollisionDiagnostic,
@@ -36,27 +37,14 @@ import {
 
 // ─── Default Text Measurement (heuristic) ──────────────────────────────────
 
-/**
- * Character-width heuristic when no Canvas adapter is available.
- * Approximate: each character is roughly 0.6 × fontSize wide for English.
- * This is intentionally conservative.
- */
 const CHAR_WIDTH_RATIO = 0.6;
 
 function defaultMeasure(text: string, fontSize: number): TextMetrics {
   const width = text.length * fontSize * CHAR_WIDTH_RATIO;
   const height = fontSize * 1.2;
-  return {
-    width,
-    height,
-    ascent: fontSize * 0.9,
-    descent: fontSize * 0.3,
-  };
+  return { width, height, ascent: fontSize * 0.9, descent: fontSize * 0.3 };
 }
 
-/**
- * Create a default text measurement adapter using heuristic widths.
- */
 export function createDefaultMeasurementAdapter(): TextMeasurementAdapter {
   return {
     measureText(text: string, options: { fontSize: number }): TextMetrics {
@@ -65,15 +53,10 @@ export function createDefaultMeasurementAdapter(): TextMeasurementAdapter {
   };
 }
 
-/**
- * Create a Canvas-based text measurement adapter.
- * Only works in environments with OffscreenCanvas or document.createElement.
- */
 export function createCanvasMeasurementAdapter(
   fontFamily = "Arial, Helvetica, sans-serif",
 ): TextMeasurementAdapter | null {
   try {
-    // Try OffscreenCanvas first (modern browsers)
     let ctx: {
       font: string;
       measureText(text: string): {
@@ -87,7 +70,6 @@ export function createCanvasMeasurementAdapter(
       const canvas = new OffscreenCanvas(1, 1);
       ctx = canvas.getContext("2d");
     } else if (typeof document !== "undefined") {
-      // Fallback to regular canvas
       const canvas = document.createElement("canvas");
       ctx = canvas.getContext("2d");
     }
@@ -114,35 +96,22 @@ export function createCanvasMeasurementAdapter(
   }
 }
 
-// ─── Font Size by Depth ────────────────────────────────────────────────────
+// ─── Depth-based Constants ──────────────────────────────────────────────────
 
-const FONT_SIZES: Record<number, number> = {
-  1: 80, // Main branch: large text
-  2: 56, // Sub-branch: medium text
-  3: 42, // Leaf: smaller text
-};
-
+const FONT_SIZES: Record<number, number> = { 1: 80, 2: 56, 3: 42 };
 function getFontSize(depth: number): number {
   return FONT_SIZES[depth] ?? 42;
 }
 
-// ─── Stroke Widths by Depth ────────────────────────────────────────────────
-
 const STROKE_WIDTHS: Record<number, { start: number; end: number }> = {
-  1: { start: 28, end: 8 }, // Main: thick taper
-  2: { start: 16, end: 4 }, // Sub: medium taper
-  3: { start: 10, end: 2 }, // Leaf: thin taper
+  1: { start: 28, end: 8 },
+  2: { start: 16, end: 4 },
+  3: { start: 10, end: 2 },
 };
-
 function getStrokeWidths(depth: number): { start: number; end: number } {
   return STROKE_WIDTHS[depth] ?? { start: 10, end: 2 };
 }
 
-// ─── Branch Length Computation ─────────────────────────────────────────────
-
-/**
- * Compute default branch length based on paper size and depth.
- */
 function getDefaultBranchLength(
   depth: number,
   paperWidth: number,
@@ -150,69 +119,60 @@ function getDefaultBranchLength(
 ): number {
   const baseLength = paperWidth * 0.14;
   const depthFactor = depth === 1 ? 1 : depth === 2 ? 0.7 : 0.5;
-  // Slightly shorter if many children share the space
   const siblingFactor = childCount > 1 ? 1 / Math.cbrt(childCount) : 1;
   return baseLength * depthFactor * siblingFactor;
 }
 
 // ─── Path Generation ───────────────────────────────────────────────────────
 
-/**
- * Generate a quadratic Bezier curve from start to end with a control point.
- * The control point is offset perpendicular to the direct line.
- */
+function fmt(v: number): string {
+  return v.toFixed(1);
+}
+
 function generateQuadraticBezier(
   start: Point,
   end: Point,
   curvature: number,
 ): string {
-  const midX = (start.x + end.x) / 2;
-  const midY = (start.y + end.y) / 2;
-
-  // Perpendicular offset
   const dx = end.x - start.x;
   const dy = end.y - start.y;
   const len = Math.sqrt(dx * dx + dy * dy) || 1;
-  const nx = -dy / len;
-  const ny = dx / len;
-
   const offset = len * curvature * 0.3;
-  const cpX = midX + nx * offset;
-  const cpY = midY + ny * offset;
-
-  return `M${start.x.toFixed(1)},${start.y.toFixed(1)} Q${cpX.toFixed(1)},${cpY.toFixed(1)} ${end.x.toFixed(1)},${end.y.toFixed(1)}`;
+  const cpX = (start.x + end.x) / 2 + (-dy / len) * offset;
+  const cpY = (start.y + end.y) / 2 + (dx / len) * offset;
+  return `M${fmt(start.x)},${fmt(start.y)} Q${fmt(cpX)},${fmt(cpY)} ${fmt(end.x)},${fmt(end.y)}`;
 }
 
-/**
- * Generate a cubic Bezier curve from start to end with two control points
- * for more organic-looking branches.
- */
 function generateCubicBezier(
-  start: Point,
-  end: Point,
-  curvature: number,
-  side: "left" | "right",
+  line: { start: Point; end: Point },
+  opts: { curvature: number; side: "left" | "right" },
 ): string {
+  const { start, end } = line;
   const dx = end.x - start.x;
   const dy = end.y - start.y;
   const len = Math.sqrt(dx * dx + dy * dy) || 1;
   const nx = -dy / len;
   const ny = dx / len;
-
-  const offset1 = len * curvature * 0.15;
-  const offset2 = len * curvature * 0.25;
-
-  const sign = side === "left" ? -1 : 1;
-
-  const cp1X = start.x + dx * 0.33 + nx * offset1 * sign;
-  const cp1Y = start.y + dy * 0.33 + ny * offset1 * sign;
-  const cp2X = start.x + dx * 0.66 + nx * offset2 * sign;
-  const cp2Y = start.y + dy * 0.66 + ny * offset2 * sign;
-
-  return `M${start.x.toFixed(1)},${start.y.toFixed(1)} C${cp1X.toFixed(1)},${cp1Y.toFixed(1)} ${cp2X.toFixed(1)},${cp2Y.toFixed(1)} ${end.x.toFixed(1)},${end.y.toFixed(1)}`;
+  const sign = opts.side === "left" ? -1 : 1;
+  const o1 = len * opts.curvature * 0.15 * sign;
+  const o2 = len * opts.curvature * 0.25 * sign;
+  return `M${fmt(start.x)},${fmt(start.y)} C${fmt(start.x + dx * 0.33 + nx * o1)},${fmt(start.y + dy * 0.33 + ny * o1)} ${fmt(start.x + dx * 0.66 + nx * o2)},${fmt(start.y + dy * 0.66 + ny * o2)} ${fmt(end.x)},${fmt(end.y)}`;
 }
 
-// ─── Main Layout Function ──────────────────────────────────────────────────
+// ─── Layout Context ─────────────────────────────────────────────────────────
+
+type Ctx = {
+  nodes: LayoutNode[];
+  branches: Record<string, BranchGeometry>;
+  boxes: LayoutBox[];
+  order: string[];
+  paper: LayoutBox;
+  safe: LayoutBox;
+  measure: TextMeasurementAdapter;
+  diag: RenderDiagnostic[];
+};
+
+// ─── Main Entry ─────────────────────────────────────────────────────────────
 
 export type LayoutResult = {
   geometry: LayoutGeometry;
@@ -221,328 +181,286 @@ export type LayoutResult = {
   organicSeed: number;
 };
 
-/**
- * Compute the full layout for a mind map tree.
- *
- * This function:
- * 1. Derives the organic seed from the tree
- * 2. Builds the layout tree with seeded geometry
- * 3. Assigns sectors to main branches
- * 4. Places all branches recursively
- * 5. Computes bounding boxes
- * 6. Runs collision detection
- * 7. Clips text where needed
- */
+export type LayoutOptions = {
+  paperKind: "a3-landscape" | "a4-landscape";
+  centerVisualSvg: string;
+  centerUsedFallback: boolean;
+  measure: TextMeasurementAdapter;
+  marginRatio?: number;
+};
+
 export function computeLayout(
   tree: AgentMindMapList,
-  paperKind: "a3-landscape" | "a4-landscape",
-  centerVisualSvg: string,
-  centerUsedFallback: boolean,
-  measure: TextMeasurementAdapter,
-  marginRatio: number = 0.05,
+  opts: LayoutOptions,
 ): LayoutResult {
-  const diagnostics: RenderDiagnostic[] = [];
-
-  // 1. Derive seed
+  const diag: RenderDiagnostic[] = [];
   const serialized = stableSerializeTree(tree);
   const contentHash = deriveOrganicSeed(serialized);
-  const organicSeed = contentHash;
-
-  // 2. Paper layout
   const { paperBounds, safeArea, viewBox, centerPoint } = computePaperLayout(
-    paperKind,
-    marginRatio,
+    opts.paperKind,
+    opts.marginRatio ?? 0.05,
   );
-
-  // 3. Center visual bounds
-  const centerVisualSize =
-    Math.min(paperBounds.width, paperBounds.height) * 0.12;
-  const centerBounds: LayoutBox = {
-    x: centerPoint.x - centerVisualSize / 2,
-    y: centerPoint.y - centerVisualSize / 2,
-    width: centerVisualSize,
-    height: centerVisualSize,
+  const center = buildCenter(centerPoint, paperBounds, opts);
+  const layoutNodes = buildLayoutTree(tree, contentHash);
+  const ctx: Ctx = {
+    nodes: layoutNodes,
+    branches: {},
+    boxes: [center.boundingBox],
+    order: [],
+    paper: paperBounds,
+    safe: safeArea,
+    measure: opts.measure,
+    diag,
   };
-
-  const centerGeometry: CenterGeometry = {
-    boundingBox: centerBounds,
-    centerPoint,
-    svgContent: centerVisualSvg,
-    usedFallback: centerUsedFallback,
-  };
-
-  // 4. Build layout tree
-  const layoutNodes = buildLayoutTree(tree, organicSeed);
-
-  // 5. Assign sectors
-  const mainBranchNodes = layoutNodes.filter((n) => n.depth === 1);
-  const sectors = assignBranchSectors(mainBranchNodes.length, organicSeed);
-
-  // 6. Place branches
-  const branchGeometries: Record<string, BranchGeometry> = {};
-  const allBoundingBoxes: LayoutBox[] = [centerBounds];
-  const nodeOrder: string[] = [];
-
-  for (let i = 0; i < mainBranchNodes.length; i++) {
-    const node = mainBranchNodes[i]!;
-    const sector = sectors[i];
-
-    if (!sector) continue;
-
-    placeBranch(
-      node,
-      centerPoint,
-      centerVisualSize / 2,
-      sector,
-      layoutNodes,
-      branchGeometries,
-      allBoundingBoxes,
-      nodeOrder,
+  placeMainBranches(
+    layoutNodes,
+    {
+      seed: contentHash,
+      center: centerPoint,
+      radius: center.boundingBox.width / 2,
+    },
+    ctx,
+  );
+  runCollisionDetection(ctx);
+  return {
+    geometry: {
+      paperKind: opts.paperKind,
+      viewBox,
       paperBounds,
       safeArea,
-      measure,
-      diagnostics,
-      0,
-    );
-  }
-
-  // 7. Collision detection pass
-  detectCollisions(allBoundingBoxes, nodeOrder, branchGeometries, diagnostics);
-
-  // 8. Build layout geometry
-  const geometry: LayoutGeometry = {
-    paperKind,
-    viewBox,
-    paperBounds,
-    safeArea,
-    center: centerGeometry,
-    branches: branchGeometries,
-    boundingBoxes: allBoundingBoxes,
-    nodeOrder,
+      center,
+      branches: ctx.branches,
+      boundingBoxes: ctx.boxes,
+      nodeOrder: ctx.order,
+    },
+    diagnostics: diag,
+    contentHash,
+    organicSeed: contentHash,
   };
+}
 
-  return { geometry, diagnostics, contentHash, organicSeed };
+function buildCenter(
+  cp: Point,
+  pb: LayoutBox,
+  opts: { centerVisualSvg: string; centerUsedFallback: boolean },
+): CenterGeometry {
+  const size = Math.min(pb.width, pb.height) * 0.12;
+  return {
+    boundingBox: {
+      x: cp.x - size / 2,
+      y: cp.y - size / 2,
+      width: size,
+      height: size,
+    },
+    centerPoint: cp,
+    svgContent: opts.centerVisualSvg,
+    usedFallback: opts.centerUsedFallback,
+  };
+}
+
+function placeMainBranches(
+  nodes: LayoutNode[],
+  opts: { seed: number; center: Point; radius: number },
+  ctx: Ctx,
+): void {
+  const main = nodes.filter((n) => n.depth === 1);
+  const sectors = assignBranchSectors(main.length, opts.seed);
+  for (let i = 0; i < main.length; i++) {
+    const s = sectors[i];
+    if (s)
+      placeBranch(
+        main[i]!,
+        { origin: opts.center, radius: opts.radius, sector: s, depth: 0 },
+        ctx,
+      );
+  }
 }
 
 // ─── Branch Placement ──────────────────────────────────────────────────────
 
-function placeBranch(
-  node: LayoutNode,
-  origin: Point,
-  originRadius: number,
-  sector: BranchSector,
-  allNodes: LayoutNode[],
-  branchGeometries: Record<string, BranchGeometry>,
-  allBoundingBoxes: LayoutBox[],
-  nodeOrder: string[],
-  paperBounds: LayoutBox,
-  safeArea: LayoutBox,
-  measure: TextMeasurementAdapter,
-  diagnostics: RenderDiagnostic[],
-  recursionDepth: number,
-): void {
-  nodeOrder.push(node.id);
+type BranchParams = {
+  origin: Point;
+  radius: number;
+  sector: BranchSector;
+  depth: number;
+};
 
-  // Compute branch angle within the sector
-  const sectorMid = (sector.angleStart + sector.angleEnd) / 2;
-
-  // Main branch uses seeded geometry angle blended with sector angle
-  const angleBlend = recursionDepth === 0 ? 0.7 : 0.5;
-  const baseAngle =
-    sectorMid * angleBlend + node.geometry.angle * (1 - angleBlend);
-
-  // Sub-branches spread within the parent sector
-  let angle: number;
-  if (recursionDepth === 0) {
-    angle = baseAngle;
-  } else {
-    // Spread children within the sector
-    const siblingIndex = getSiblingIndex(allNodes, node);
-    const siblingCount = getSiblingCount(allNodes, node);
-    const sectorSpan = sector.angleEnd - sector.angleStart;
-    const childSpan = sectorSpan / (siblingCount + 1);
-    angle = sector.angleStart + childSpan * (siblingIndex + 1);
-  }
-
-  // Branch length
-  const childCount = node.children.length;
-  const defaultLength = getDefaultBranchLength(
-    node.depth,
-    paperBounds.width,
-    childCount,
-  );
-  const branchLength = defaultLength * node.geometry.lengthPreference;
-
-  // Start and end points
-  const startPoint: Point = {
-    x: origin.x + Math.cos(angle) * originRadius,
-    y: origin.y + Math.sin(angle) * originRadius,
+function placeBranch(node: LayoutNode, params: BranchParams, ctx: Ctx): void {
+  const { origin, radius, sector, depth } = params;
+  ctx.order.push(node.id);
+  const angle = branchAngle(node, sector, ctx);
+  const len =
+    getDefaultBranchLength(node.depth, ctx.paper.width, node.children.length) *
+    node.geometry.lengthPreference;
+  const sp = {
+    x: origin.x + Math.cos(angle) * radius,
+    y: origin.y + Math.sin(angle) * radius,
   };
-
-  const endPoint: Point = {
-    x: origin.x + Math.cos(angle) * (originRadius + branchLength),
-    y: origin.y + Math.sin(angle) * (originRadius + branchLength),
+  const ep = {
+    x: origin.x + Math.cos(angle) * (radius + len),
+    y: origin.y + Math.sin(angle) * (radius + len),
   };
-
-  // Generate path
   const pathData =
     node.depth === 1
       ? generateCubicBezier(
-          startPoint,
-          endPoint,
-          node.geometry.curvature,
-          sector.side,
+          { start: sp, end: ep },
+          { curvature: node.geometry.curvature, side: sector.side },
         )
-      : generateQuadraticBezier(startPoint, endPoint, node.geometry.curvature);
+      : generateQuadraticBezier(sp, ep, node.geometry.curvature);
 
-  // Text path (offset perpendicular to the branch for readability)
-  const textOffset =
-    (getStrokeWidths(node.depth).start + getStrokeWidths(node.depth).end) / 2 +
-    getFontSize(node.depth) * 0.3;
-  const perpX = -(endPoint.y - startPoint.y);
-  const perpY = endPoint.x - startPoint.x;
-  const perpLen = Math.sqrt(perpX * perpX + perpY * perpY) || 1;
-
-  const tpStart: Point = {
-    x: startPoint.x + (perpX / perpLen) * textOffset,
-    y: startPoint.y + (perpY / perpLen) * textOffset,
-  };
-  const tpEnd: Point = {
-    x: endPoint.x + (perpX / perpLen) * textOffset,
-    y: endPoint.y + (perpY / perpLen) * textOffset,
-  };
-
-  // Left-side branches point backward — reverse text path so labels read left-to-right
-  const isLeftSide = Math.abs(angle) > Math.PI / 2;
-  const textPathData = isLeftSide
-    ? generateQuadraticBezier(tpEnd, tpStart, node.geometry.curvature)
-    : generateQuadraticBezier(tpStart, tpEnd, node.geometry.curvature);
-
-  // Measure text
-  const fontSize = getFontSize(node.depth);
-  const textMetrics = measure.measureText(node.concept, { fontSize });
-  const strokeWidths = getStrokeWidths(node.depth);
-
-  // Check text clipping — use 95% of branch length as threshold
-  const textClipped = textMetrics.width > branchLength * 0.95;
-  let displayText = node.concept;
-  if (textClipped) {
-    // Clamp text to fit
-    displayText = clampText(
-      node.concept,
-      branchLength * 0.95,
-      textMetrics.width,
-    );
-    diagnostics.push(
-      clippedTextDiagnostic(
-        node.id,
-        node.concept,
-        branchLength * 0.95,
-        textMetrics.width,
-      ),
-    );
-  }
-
-  // Bounding box of the branch shape
-  const padding = strokeWidths.start;
-  const branchBBox: LayoutBox = computePathBoundingBox(
-    startPoint,
-    endPoint,
-    padding,
+  const geom = buildBranchGeom(
+    node,
+    { sp, ep, pathData, branchLen: len, angle },
+    ctx,
   );
+  ctx.branches[node.id] = geom;
+  ctx.boxes.push(geom.boundingBox);
 
-  // Text bounding box (approximation)
-  const textBBox: LayoutBox = {
-    x: startPoint.x - textMetrics.width / 2,
-    y: startPoint.y - textMetrics.height - textOffset,
-    width: textMetrics.width,
-    height: textMetrics.height,
-  };
-
-  // Check for paper overflow
-  if (!isBoxContained(branchBBox, safeArea)) {
-    diagnostics.push(layoutOverflowDiagnostic(node.id));
+  for (let c = 0; c < node.children.length; c++) {
+    const span = (sector.angleEnd - sector.angleStart) / node.children.length;
+    const childSector: BranchSector = {
+      angleStart: sector.angleStart + span * c,
+      angleEnd: sector.angleStart + span * (c + 1),
+      side: sector.side,
+    };
+    placeBranch(
+      node.children[c]!,
+      { origin: ep, radius: 0, sector: childSector, depth: depth + 1 },
+      ctx,
+    );
   }
+}
 
-  const branchGeometry: BranchGeometry = {
+function branchAngle(node: LayoutNode, sector: BranchSector, ctx: Ctx): number {
+  const depth = node.depth;
+  const mid = (sector.angleStart + sector.angleEnd) / 2;
+  if (depth === 1) return mid * 0.7 + node.geometry.angle * 0.3;
+  const idx = getSiblingIndex(ctx.nodes, node);
+  const cnt = getSiblingCount(ctx.nodes, node);
+  return (
+    sector.angleStart +
+    ((sector.angleEnd - sector.angleStart) / (cnt + 1)) * (idx + 1)
+  );
+}
+
+type BranchGeomInput = {
+  sp: Point;
+  ep: Point;
+  pathData: string;
+  branchLen: number;
+  angle: number;
+};
+
+function buildBranchGeom(
+  node: LayoutNode,
+  bi: BranchGeomInput,
+  ctx: Ctx,
+): BranchGeometry {
+  const sw = getStrokeWidths(node.depth);
+  const { displayText, textClipped, tm, textOff } = measureText(
+    node,
+    bi.branchLen,
+    ctx,
+  );
+  const textPath = buildTextPath(bi, node.geometry.curvature, textOff);
+  const bbox = computePathBBox(bi.sp, bi.ep, sw.start);
+  const textBBox = {
+    x: bi.sp.x - tm.width / 2,
+    y: bi.sp.y - tm.height - textOff,
+    width: tm.width,
+    height: tm.height,
+  };
+  if (!boxIn(bbox, ctx.safe)) ctx.diag.push(layoutOverflowDiagnostic(node.id));
+  return {
     nodeId: node.id,
     concept: displayText,
     depth: node.depth,
     parentNodeId: node.parentId,
     color: node.color,
-    branchPath: pathData,
-    textPath: textPathData,
-    strokeWidthStart: strokeWidths.start,
-    strokeWidthEnd: strokeWidths.end,
-    boundingBox: branchBBox,
+    branchPath: bi.pathData,
+    textPath,
+    strokeWidthStart: sw.start,
+    strokeWidthEnd: sw.end,
+    boundingBox: bbox,
     textBoundingBox: textBBox,
     textClipped,
-    startPoint,
-    endPoint,
+    startPoint: bi.sp,
+    endPoint: bi.ep,
   };
+}
 
-  branchGeometries[node.id] = branchGeometry;
-  allBoundingBoxes.push(branchBBox);
+function buildTextPath(
+  bi: BranchGeomInput,
+  curvature: number,
+  textOff: number,
+): string {
+  const px = -(bi.ep.y - bi.sp.y);
+  const py = bi.ep.x - bi.sp.x;
+  const pl = Math.sqrt(px * px + py * py) || 1;
+  const tps = {
+    x: bi.sp.x + (px / pl) * textOff,
+    y: bi.sp.y + (py / pl) * textOff,
+  };
+  const tpe = {
+    x: bi.ep.x + (px / pl) * textOff,
+    y: bi.ep.y + (py / pl) * textOff,
+  };
+  const isLeft = Math.abs(bi.angle) > Math.PI / 2;
+  return isLeft
+    ? generateQuadraticBezier(tpe, tps, curvature)
+    : generateQuadraticBezier(tps, tpe, curvature);
+}
 
-  // Recurse into children
-  if (node.children.length > 0) {
-    const childSectorSpan =
-      (sector.angleEnd - sector.angleStart) / node.children.length;
-    for (let c = 0; c < node.children.length; c++) {
-      const child = node.children[c]!;
-      const childSector: BranchSector = {
-        angleStart: sector.angleStart + childSectorSpan * c,
-        angleEnd: sector.angleStart + childSectorSpan * (c + 1),
-        side: sector.side,
-      };
-
-      placeBranch(
-        child,
-        endPoint,
-        0, // No extra radius for sub-branch start
-        childSector,
-        allNodes,
-        branchGeometries,
-        allBoundingBoxes,
-        nodeOrder,
-        paperBounds,
-        safeArea,
-        measure,
-        diagnostics,
-        recursionDepth + 1,
-      );
-    }
-  }
+function measureText(
+  node: LayoutNode,
+  branchLen: number,
+  ctx: Ctx,
+): {
+  displayText: string;
+  textClipped: boolean;
+  tm: TextMetrics;
+  textOff: number;
+} {
+  const sw = getStrokeWidths(node.depth);
+  const textOff = (sw.start + sw.end) / 2 + getFontSize(node.depth) * 0.3;
+  const fontSize = getFontSize(node.depth);
+  const tm = ctx.measure.measureText(node.concept, { fontSize });
+  const textClipped = tm.width > branchLen * 0.95;
+  const displayText = textClipped
+    ? clampText(node.concept, branchLen * 0.95, tm.width)
+    : node.concept;
+  if (textClipped)
+    ctx.diag.push(
+      clippedTextDiagnostic(node.id, node.concept, {
+        maxWidth: branchLen * 0.95,
+        measuredWidth: tm.width,
+      }),
+    );
+  return { displayText, textClipped, tm, textOff };
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
-function getSiblingIndex(allNodes: LayoutNode[], node: LayoutNode): number {
-  const parent = allNodes.find((n) => n.id === node.parentId);
-  if (!parent) return 0;
-  return parent.children.findIndex((c) => c.id === node.id);
+function getSiblingIndex(all: LayoutNode[], node: LayoutNode): number {
+  const p = all.find((n) => n.id === node.parentId);
+  return p ? p.children.findIndex((c) => c.id === node.id) : 0;
 }
 
-function getSiblingCount(allNodes: LayoutNode[], node: LayoutNode): number {
-  const parent = allNodes.find((n) => n.id === node.parentId);
-  if (!parent) return 1;
-  return parent.children.length;
+function getSiblingCount(all: LayoutNode[], node: LayoutNode): number {
+  const p = all.find((n) => n.id === node.parentId);
+  return p ? p.children.length : 1;
 }
 
-function computePathBoundingBox(
-  start: Point,
-  end: Point,
-  padding: number,
-): LayoutBox {
+function computePathBBox(s: Point, e: Point, pad: number): LayoutBox {
   return {
-    x: Math.min(start.x, end.x) - padding,
-    y: Math.min(start.y, end.y) - padding,
-    width: Math.abs(end.x - start.x) + padding * 2,
-    height: Math.abs(end.y - start.y) + padding * 2,
+    x: Math.min(s.x, e.x) - pad,
+    y: Math.min(s.y, e.y) - pad,
+    width: Math.abs(e.x - s.x) + pad * 2,
+    height: Math.abs(e.y - s.y) + pad * 2,
   };
 }
 
-function isBoxContained(inner: LayoutBox, outer: LayoutBox): boolean {
+function boxIn(inner: LayoutBox, outer: LayoutBox): boolean {
   return (
     inner.x >= outer.x &&
     inner.y >= outer.y &&
@@ -551,59 +469,32 @@ function isBoxContained(inner: LayoutBox, outer: LayoutBox): boolean {
   );
 }
 
-/**
- * Clamp text to fit within a maximum width by truncating with ellipsis.
- */
-function clampText(
-  text: string,
-  maxWidth: number,
-  measuredWidth: number,
-): string {
-  if (measuredWidth <= maxWidth) return text;
-  if (text.length <= 3) return text;
-
-  // Binary search for the right length
+function clampText(text: string, maxW: number, measuredW: number): string {
+  if (measuredW <= maxW || text.length <= 3) return text;
   let lo = 1;
-  let hi = text.length - 3; // Reserve space for "..."
+  let hi = text.length - 3;
   while (lo < hi) {
     const mid = Math.ceil((lo + hi) / 2);
-    const testText = text.slice(0, mid) + "...";
-    // Estimate: width is proportional to character count
-    const estimatedWidth = (testText.length / text.length) * measuredWidth;
-    if (estimatedWidth <= maxWidth) {
-      lo = mid;
-    } else {
-      hi = mid - 1;
-    }
+    const est = ((mid + 3) / text.length) * measuredW;
+    if (est <= maxW) lo = mid;
+    else hi = mid - 1;
   }
-
-  return lo > 0 ? text.slice(0, lo) + "..." : text.slice(0, 1) + "...";
+  return lo > 0 ? `${text.slice(0, lo)}...` : `${text.slice(0, 1)}...`;
 }
 
-/**
- * Detect collisions between branch bounding boxes and emit diagnostics.
- */
-function detectCollisions(
-  boxes: LayoutBox[],
-  nodeOrder: string[],
-  _branchGeometries: Record<string, BranchGeometry>,
-  diagnostics: RenderDiagnostic[],
-): void {
-  const minPadding = 20; // Minimum spacing between branches
-  const collisionSet = new Set<string>();
-
-  for (let i = 0; i < boxes.length; i++) {
-    for (let j = i + 1; j < boxes.length; j++) {
-      // Skip center box (index 0) vs branch comparisons — those are expected
-      if (i === 0) continue;
-
-      if (boxesOverlap(boxes[i]!, boxes[j]!, minPadding)) {
-        const nodeId1 = nodeOrder[i - 1] ?? `unknown-${i}`;
-        const nodeId2 = nodeOrder[j - 1] ?? `unknown-${j}`;
-        const key = [nodeId1, nodeId2].sort().join(":");
-        if (!collisionSet.has(key)) {
-          collisionSet.add(key);
-          diagnostics.push(unresolvedCollisionDiagnostic(nodeId1, nodeId2));
+function runCollisionDetection(ctx: Ctx): void {
+  const minPad = 20;
+  const seen = new Set<string>();
+  for (let i = 0; i < ctx.boxes.length; i++) {
+    if (i === 0) continue;
+    for (let j = i + 1; j < ctx.boxes.length; j++) {
+      if (boxesOverlap(ctx.boxes[i]!, ctx.boxes[j]!, minPad)) {
+        const id1 = ctx.order[i - 1] ?? `unknown-${i}`;
+        const id2 = ctx.order[j - 1] ?? `unknown-${j}`;
+        const key = [id1, id2].sort().join(":");
+        if (!seen.has(key)) {
+          seen.add(key);
+          ctx.diag.push(unresolvedCollisionDiagnostic(id1, id2));
         }
       }
     }

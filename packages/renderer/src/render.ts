@@ -5,38 +5,26 @@
  * or an OmmDocument and return a complete SVG render result.
  */
 
-import type {
-  OmmDocument,
-  AgentMindMapList,
-  PaperKind,
-} from "@omm/core";
+import type { OmmDocument, AgentMindMapList } from "@omm/core";
 import type {
   PreviewPayload,
   RenderInput,
   RenderResult,
   RenderOptions,
-  TextMeasurementAdapter,
 } from "./types.js";
-import {
-  stableSerializeTree,
-  deriveOrganicSeed,
-} from "./seed.js";
-import {
-  computeLayout,
-  createDefaultMeasurementAdapter,
-} from "./layout.js";
+import { stableSerializeTree, deriveOrganicSeed } from "./seed.js";
+import { computeLayout, createDefaultMeasurementAdapter } from "./layout.js";
 import { renderSvg } from "./svg-renderer.js";
 import {
   resolveCenterVisualSync,
   resolveCenterVisualAsync,
 } from "./center-visual.js";
-import { hardLayoutFailureDiagnostic } from "./diagnostics.js";
 
 /**
  * Render a mind map from a PreviewPayload (CLI handoff format).
  *
  * This is the primary entry point for the Phase 1 flow:
- * Agent CLI -> PreviewPayload -> browser renderer -> SVG preview.
+ * Agent CLI -\> PreviewPayload -\> browser renderer -\> SVG preview.
  *
  * @param payload - Validated PreviewPayload from the CLI
  * @param options - Optional rendering configuration
@@ -46,12 +34,11 @@ export function renderFromPreview(
   payload: PreviewPayload,
   options?: RenderOptions,
 ): RenderResult {
-  return renderFromTree(
-    payload.tree,
-    payload.paper,
-    payload.centerVisual?.inlineSvg,
-    options,
-  );
+  return renderFromTree(payload.tree, {
+    paperKind: payload.paper,
+    inlineSvg: payload.centerVisual?.inlineSvg,
+    renderOptions: options,
+  });
 }
 
 /**
@@ -74,25 +61,25 @@ export async function renderFromPreviewAsync(
   const contentHash = deriveOrganicSeed(serialized);
 
   // Resolve center visual (async)
-  const centerResult = await resolveCenterVisualAsync(
-    tree.center,
-    payload,
+  const centerResult = await resolveCenterVisualAsync(tree.center, payload, {
     contentHash,
     loadSvg,
-  );
+  });
 
   // Compute layout
-  const layoutResult = computeLayout(
-    tree,
+  const layoutResult = computeLayout(tree, {
     paperKind,
-    centerResult.svgContent,
-    centerResult.usedFallback,
+    centerVisualSvg: centerResult.svgContent,
+    centerUsedFallback: centerResult.usedFallback,
     measure,
     marginRatio,
-  );
+  });
 
   // Merge diagnostics
-  const allDiagnostics = [...centerResult.diagnostics, ...layoutResult.diagnostics];
+  const allDiagnostics = [
+    ...centerResult.diagnostics,
+    ...layoutResult.diagnostics,
+  ];
 
   // Render SVG
   const svg = renderSvg(layoutResult.geometry, options?.paperBackground);
@@ -122,12 +109,11 @@ export function renderFromOmm(
   const paperKind = document.paper.kind as "a3-landscape" | "a4-landscape";
 
   // Use center visual from document if available
-  let inlineSvg: string | undefined;
   // In .omm format, center visuals are referenced by asset ID
   // For now, no inline SVG is extracted from OmmDocument
-  inlineSvg = undefined;
+  const inlineSvg = undefined;
 
-  return renderFromTree(tree, paperKind, inlineSvg, options);
+  return renderFromTree(tree, { paperKind, inlineSvg, renderOptions: options });
 }
 
 // ─── Internal ──────────────────────────────────────────────────────────────
@@ -137,12 +123,15 @@ export function renderFromOmm(
  */
 function renderFromTree(
   tree: AgentMindMapList,
-  paperKind: "a3-landscape" | "a4-landscape",
-  inlineSvg: string | undefined,
-  options?: RenderOptions,
+  options: {
+    paperKind: "a3-landscape" | "a4-landscape";
+    inlineSvg?: string;
+    renderOptions?: RenderOptions;
+  },
 ): RenderResult {
-  const measure = options?.measure ?? createDefaultMeasurementAdapter();
-  const marginRatio = options?.marginRatio ?? 0.05;
+  const measure =
+    options.renderOptions?.measure ?? createDefaultMeasurementAdapter();
+  const marginRatio = options.renderOptions?.marginRatio ?? 0.05;
 
   // Derive seed
   const serialized = stableSerializeTree(tree);
@@ -151,25 +140,30 @@ function renderFromTree(
   // Resolve center visual (sync)
   const centerResult = resolveCenterVisualSync(
     tree.center,
-    inlineSvg,
+    options.inlineSvg,
     contentHash,
   );
 
   // Compute layout
-  const layoutResult = computeLayout(
-    tree,
-    paperKind,
-    centerResult.svgContent,
-    centerResult.usedFallback,
+  const layoutResult = computeLayout(tree, {
+    paperKind: options.paperKind,
+    centerVisualSvg: centerResult.svgContent,
+    centerUsedFallback: centerResult.usedFallback,
     measure,
     marginRatio,
-  );
+  });
 
   // Merge diagnostics
-  const allDiagnostics = [...centerResult.diagnostics, ...layoutResult.diagnostics];
+  const allDiagnostics = [
+    ...centerResult.diagnostics,
+    ...layoutResult.diagnostics,
+  ];
 
   // Render SVG
-  const svg = renderSvg(layoutResult.geometry, options?.paperBackground);
+  const svg = renderSvg(
+    layoutResult.geometry,
+    options.renderOptions?.paperBackground,
+  );
 
   return {
     svg,

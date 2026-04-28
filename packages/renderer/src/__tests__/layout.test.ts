@@ -3,21 +3,14 @@
  */
 
 import { describe, it, expect } from "vitest";
-import {
-  computeLayout,
-  createDefaultMeasurementAdapter,
-} from "../layout";
-import {
-  computePaperLayout,
-  boxesOverlap,
-  findOverlaps,
-} from "../diagnostics";
-import {
-  stableSerializeTree,
-  deriveOrganicSeed,
-} from "../seed";
+import { computeLayout, createDefaultMeasurementAdapter } from "../layout";
+import { computePaperLayout, boxesOverlap, findOverlaps } from "../diagnostics";
 import type { AgentMindMapList } from "@omm/core";
-import type { TextMeasurementAdapter, TextMetrics, BranchGeometry } from "../types";
+import type {
+  TextMeasurementAdapter,
+  TextMetrics,
+  BranchGeometry,
+} from "../types";
 
 // ─── Fixture ───────────────────────────────────────────────────────────────
 
@@ -25,10 +18,7 @@ const SIMPLE_TREE: AgentMindMapList = {
   version: 1,
   title: "Simple Map",
   center: { concept: "Center" },
-  branches: [
-    { concept: "Branch A" },
-    { concept: "Branch B" },
-  ],
+  branches: [{ concept: "Branch A" }, { concept: "Branch B" }],
 };
 
 const NESTED_TREE: AgentMindMapList = {
@@ -39,18 +29,20 @@ const NESTED_TREE: AgentMindMapList = {
     {
       concept: "Main One",
       children: [
-        { concept: "Sub 1A", children: [{ concept: "Leaf 1A1" }, { concept: "Leaf 1A2" }] },
+        {
+          concept: "Sub 1A",
+          children: [{ concept: "Leaf 1A1" }, { concept: "Leaf 1A2" }],
+        },
         { concept: "Sub 1B" },
       ],
     },
     {
       concept: "Main Two",
-      children: [
-        { concept: "Sub 2A" },
-      ],
+      children: [{ concept: "Sub 2A" }],
     },
     {
-      concept: "Main Three" },
+      concept: "Main Three",
+    },
   ],
 };
 
@@ -78,6 +70,34 @@ function createMockMeasure(): TextMeasurementAdapter {
       };
     },
   };
+}
+
+// ─── Helper ─────────────────────────────────────────────────────────────────
+
+function layout(
+  tree: AgentMindMapList = SIMPLE_TREE,
+  paper: "a3-landscape" | "a4-landscape" = "a3-landscape",
+  svg = "<svg></svg>",
+) {
+  return computeLayout(tree, {
+    paperKind: paper,
+    centerVisualSvg: svg,
+    centerUsedFallback: true,
+    measure: createMockMeasure(),
+  });
+}
+
+function layoutNoFallback(
+  tree: AgentMindMapList,
+  paper: "a3-landscape" | "a4-landscape",
+  svg: string,
+) {
+  return computeLayout(tree, {
+    paperKind: paper,
+    centerVisualSvg: svg,
+    centerUsedFallback: false,
+    measure: createMockMeasure(),
+  });
 }
 
 // ─── Paper Layout Tests ────────────────────────────────────────────────────
@@ -143,11 +163,9 @@ describe("createDefaultMeasurementAdapter", () => {
 
 // ─── Layout Computation ────────────────────────────────────────────────────
 
-describe("computeLayout", () => {
+describe("computeLayout - basic structure", () => {
   it("produces layout geometry with required fields", () => {
-    const measure = createMockMeasure();
-    const result = computeLayout(SIMPLE_TREE, "a3-landscape", "<svg></svg>", true, measure);
-
+    const result = layout();
     expect(result.geometry).toBeDefined();
     expect(result.geometry.viewBox).toBe("0 0 4200 2970");
     expect(result.geometry.paperKind).toBe("a3-landscape");
@@ -157,34 +175,31 @@ describe("computeLayout", () => {
   });
 
   it("places center at paper center", () => {
-    const measure = createMockMeasure();
-    const result = computeLayout(SIMPLE_TREE, "a3-landscape", "<svg></svg>", true, measure);
-
+    const result = layout();
     expect(result.geometry.center.centerPoint.x).toBe(2100);
     expect(result.geometry.center.centerPoint.y).toBe(1485);
   });
 
   it("generates branch geometries for all tree nodes", () => {
-    const measure = createMockMeasure();
-    const result = computeLayout(SIMPLE_TREE, "a3-landscape", "<svg></svg>", true, measure);
-
+    const result = layout();
     expect(Object.keys(result.geometry.branches)).toHaveLength(2);
     expect(result.geometry.nodeOrder).toHaveLength(2);
   });
+});
 
+describe("computeLayout - nested trees", () => {
   it("handles nested trees", () => {
-    const measure = createMockMeasure();
-    const result = computeLayout(NESTED_TREE, "a3-landscape", "<svg></svg>", true, measure);
-
+    const result = layout(NESTED_TREE);
     expect(Object.keys(result.geometry.branches)).toHaveLength(8);
     expect(result.geometry.nodeOrder).toHaveLength(8);
   });
+});
 
+describe("computeLayout - branch paths", () => {
   it("branch geometries have valid path data", () => {
-    const measure = createMockMeasure();
-    const result = computeLayout(SIMPLE_TREE, "a3-landscape", "<svg></svg>", true, measure);
-
-    const branches = Object.values(result.geometry.branches) as BranchGeometry[];
+    const branches = Object.values(
+      layout().geometry.branches,
+    ) as BranchGeometry[];
     for (const branch of branches) {
       expect(branch.branchPath).toMatch(/^M/);
       expect(branch.textPath).toMatch(/^M/);
@@ -193,28 +208,17 @@ describe("computeLayout", () => {
       expect(branch.boundingBox).toBeDefined();
     }
   });
+});
 
-  it("is deterministic for the same input", () => {
-    const measure = createMockMeasure();
-    const a = computeLayout(SIMPLE_TREE, "a3-landscape", "<svg></svg>", true, measure);
-    const b = computeLayout(SIMPLE_TREE, "a3-landscape", "<svg></svg>", true, measure);
-    expect(a.geometry.nodeOrder).toEqual(b.geometry.nodeOrder);
-    expect(a.contentHash).toBe(b.contentHash);
-  });
-
-  it("uses correct viewBox for A4", () => {
-    const measure = createMockMeasure();
-    const result = computeLayout(SIMPLE_TREE, "a4-landscape", "<svg></svg>", true, measure);
-    expect(result.geometry.viewBox).toBe("0 0 2970 2100");
-  });
-
+describe("computeLayout - stroke widths", () => {
   it("branch stroke widths decrease with depth", () => {
-    const measure = createMockMeasure();
-    const result = computeLayout(NESTED_TREE, "a3-landscape", "<svg></svg>", true, measure);
-
-    const branches = Object.values(result.geometry.branches) as BranchGeometry[];
+    const branches = Object.values(
+      layout(NESTED_TREE).geometry.branches,
+    ) as BranchGeometry[];
     for (const branch of branches) {
-      expect(branch.strokeWidthStart).toBeGreaterThanOrEqual(branch.strokeWidthEnd);
+      expect(branch.strokeWidthStart).toBeGreaterThanOrEqual(
+        branch.strokeWidthEnd,
+      );
       if (branch.depth === 1) {
         expect(branch.strokeWidthStart).toBe(28);
       } else if (branch.depth === 2) {
@@ -224,11 +228,13 @@ describe("computeLayout", () => {
       }
     }
   });
+});
 
+describe("computeLayout - branch colors", () => {
   it("main branches have distinct colors", () => {
-    const measure = createMockMeasure();
-    const result = computeLayout(SIMPLE_TREE, "a3-landscape", "<svg></svg>", true, measure);
-    const branches = Object.values(result.geometry.branches) as BranchGeometry[];
+    const branches = Object.values(
+      layout().geometry.branches,
+    ) as BranchGeometry[];
     const mainBranches = branches.filter((b) => b.depth === 1);
     const colors = mainBranches.map((b) => b.color);
     const unique = new Set(colors);
@@ -236,33 +242,51 @@ describe("computeLayout", () => {
   });
 
   it("children inherit parent branch color", () => {
-    const measure = createMockMeasure();
-    const result = computeLayout(NESTED_TREE, "a3-landscape", "<svg></svg>", true, measure);
-
-    const branches = Object.values(result.geometry.branches) as BranchGeometry[];
+    const branches = Object.values(
+      layout(NESTED_TREE).geometry.branches,
+    ) as BranchGeometry[];
     const mainBranch = branches.find((b) => b.depth === 1);
     if (mainBranch) {
-      const children = branches.filter((b) => b.parentNodeId === mainBranch.nodeId);
+      const children = branches.filter(
+        (b) => b.parentNodeId === mainBranch.nodeId,
+      );
       for (const child of children) {
         expect(child.color).toBe(mainBranch.color);
       }
     }
   });
+});
 
+describe("computeLayout - determinism and paper", () => {
+  it("is deterministic for the same input", () => {
+    const a = layout();
+    const b = layout();
+    expect(a.geometry.nodeOrder).toEqual(b.geometry.nodeOrder);
+    expect(a.contentHash).toBe(b.contentHash);
+  });
+
+  it("uses correct viewBox for A4", () => {
+    const result = layout(SIMPLE_TREE, "a4-landscape");
+    expect(result.geometry.viewBox).toBe("0 0 2970 2100");
+  });
+});
+
+describe("computeLayout - center and text clipping", () => {
   it("center visual SVG content is stored", () => {
-    const measure = createMockMeasure();
-    const testSvg = '<svg viewBox="0 0 200 200"><circle cx="100" cy="100" r="50" fill="blue"/></svg>';
-    const result = computeLayout(SIMPLE_TREE, "a3-landscape", testSvg, false, measure);
+    const testSvg =
+      '<svg viewBox="0 0 200 200"><circle cx="100" cy="100" r="50" fill="blue"/></svg>';
+    const result = layoutNoFallback(SIMPLE_TREE, "a3-landscape", testSvg);
     expect(result.geometry.center.svgContent).toBe(testSvg);
     expect(result.geometry.center.usedFallback).toBe(false);
   });
 
   it("clips text when it exceeds branch length", () => {
-    const measure = createMockMeasure();
-    const result = computeLayout(LONG_TEXT_TREE, "a3-landscape", "<svg></svg>", true, measure);
-
-    const branches = Object.values(result.geometry.branches) as BranchGeometry[];
-    const longBranch = branches.find((b) => b.concept.includes("...") || b.textClipped);
+    const branches = Object.values(
+      layout(LONG_TEXT_TREE).geometry.branches,
+    ) as BranchGeometry[];
+    const longBranch = branches.find(
+      (b) => b.concept.includes("...") || b.textClipped,
+    );
     expect(longBranch).toBeDefined();
     expect(longBranch!.textClipped).toBe(true);
   });
@@ -317,8 +341,15 @@ describe("findOverlaps", () => {
 describe("layout diagnostics", () => {
   it("emits clipped-text diagnostics for long text", () => {
     const measure = createMockMeasure();
-    const result = computeLayout(LONG_TEXT_TREE, "a3-landscape", "<svg></svg>", true, measure);
-    const clippedDiags = result.diagnostics.filter((d: { kind: string }) => d.kind === "clipped-text");
+    const result = computeLayout(LONG_TEXT_TREE, {
+      paperKind: "a3-landscape",
+      centerVisualSvg: "<svg></svg>",
+      centerUsedFallback: true,
+      measure,
+    });
+    const clippedDiags = result.diagnostics.filter(
+      (d: { kind: string }) => d.kind === "clipped-text",
+    );
     expect(clippedDiags.length).toBeGreaterThanOrEqual(1);
   });
 });

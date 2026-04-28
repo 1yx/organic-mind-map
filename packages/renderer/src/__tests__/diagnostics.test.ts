@@ -43,7 +43,10 @@ describe("createDiagnostic", () => {
 
 describe("clippedTextDiagnostic", () => {
   it("creates a clipped-text diagnostic with info severity", () => {
-    const diag = clippedTextDiagnostic("n-3", "Long Text", 100, 200);
+    const diag = clippedTextDiagnostic("n-3", "Long Text", {
+      maxWidth: 100,
+      measuredWidth: 200,
+    });
     expect(diag.kind).toBe("clipped-text");
     expect(diag.severity).toBe("info");
     expect(diag.nodeId).toBe("n-3");
@@ -164,7 +167,9 @@ describe("findOverlaps", () => {
   });
 
   it("returns empty for single box", () => {
-    expect(findOverlaps([{ x: 0, y: 0, width: 100, height: 100 }])).toHaveLength(0);
+    expect(
+      findOverlaps([{ x: 0, y: 0, width: 100, height: 100 }]),
+    ).toHaveLength(0);
   });
 });
 
@@ -221,13 +226,23 @@ describe("buildLayoutSnapshot", () => {
 describe("computePaperLayout", () => {
   it("A3 has correct dimensions", () => {
     const result = computePaperLayout("a3-landscape", 0.05);
-    expect(result.paperBounds).toEqual({ x: 0, y: 0, width: 4200, height: 2970 });
+    expect(result.paperBounds).toEqual({
+      x: 0,
+      y: 0,
+      width: 4200,
+      height: 2970,
+    });
     expect(result.viewBox).toBe("0 0 4200 2970");
   });
 
   it("A4 has correct dimensions", () => {
     const result = computePaperLayout("a4-landscape", 0.05);
-    expect(result.paperBounds).toEqual({ x: 0, y: 0, width: 2970, height: 2100 });
+    expect(result.paperBounds).toEqual({
+      x: 0,
+      y: 0,
+      width: 2970,
+      height: 2100,
+    });
     expect(result.viewBox).toBe("0 0 2970 2100");
   });
 

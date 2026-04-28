@@ -108,7 +108,7 @@ describe("stableSerializeTree", () => {
 
   it("produces valid JSON that parses", () => {
     const json = stableSerializeTree(SAMPLE_TREE);
-    const parsed = JSON.parse(json);
+    const parsed = JSON.parse(json) as Record<string, unknown>;
     expect(parsed).toBeDefined();
   });
 
@@ -205,11 +205,17 @@ describe("createSeededPRNG", () => {
 
 // ─── Node ID Generation ────────────────────────────────────────────────────
 
-describe("generateNodeIds", () => {
+describe("generateNodeIds - ID generation", () => {
   it("generates stable IDs in tree order", () => {
     const ids = generateNodeIds(SAMPLE_TREE);
     expect(ids.map((n) => n.id)).toEqual([
-      "n-0", "n-1", "n-2", "n-3", "n-4", "n-5", "n-6",
+      "n-0",
+      "n-1",
+      "n-2",
+      "n-3",
+      "n-4",
+      "n-5",
+      "n-6",
     ]);
   });
 
@@ -230,7 +236,9 @@ describe("generateNodeIds", () => {
     expect(ids[3]!.depth).toBe(2);
     expect(ids[4]!.depth).toBe(1);
   });
+});
 
+describe("generateNodeIds - edge cases", () => {
   it("is deterministic", () => {
     const a = generateNodeIds(SAMPLE_TREE);
     const b = generateNodeIds(SAMPLE_TREE);
@@ -239,7 +247,9 @@ describe("generateNodeIds", () => {
 
   it("handles a tree with only main branches", () => {
     const tree: AgentMindMapList = {
-      version: 1, title: "T", center: { concept: "C" },
+      version: 1,
+      title: "T",
+      center: { concept: "C" },
       branches: [{ concept: "A" }, { concept: "B" }],
     };
     const ids = generateNodeIds(tree);
@@ -250,7 +260,9 @@ describe("generateNodeIds", () => {
 
   it("handles an empty tree", () => {
     const tree: AgentMindMapList = {
-      version: 1, title: "T", center: { concept: "C" },
+      version: 1,
+      title: "T",
+      center: { concept: "C" },
       branches: [],
     };
     const ids = generateNodeIds(tree);
@@ -360,7 +372,9 @@ describe("buildLayoutTree", () => {
   it("children inherit main branch color", () => {
     const seed = deriveOrganicSeed(stableSerializeTree(SAMPLE_TREE));
     const tree = buildLayoutTree(SAMPLE_TREE, seed);
-    const main1 = tree.find((n: { concept: string }) => n.concept === "Branch One");
+    const main1 = tree.find(
+      (n: { concept: string }) => n.concept === "Branch One",
+    );
     const sub1a = tree.find((n: { concept: string }) => n.concept === "Sub 1A");
     expect(sub1a?.color).toBe(main1?.color);
   });

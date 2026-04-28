@@ -6,10 +6,9 @@
  */
 
 import type { AgentCenter } from "@omm/core";
-import type { PreviewPayload } from "./types.js";
 import { missingAssetFallbackDiagnostic } from "./diagnostics.js";
 import { isSvgSafe } from "./svg-loader.js";
-import type { RenderDiagnostic } from "./types.js";
+import type { PreviewPayload, RenderDiagnostic } from "./types.js";
 
 // ─── Built-in Center Visual Templates ──────────────────────────────────────
 
@@ -212,13 +211,30 @@ export function resolveCenterVisualSync(
 }
 
 /**
+ * Attempt to load an SVG from a URL, returning content or pushing a diagnostic.
+ */
+async function tryLoadSvgUrl(
+  url: string | undefined,
+  loadSvg: (url: string) => Promise<string | null>,
+  context: { diagnostics: RenderDiagnostic[]; failureMsg: string },
+): Promise<string | null> {
+  if (!url) return null;
+  const loaded = await loadSvg(url);
+  if (loaded) return loaded;
+  context.diagnostics.push(missingAssetFallbackDiagnostic(context.failureMsg));
+  return null;
+}
+
+/**
  * Async version that attempts URL loading before falling back.
  */
 export async function resolveCenterVisualAsync(
   center: AgentCenter,
   payload: PreviewPayload,
-  contentHash: number,
-  loadSvg: (url: string) => Promise<string | null>,
+  options: {
+    contentHash: number;
+    loadSvg: (url: string) => Promise<string | null>;
+  },
 ): Promise<CenterVisualResult> {
   const diagnostics: RenderDiagnostic[] = [];
 
@@ -237,40 +253,21 @@ export async function resolveCenterVisualAsync(
     );
   }
 
-  // 2. Try URL loading
-  if (payload.centerVisual?.svgUrl) {
-    const loaded = await loadSvg(payload.centerVisual.svgUrl);
-    if (loaded) {
-      return {
-        svgContent: loaded,
-        usedFallback: false,
-        diagnostics: [],
-      };
-    }
-    diagnostics.push(
-      missingAssetFallbackDiagnostic("SVG URL load failed or rejected"),
-    );
-  } else if (center.svgUrl) {
-    const loaded = await loadSvg(center.svgUrl);
-    if (loaded) {
-      return {
-        svgContent: loaded,
-        usedFallback: false,
-        diagnostics: [],
-      };
-    }
-    diagnostics.push(
-      missingAssetFallbackDiagnostic("center SVG URL load failed or rejected"),
-    );
-  }
+  // 2. Try URL loading (payload first, then center fallback)
+  const url = payload.centerVisual?.svgUrl ?? center.svgUrl;
+  const failureMsg = payload.centerVisual?.svgUrl
+    ? "SVG URL load failed or rejected"
+    : "center SVG URL load failed or rejected";
+  const loaded = await tryLoadSvgUrl(url, options.loadSvg, {
+    diagnostics,
+    failureMsg,
+  });
+  if (loaded)
+    return { svgContent: loaded, usedFallback: false, diagnostics: [] };
 
   // 3. Built-in fallback
-  const templateName = selectBuiltinTemplate(contentHash);
-  const svgContent = generateBuiltinCenterSvg(templateName);
-
-  return {
-    svgContent,
-    usedFallback: true,
-    diagnostics,
-  };
+  const svgContent = generateBuiltinCenterSvg(
+    selectBuiltinTemplate(options.contentHash),
+  );
+  return { svgContent, usedFallback: true, diagnostics };
 }

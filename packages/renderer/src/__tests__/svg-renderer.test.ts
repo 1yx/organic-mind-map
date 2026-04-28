@@ -52,19 +52,18 @@ function createMockMeasure(): TextMeasurementAdapter {
 
 function getSampleLayout(): LayoutGeometry {
   const measure = createMockMeasure();
-  const result = computeLayout(
-    SAMPLE_TREE,
-    "a3-landscape",
-    "<svg></svg>",
-    true,
+  const result = computeLayout(SAMPLE_TREE, {
+    paperKind: "a3-landscape",
+    centerVisualSvg: "<svg></svg>",
+    centerUsedFallback: true,
     measure,
-  );
+  });
   return result.geometry;
 }
 
 // ─── SVG Rendering Tests ───────────────────────────────────────────────────
 
-describe("renderSvg", () => {
+describe("renderSvg - structure", () => {
   it("returns a non-empty SVG string", () => {
     const layout = getSampleLayout();
     const svg = renderSvg(layout);
@@ -103,16 +102,16 @@ describe("renderSvg", () => {
     expect(svg).toContain("Paper boundary");
     expect(svg).toContain('stroke="#CCCCCC"');
   });
+});
 
+describe("renderSvg - content", () => {
   it("renders branches with tapered path shapes", () => {
     const layout = getSampleLayout();
     const svg = renderSvg(layout);
     expect(svg).toContain("<!-- Branches -->");
     const branches = Object.values(layout.branches) as BranchGeometry[];
     for (const branch of branches) {
-      // Each branch should have a path element using its color
       expect(svg).toContain(`fill="${branch.color}"`);
-      // Text path should be present
       expect(svg).toContain(branch.textPath);
     }
   });
@@ -140,7 +139,9 @@ describe("renderSvg", () => {
     const svg = renderSvg(layout);
     expect(svg).toContain("<!-- Center visual");
   });
+});
 
+describe("renderSvg - styling and refs", () => {
   it("applies custom paper background color", () => {
     const layout = getSampleLayout();
     const svg = renderSvg(layout, "#F5F5DC");
@@ -168,7 +169,7 @@ describe("renderSvg", () => {
 
 // ─── Center Visual Tests ───────────────────────────────────────────────────
 
-describe("center visual", () => {
+describe("center visual - builtin templates", () => {
   it("selectBuiltinTemplate returns a known template name", () => {
     const name = selectBuiltinTemplate(42);
     expect(BUILTIN_CENTER_TEMPLATES).toContain(name);
@@ -215,79 +216,63 @@ describe("center visual", () => {
       expect(svg).not.toContain("onload");
     }
   });
+});
 
-  describe("resolveCenterVisualSync", () => {
-    it("uses inline SVG when provided and valid", () => {
-      const inlineSvg =
-        '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="blue"/></svg>';
-      const result = resolveCenterVisualSync(
-        { concept: "Test" },
-        inlineSvg,
-        42,
-      );
-      expect(result.svgContent).toBe(inlineSvg);
-      expect(result.usedFallback).toBe(false);
-      expect(result.diagnostics).toHaveLength(0);
-    });
+describe("resolveCenterVisualSync - valid input", () => {
+  it("uses inline SVG when provided and valid", () => {
+    const inlineSvg =
+      '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="blue"/></svg>';
+    const result = resolveCenterVisualSync({ concept: "Test" }, inlineSvg, 42);
+    expect(result.svgContent).toBe(inlineSvg);
+    expect(result.usedFallback).toBe(false);
+    expect(result.diagnostics).toHaveLength(0);
+  });
+});
 
-    it("rejects unsafe inline SVG with script tag", () => {
-      const unsafeSvg =
-        '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script><circle cx="12" cy="12" r="10"/></svg>';
-      const result = resolveCenterVisualSync(
-        { concept: "Test" },
-        unsafeSvg,
-        42,
-      );
-      expect(result.usedFallback).toBe(true);
-      expect(result.diagnostics.length).toBeGreaterThanOrEqual(1);
-    });
+describe("resolveCenterVisualSync - rejection", () => {
+  it("rejects unsafe inline SVG with script tag", () => {
+    const unsafeSvg =
+      '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script><circle cx="12" cy="12" r="10"/></svg>';
+    const result = resolveCenterVisualSync({ concept: "Test" }, unsafeSvg, 42);
+    expect(result.usedFallback).toBe(true);
+    expect(result.diagnostics.length).toBeGreaterThanOrEqual(1);
+  });
 
-    it("rejects unsafe inline SVG with event handler", () => {
-      const unsafeSvg =
-        '<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"><circle cx="12" cy="12" r="10"/></svg>';
-      const result = resolveCenterVisualSync(
-        { concept: "Test" },
-        unsafeSvg,
-        42,
-      );
-      expect(result.usedFallback).toBe(true);
-    });
+  it("rejects unsafe inline SVG with event handler", () => {
+    const unsafeSvg =
+      '<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"><circle cx="12" cy="12" r="10"/></svg>';
+    const result = resolveCenterVisualSync({ concept: "Test" }, unsafeSvg, 42);
+    expect(result.usedFallback).toBe(true);
+  });
 
-    it("falls back when inline SVG is invalid", () => {
-      const result = resolveCenterVisualSync(
-        { concept: "Test" },
-        "not an svg",
-        42,
-      );
-      expect(result.usedFallback).toBe(true);
-      expect(result.diagnostics.length).toBeGreaterThanOrEqual(1);
-    });
+  it("falls back when inline SVG is invalid", () => {
+    const result = resolveCenterVisualSync(
+      { concept: "Test" },
+      "not an svg",
+      42,
+    );
+    expect(result.usedFallback).toBe(true);
+    expect(result.diagnostics.length).toBeGreaterThanOrEqual(1);
+  });
+});
 
-    it("uses fallback when no inline SVG provided", () => {
-      const result = resolveCenterVisualSync(
-        { concept: "Test" },
-        undefined,
-        42,
-      );
-      expect(result.usedFallback).toBe(true);
-      expect(result.svgContent).toContain("<svg");
-    });
+describe("resolveCenterVisualSync - fallback", () => {
+  it("uses fallback when no inline SVG provided", () => {
+    const result = resolveCenterVisualSync({ concept: "Test" }, undefined, 42);
+    expect(result.usedFallback).toBe(true);
+    expect(result.svgContent).toContain("<svg");
+  });
 
-    it("fallback SVG is valid and multi-color", () => {
-      const result = resolveCenterVisualSync(
-        { concept: "Test" },
-        undefined,
-        42,
-      );
-      expect(result.svgContent).toContain("<svg");
-      const fills = result.svgContent.match(/fill="([^"]+)"/g) || [];
-      expect(fills.length).toBeGreaterThanOrEqual(3);
-    });
+  it("fallback SVG is valid and multi-color", () => {
+    const result = resolveCenterVisualSync({ concept: "Test" }, undefined, 42);
+    expect(result.svgContent).toContain("<svg");
+    const fills = result.svgContent.match(/fill="([^"]+)"/g) || [];
+    expect(fills.length).toBeGreaterThanOrEqual(3);
+  });
 
-    it("fallback selection is deterministic based on hash", () => {
-      const a = resolveCenterVisualSync({ concept: "Test" }, undefined, 42);
-      const b = resolveCenterVisualSync({ concept: "Test" }, undefined, 42);
-      expect(a.svgContent).toBe(b.svgContent);
-    });
+  it("fallback selection is deterministic based on hash", () => {
+    const a = resolveCenterVisualSync({ concept: "Test" }, undefined, 42);
+    const b = resolveCenterVisualSync({ concept: "Test" }, undefined, 42);
+    expect(a.svgContent).toBe(b.svgContent);
   });
 });
