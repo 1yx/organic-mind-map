@@ -23,7 +23,7 @@ import {
   type AgentMindMapList,
 } from "@omm/core";
 
-import { startPreviewServer } from "./preview-server.js";
+import { startPreviewServerAsync } from "./preview-server.js";
 import { isAllowedSvgUrl } from "./svg-allowlist.js";
 import {
   cliExitCode,
@@ -39,6 +39,7 @@ type ParsedArgs = {
   positional: string[];
   paper: "a3-landscape" | "a4-landscape" | undefined;
   port: number | undefined;
+  host: string | undefined;
 };
 
 const VALID_PAPERS = new Set(["a3-landscape", "a4-landscape"]);
@@ -61,6 +62,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   const positional: string[] = [];
   let paper: "a3-landscape" | "a4-landscape" | undefined;
   let port: number | undefined;
+  let host: string | undefined;
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -68,12 +70,14 @@ function parseArgs(argv: string[]): ParsedArgs {
       paper = parsePaper(argv[++i]);
     } else if (arg === "--port") {
       port = parsePort(argv[++i]);
+    } else if (arg === "--host") {
+      host = argv[++i];
     } else if (!arg.startsWith("-") || arg === "--") {
       positional.push(arg);
     }
   }
 
-  return { positional, paper, port };
+  return { positional, paper, port, host };
 }
 
 // ---------------------------------------------------------------------------
@@ -160,6 +164,7 @@ function printUsage(): void {
     "  --paper <paper>   Paper size: a3-landscape | a4-landscape (default: a3-landscape)",
   );
   console.error("  --port <port>     Port for the local preview server");
+  console.error("  --host <host>     Host to bind to (default: 127.0.0.1)");
 }
 
 /** Resolve raw JSON input from positional file arg or stdin. Returns null on error. */
@@ -266,8 +271,8 @@ function buildPayload(
 // ---------------------------------------------------------------------------
 
 export type { PreviewPayload, PreviewOptions };
-export type { PreviewServerOptions } from "./preview-server.js";
-export { startPreviewServer } from "./preview-server.js";
+export type { PreviewServerOptions, PreviewServerResult } from "./preview-server.js";
+export { startPreviewServer, startPreviewServerAsync } from "./preview-server.js";
 
 /**
  * Run the preview command.
@@ -291,7 +296,7 @@ export async function previewCommand(argv: string[]): Promise<number> {
   const payload = buildPayload(tree, args.paper);
 
   try {
-    startPreviewServer(payload, { port: args.port });
+    await startPreviewServerAsync(payload, { host: args.host, port: args.port });
   } catch (err: unknown) {
     console.error(
       `Preview server error: ${err instanceof Error ? err.message : String(err)}`,

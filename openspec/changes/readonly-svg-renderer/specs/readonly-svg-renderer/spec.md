@@ -22,6 +22,17 @@ The renderer SHALL use browser Canvas 2D `CanvasRenderingContext2D.measureText()
 - **WHEN** the renderer is solving layout
 - **THEN** it does not mount hidden DOM/SVG text nodes or call SVG `getBBox()` for iterative text measurement
 
+### Requirement: System font stack
+The renderer SHALL use system font stacks for Canvas measurement and SVG text rendering.
+
+#### Scenario: Renderer measures and renders text
+- **WHEN** the renderer measures concept text and emits SVG text
+- **THEN** both use the same system font stack such as `system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`
+
+#### Scenario: Web Font is requested
+- **WHEN** renderer code attempts to depend on `@font-face`, remote fonts, local bundled Web Fonts, WOFF/WOFF2 assets, or font Base64 inlining
+- **THEN** the implementation violates the renderer contract
+
 ### Requirement: Deterministic preview instantiation
 The renderer SHALL deterministically instantiate domain state from `PreviewPayload` content.
 

@@ -44,6 +44,8 @@ Final layout depends on text metrics, branch geometry, and paper constraints. Th
 
 SVG `textPath` remains the final rendering mechanism, but Canvas 2D measurement is the performance boundary for layout inference. Small sub-pixel differences are acceptable within the organic branch style.
 
+The renderer must use a system font stack only, such as `system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`. Do not introduce remote or local Web Fonts, `@font-face`, WOFF/WOFF2 assets, or font Base64 inlining. The same font stack must be used for Canvas 2D measurement and final SVG text rendering so PNG export remains visually aligned.
+
 ## Coordinate System
 
 Use document coordinates independent of screen pixels.
@@ -166,6 +168,7 @@ The preview should stay lightweight. Capacity failures should primarily be preve
 * MVP layout is deterministic and includes bounding-box collision protection.
 * Text clipping is visible but not actively warned to users.
 * Browser-side Canvas 2D `measureText()` is the layout-time text measurement source.
+* Renderer text uses system fonts only; Web Fonts are out of scope for MVP and base rendering.
 * Organic seed is derived from OrganicTree content using a synchronous stable hash such as `cyrb53`.
 * Seed-derived geometry parameters are instantiated before collision detection and layout solving.
 * Center visual selection prioritizes a successfully loaded controlled SVG URL and falls back to a deterministic hash-selected built-in template.

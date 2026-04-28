@@ -118,10 +118,9 @@ describe("previewCommand — input & parsing", () => {
     expect(process.exitCode).toBe(cliExitCode.OK);
     expect(stdout).toEqual(
       expect.arrayContaining([
-        expect.stringContaining("PreviewPayload ready for browser consumption"),
-        expect.stringContaining("Paper:"),
-        expect.stringContaining("Title: Product Strategy"),
-        expect.stringContaining("Source: organic-tree"),
+        expect.stringContaining("[OMM_SERVER_READY]"),
+        expect.stringContaining("PID:"),
+        expect.stringContaining("http://"),
       ]),
     );
   });
@@ -190,8 +189,14 @@ describe("previewCommand — payload shape", () => {
   it("passes PreviewPayload to the preview server with correct shape", async () => {
     const serverModule = await import("./preview-server.js");
     const spy = vi
-      .spyOn(serverModule, "startPreviewServer")
-      .mockResolvedValue();
+      .spyOn(serverModule, "startPreviewServerAsync")
+      .mockResolvedValue({
+        host: "127.0.0.1",
+        port: 5173,
+        url: "http://127.0.0.1:5173",
+        pid: 12345,
+        server: {} as any,
+      });
 
     const code = await previewCommand([fixture("valid-handoff.json")]);
 
@@ -222,10 +227,8 @@ describe("previewCommand — payload shape", () => {
   it("exits with code 3 when preview server throws", async () => {
     const serverModule = await import("./preview-server.js");
     const spy = vi
-      .spyOn(serverModule, "startPreviewServer")
-      .mockImplementation(() => {
-        throw new Error("EADDRINUSE: port already in use");
-      });
+      .spyOn(serverModule, "startPreviewServerAsync")
+      .mockRejectedValue(new Error("EADDRINUSE: port already in use"));
 
     const { code, stderr } = await captureOutput(() =>
       previewCommand([fixture("valid-handoff.json")]),
@@ -247,9 +250,10 @@ describe("previewCommand — forbidden artifacts", () => {
     const serverModule = await import("./preview-server.js");
     let capturedPayload: unknown;
     const spy = vi
-      .spyOn(serverModule, "startPreviewServer")
-      .mockImplementation((p) => {
+      .spyOn(serverModule, "startPreviewServerAsync")
+      .mockImplementation(async (p) => {
         capturedPayload = p;
+        return { host: "127.0.0.1", port: 5173, url: "http://127.0.0.1:5173", pid: 1, server: {} as any };
       });
 
     await previewCommand([fixture("no-generated-ids.json")]);
@@ -269,9 +273,10 @@ describe("previewCommand — flags", () => {
     const serverModule = await import("./preview-server.js");
     let capturedPayload: unknown;
     const spy = vi
-      .spyOn(serverModule, "startPreviewServer")
-      .mockImplementation((p) => {
+      .spyOn(serverModule, "startPreviewServerAsync")
+      .mockImplementation(async (p) => {
         capturedPayload = p;
+        return { host: "127.0.0.1", port: 5173, url: "http://127.0.0.1:5173", pid: 1, server: {} as any };
       });
 
     await previewCommand([
@@ -291,9 +296,10 @@ describe("previewCommand — flags", () => {
     const serverModule = await import("./preview-server.js");
     let capturedOptions: unknown;
     const spy = vi
-      .spyOn(serverModule, "startPreviewServer")
-      .mockImplementation((_p, opts) => {
+      .spyOn(serverModule, "startPreviewServerAsync")
+      .mockImplementation(async (_p, opts) => {
         capturedOptions = opts;
+        return { host: "127.0.0.1", port: 5173, url: "http://127.0.0.1:5173", pid: 1, server: {} as any };
       });
 
     await previewCommand(["--port", "5173", fixture("valid-handoff.json")]);
@@ -308,9 +314,10 @@ describe("previewCommand — flags", () => {
     const serverModule = await import("./preview-server.js");
     let capturedPayload: unknown;
     const spy = vi
-      .spyOn(serverModule, "startPreviewServer")
-      .mockImplementation((p) => {
+      .spyOn(serverModule, "startPreviewServerAsync")
+      .mockImplementation(async (p) => {
         capturedPayload = p;
+        return { host: "127.0.0.1", port: 5173, url: "http://127.0.0.1:5173", pid: 1, server: {} as any };
       });
 
     await previewCommand([fixture("no-generated-ids.json")]);
@@ -329,9 +336,10 @@ describe("previewCommand — svgUrl allowlist (allowed)", () => {
     const serverModule = await import("./preview-server.js");
     let capturedPayload: unknown;
     const serverSpy = vi
-      .spyOn(serverModule, "startPreviewServer")
-      .mockImplementation((p) => {
+      .spyOn(serverModule, "startPreviewServerAsync")
+      .mockImplementation(async (p) => {
         capturedPayload = p;
+        return { host: "127.0.0.1", port: 5173, url: "http://127.0.0.1:5173", pid: 1, server: {} as any };
       });
 
     const code = await previewCommand([fixture("svg-url-allowlisted.json")]);
@@ -358,9 +366,10 @@ describe("previewCommand — svgUrl allowlist (rejected/absent)", () => {
     const serverModule = await import("./preview-server.js");
     let capturedPayload: unknown;
     const serverSpy = vi
-      .spyOn(serverModule, "startPreviewServer")
-      .mockImplementation((p) => {
+      .spyOn(serverModule, "startPreviewServerAsync")
+      .mockImplementation(async (p) => {
         capturedPayload = p;
+        return { host: "127.0.0.1", port: 5173, url: "http://127.0.0.1:5173", pid: 1, server: {} as any };
       });
 
     const code = await previewCommand([
@@ -381,9 +390,10 @@ describe("previewCommand — svgUrl allowlist (rejected/absent)", () => {
     const serverModule = await import("./preview-server.js");
     let capturedPayload: unknown;
     const serverSpy = vi
-      .spyOn(serverModule, "startPreviewServer")
-      .mockImplementation((p) => {
+      .spyOn(serverModule, "startPreviewServerAsync")
+      .mockImplementation(async (p) => {
         capturedPayload = p;
+        return { host: "127.0.0.1", port: 5173, url: "http://127.0.0.1:5173", pid: 1, server: {} as any };
       });
 
     const code = await previewCommand([fixture("no-svg-url.json")]);
