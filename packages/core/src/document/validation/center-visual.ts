@@ -1,8 +1,16 @@
 import type { OmmValidationIssue } from "./types";
 import type { CenterVisual, CenterVisualMode, ComplianceState } from "../types";
 
-const VALID_MODES: readonly CenterVisualMode[] = ["image", "styled-text", "hybrid"] as const;
-const VALID_STATES: readonly ComplianceState[] = ["draft", "needs-visuals", "compliant"] as const;
+const VALID_MODES: readonly CenterVisualMode[] = [
+  "image",
+  "styled-text",
+  "hybrid",
+] as const;
+const VALID_STATES: readonly ComplianceState[] = [
+  "draft",
+  "needs-visuals",
+  "compliant",
+] as const;
 
 /**
  * Validates the center visual object.
@@ -39,7 +47,10 @@ export function validateCenterVisual(
   const cv = center as Record<string, unknown>;
 
   // mode
-  if (typeof cv.mode !== "string" || !VALID_MODES.includes(cv.mode as CenterVisualMode)) {
+  if (
+    typeof cv.mode !== "string" ||
+    !VALID_MODES.includes(cv.mode as CenterVisualMode)
+  ) {
     issues.push({
       path: `${path}.mode`,
       message: `Invalid mode "${String(cv.mode)}". Must be one of: ${VALID_MODES.join(", ")}`,
@@ -48,7 +59,10 @@ export function validateCenterVisual(
   }
 
   // titleText
-  if (typeof cv.titleText !== "string" || (cv.titleText as string).length === 0) {
+  if (
+    typeof cv.titleText !== "string" ||
+    (cv.titleText as string).length === 0
+  ) {
     issues.push({
       path: `${path}.titleText`,
       message: "titleText must be a non-empty string",
@@ -73,14 +87,18 @@ export function validateCenterVisual(
     ) {
       issues.push({
         path: `${path}.minColorCount`,
-        message: "minColorCount must be >= 2 when complianceState is 'compliant'",
+        message:
+          "minColorCount must be >= 2 when complianceState is 'compliant'",
         code: "center_visual.insufficient_colors",
       });
     }
   }
 
   // complianceState
-  if (typeof cv.complianceState !== "string" || !VALID_STATES.includes(cv.complianceState as ComplianceState)) {
+  if (
+    typeof cv.complianceState !== "string" ||
+    !VALID_STATES.includes(cv.complianceState as ComplianceState)
+  ) {
     issues.push({
       path: `${path}.complianceState`,
       message: `Invalid complianceState "${String(cv.complianceState)}". Must be one of: ${VALID_STATES.join(", ")}`,

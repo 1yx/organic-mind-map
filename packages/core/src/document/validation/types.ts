@@ -6,17 +6,17 @@
  * aggregates them into an OmmValidationResult.
  */
 
-export interface OmmValidationError {
+export type OmmValidationError = {
   path: string;
   message: string;
   code: string;
-}
+};
 
-export interface OmmValidationResult {
+export type OmmValidationResult = {
   valid: boolean;
   errors: OmmValidationError[];
   data: unknown;
-}
+};
 
 export type OmmValidationIssue = {
   path: string;

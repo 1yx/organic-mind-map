@@ -6,10 +6,10 @@
 
 import type { OmmDocument } from "@omm/core";
 
-export interface SvgRenderModel {
+export type SvgRenderModel = {
   svg: string;
   viewBox: string;
-}
+};
 
 /**
  * Placeholder: renders an OmmDocument to an SVG render model.

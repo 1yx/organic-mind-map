@@ -31,21 +31,31 @@ export function validateQuality(
     const branch = input.branches[i];
     const path = `branches[${i}]`;
 
-    errors.push(...checkConcept(branch.concept, `${path}.concept`, maxUnitWidth));
+    errors.push(
+      ...checkConcept(branch.concept, `${path}.concept`, maxUnitWidth),
+    );
 
     if (branch.children) {
       for (let j = 0; j < branch.children.length; j++) {
         const sub = branch.children[j];
         const subPath = `${path}.children[${j}]`;
 
-        errors.push(...checkConcept(sub.concept, `${subPath}.concept`, maxUnitWidth));
+        errors.push(
+          ...checkConcept(sub.concept, `${subPath}.concept`, maxUnitWidth),
+        );
 
         if (sub.children) {
           for (let k = 0; k < sub.children.length; k++) {
             const leaf = sub.children[k];
             const leafPath = `${subPath}.children[${k}]`;
 
-            errors.push(...checkConcept(leaf.concept, `${leafPath}.concept`, maxUnitWidth));
+            errors.push(
+              ...checkConcept(
+                leaf.concept,
+                `${leafPath}.concept`,
+                maxUnitWidth,
+              ),
+            );
           }
         }
       }
@@ -84,5 +94,5 @@ function checkConcept(
 
 function truncate(s: string, max: number): string {
   if (s.length <= max) return s;
-  return s.slice(0, max) + "…";
+  return `${s.slice(0, max)}…`;
 }

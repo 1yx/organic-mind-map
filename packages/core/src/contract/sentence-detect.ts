@@ -7,14 +7,14 @@
 
 // Sentence-like punctuation patterns that indicate prose, not concept units
 const SENTENCE_PATTERNS: RegExp[] = [
-  /\.{3}/,           // ellipsis in any language
-  /…/,               // Unicode ellipsis
-  /[。！？；，、]/,   // Chinese sentence punctuation
-  /[.,;!?]\s/,       // ASCII sentence punctuation followed by space
+  /\.{3}/, // ellipsis in any language
+  /…/, // Unicode ellipsis
+  /[。！？；，、]/, // Chinese sentence punctuation
+  /[.,;!?]\s/, // ASCII sentence punctuation followed by space
   /\bbecause\b/i,
   /\btherefore\b/i,
   /\bhence\b/i,
-  /\bso\b\s+\w/i,    // "so we..." pattern
+  /\bso\b\s+\w/i, // "so we..." pattern
   /\bif\b.*\bthen\b/i,
   /\bdue to\b/i,
   /\bin order to\b/i,
@@ -34,11 +34,11 @@ const SENTENCE_PATTERNS: RegExp[] = [
   /为了.*需要/,
   /不仅.*而且/,
   /与其.*不如/,
-  /如果.*，/,         // conditional with comma
-  /因为.*，/,         // causal with comma
-  /因为.*影响/,       // causal with effect verb
-  /如果.*下降/,       // conditional with result
-  /[^，。！？]{10,}[，。！？]/,  // long clause ending with punctuation
+  /如果.*，/, // conditional with comma
+  /因为.*，/, // causal with comma
+  /因为.*影响/, // causal with effect verb
+  /如果.*下降/, // conditional with result
+  /[^，。！？]{10,}[，。！？]/, // long clause ending with punctuation
 ];
 
 /**
