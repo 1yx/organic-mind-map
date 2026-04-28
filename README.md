@@ -34,7 +34,7 @@ packages/
   cli/      @omm/cli      — Command parsing, file I/O, server, orchestration
   web/      @omm/web      — Vue 3 read-only preview app
 fixtures/
-  agent-list/             — Agent list JSON examples
+  organic-tree/             — Agent list JSON examples
   omm/                    — .omm document examples
 ```
 

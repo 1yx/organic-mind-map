@@ -1,4 +1,4 @@
-# agent-list-contract
+# organic-tree-contract
 
 ## Summary
 

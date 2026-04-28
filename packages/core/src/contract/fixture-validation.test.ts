@@ -1,7 +1,7 @@
 /**
  * Fixture-based validation tests for agent list and OmmDocument contracts.
  *
- * Loads JSON fixtures from fixtures/agent-list/ and fixtures/omm/ and runs
+ * Loads JSON fixtures from fixtures/organic-tree/ and fixtures/omm/ and runs
  * them through the full validation pipeline (structural, quality, capacity).
  */
 
@@ -27,7 +27,7 @@ function loadAgentListFixture(name: string): unknown {
     "..",
     "..",
     "fixtures",
-    "agent-list",
+    "organic-tree",
     `${name}.json`,
   );
   return JSON.parse(readFileSync(fixturePath, "utf-8"));

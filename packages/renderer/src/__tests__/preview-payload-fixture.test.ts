@@ -1,7 +1,7 @@
 /**
  * Preview payload fixture tests for the renderer.
  *
- * Loads agent-list fixtures, wraps them in PreviewPayload, and verifies
+ * Loads organic-tree fixtures, wraps them in PreviewPayload, and verifies
  * that the renderer produces valid SVG output with correct paper/center properties.
  */
 
@@ -38,7 +38,7 @@ function loadAgentListFixture(name: string): unknown {
     "..",
     "..",
     "fixtures",
-    "agent-list",
+    "organic-tree",
     `${name}.json`,
   );
   return JSON.parse(readFileSync(fixturePath, "utf-8"));

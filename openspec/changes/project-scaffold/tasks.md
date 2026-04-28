@@ -13,7 +13,7 @@
 - [x] 2.2 Create `src/renderer/` for layout, SVG, and measurement modules.
 - [x] 2.3 Create `src/cli/` for command parsing and CLI entrypoints.
 - [x] 2.4 Create `src/web/` for the read-only local preview app.
-- [x] 2.5 Create `src/fixtures/` or top-level `fixtures/` for agent-list and `.omm` examples.
+- [x] 2.5 Create `src/fixtures/` or top-level `fixtures/` for organic-tree and `.omm` examples.
 
 ## 3. Placeholder Entrypoints
 

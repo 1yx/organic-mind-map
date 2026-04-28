@@ -51,4 +51,4 @@ The MVP needs a stable document boundary for saving the browser-computed result.
 ## Dependencies
 
 * `project-scaffold`
-* `agent-list-contract`
+* `organic-tree-contract`

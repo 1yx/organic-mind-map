@@ -1,4 +1,4 @@
-# agent-list-contract Design
+# organic-tree-contract Design
 
 ## Goal
 

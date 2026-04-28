@@ -40,7 +40,7 @@ function loadAgentListFixture(name: string): unknown {
     "..",
     "..",
     "fixtures",
-    "agent-list",
+    "organic-tree",
     `${name}.json`,
   );
   return JSON.parse(readFileSync(fixturePath, "utf-8"));

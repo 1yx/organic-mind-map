@@ -21,7 +21,7 @@ Agent CLI + skill
 pnpm dev:web
 
 # In a separate terminal, start the preview server with a fixture
-omm preview fixtures/agent-list/valid-chinese.json
+omm preview fixtures/organic-tree/valid-chinese.json
 ```
 
 The CLI validates the OrganicTree, wraps it in a `PreviewPayload`, and starts a local HTTP
@@ -30,7 +30,7 @@ in the browser.
 
 ## Fixture Categories
 
-### `fixtures/agent-list/` — OrganicTree (AgentMindMapList) JSON
+### `fixtures/organic-tree/` — OrganicTree (AgentMindMapList) JSON
 
 These represent the output of an **Agent CLI + skill** workflow. They follow the
 `AgentMindMapList` contract (version 1) and are the primary input to the CLI.
@@ -83,7 +83,7 @@ rendered output across runs.
 
 ```bash
 # Deterministic: same input always yields same output
-omm preview fixtures/agent-list/valid-chinese.json
+omm preview fixtures/organic-tree/valid-chinese.json
 # Reload the page — the SVG will be identical
 ```
 
@@ -138,7 +138,7 @@ pnpm --filter @omm/renderer test
 1. Start the preview server with a fixture:
 
    ```bash
-   omm preview fixtures/agent-list/valid-chinese.json
+   omm preview fixtures/organic-tree/valid-chinese.json
    ```
 
 2. Open the browser preview URL
@@ -153,7 +153,7 @@ pnpm --filter @omm/renderer test
 4. Test the unreachable SVG URL fixture:
 
    ```bash
-   omm preview fixtures/agent-list/valid-unreachable-svg-url.json
+   omm preview fixtures/organic-tree/valid-unreachable-svg-url.json
    ```
 
 5. Verify:

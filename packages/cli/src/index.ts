@@ -11,7 +11,7 @@ export async function runCli(argv: string[]): Promise<number> {
       console.log("");
       console.log("Commands:");
       console.log("  preview <file>  Start local preview server");
-      console.log("  validate <file> Validate agent-list or .omm file");
+      console.log("  validate <file> Validate organic-tree or .omm file");
       console.log("  help            Show this help message");
       return 0;
 

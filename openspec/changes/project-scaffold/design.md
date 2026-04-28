@@ -49,7 +49,7 @@ packages/
       preview/
       main.ts
 fixtures/
-  agent-list/
+  organic-tree/
   omm/
 ```
 
@@ -139,7 +139,7 @@ Phase 1 final data flow:
 
 ```text
 Agent CLI + skill
-  -> agent-list.json
+  -> organic-tree.json
   -> cli validate capacity
   -> return retry feedback to Agent CLI if oversized
   -> start localhost HTTP server
