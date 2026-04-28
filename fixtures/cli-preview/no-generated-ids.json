@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "title": "Plain OrganicTree No Generated Fields",
+  "center": {
+    "concept": "ORGANIC MAP"
+  },
+  "branches": [
+    {
+      "concept": "BRANCH ONE",
+      "children": [
+        { "concept": "SUB A" },
+        { "concept": "SUB B", "children": [{ "concept": "LEAF 1" }] }
+      ]
+    },
+    {
+      "concept": "BRANCH TWO",
+      "children": [
+        { "concept": "SUB C" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "title": "Oversized Input",
+  "center": {
+    "concept": "测试中心"
+  },
+  "branches": [
+    { "concept": "B1", "children": [
+      { "concept": "S1" }, { "concept": "S2" }, { "concept": "S3" }, { "concept": "S4" },
+      { "concept": "S5" }, { "concept": "S6" }, { "concept": "S7" }, { "concept": "S8" }, { "concept": "S9" }
+    ]},
+    { "concept": "B2", "children": [
+      { "concept": "S1" }, { "concept": "S2" }, { "concept": "S3" }, { "concept": "S4" },
+      { "concept": "S5" }, { "concept": "S6" }, { "concept": "S7" }, { "concept": "S8" }, { "concept": "S9" }
+    ]},
+    { "concept": "B3", "children": [
+      { "concept": "S1" }, { "concept": "S2" }, { "concept": "S3" }, { "concept": "S4" },
+      { "concept": "S5" }, { "concept": "S6" }, { "concept": "S7" }, { "concept": "S8" }, { "concept": "S9" }
+    ]},
+    { "concept": "B4", "children": [
+      { "concept": "S1" }, { "concept": "S2" }, { "concept": "S3" }, { "concept": "S4" },
+      { "concept": "S5" }, { "concept": "S6" }, { "concept": "S7" }, { "concept": "S8" }, { "concept": "S9" }
+    ]},
+    { "concept": "B5", "children": [
+      { "concept": "S1" }, { "concept": "S2" }, { "concept": "S3" }, { "concept": "S4" },
+      { "concept": "S5" }, { "concept": "S6" }, { "concept": "S7" }, { "concept": "S8" }, { "concept": "S9" }
+    ]}
+  ]
+}
