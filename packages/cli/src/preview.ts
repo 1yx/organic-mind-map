@@ -20,22 +20,40 @@ import {
   validateCapacity,
   formatCapacityFeedback,
   DEFAULT_LIMITS,
-  traverseBranches,
+  type AgentMindMapList,
 } from "@omm/core";
-import type { AgentMindMapList } from "@omm/core";
 
-import type { PreviewPayload, PreviewOptions } from "./types.js";
-import { CliExitCode } from "./types.js";
 import { startPreviewServer } from "./preview-server.js";
+import {
+  cliExitCode,
+  type PreviewPayload,
+  type PreviewOptions,
+} from "./types.js";
 
 // ---------------------------------------------------------------------------
 // Arg parsing
 // ---------------------------------------------------------------------------
 
-interface ParsedArgs {
+type ParsedArgs = {
   positional: string[];
   paper: "a3-landscape" | "a4-landscape" | undefined;
   port: number | undefined;
+};
+
+const VALID_PAPERS = new Set(["a3-landscape", "a4-landscape"]);
+
+function parsePaper(
+  val: string | undefined,
+): "a3-landscape" | "a4-landscape" | undefined {
+  if (val && VALID_PAPERS.has(val))
+    return val as "a3-landscape" | "a4-landscape";
+  return undefined;
+}
+
+function parsePort(val: string | undefined): number | undefined {
+  if (!val) return undefined;
+  const num = Number(val);
+  return Number.isFinite(num) && num > 0 && num < 65536 ? num : undefined;
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
@@ -46,17 +64,9 @@ function parseArgs(argv: string[]): ParsedArgs {
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--paper") {
-      const val = argv[++i];
-      if (val !== "a3-landscape" && val !== "a4-landscape") {
-        return { positional, paper: undefined, port };
-      }
-      paper = val as "a3-landscape" | "a4-landscape";
+      paper = parsePaper(argv[++i]);
     } else if (arg === "--port") {
-      const val = argv[++i];
-      const num = Number(val);
-      if (Number.isFinite(num) && num > 0 && num < 65536) {
-        port = num;
-      }
+      port = parsePort(argv[++i]);
     } else if (!arg.startsWith("-") || arg === "--") {
       positional.push(arg);
     }
@@ -134,93 +144,92 @@ function formatValidationErrors(
 }
 
 // ---------------------------------------------------------------------------
-// Public API
+// Command helpers (split from previewCommand to keep complexity/lines low)
 // ---------------------------------------------------------------------------
 
-export { type PreviewPayload, type PreviewOptions } from "./types.js";
-export type { PreviewServerOptions } from "./preview-server.js";
-export { startPreviewServer } from "./preview-server.js";
+function printUsage(): void {
+  console.error("Usage: omm preview <input.json>");
+  console.error("");
+  console.error("Options:");
+  console.error(
+    "  --paper <paper>   Paper size: a3-landscape | a4-landscape (default: a3-landscape)",
+  );
+  console.error("  --port <port>     Port for the local preview server");
+}
 
-/**
- * Run the preview command.
- *
- * @param argv  Raw process.argv (or subset starting from the command).
- * @returns     Exit code (0–3). Sets `process.exitCode` as a side-effect.
- */
-export async function previewCommand(argv: string[]): Promise<number> {
-  const args = parseArgs(argv);
-
-  // Determine input source
-  let rawJson: string;
-  const hasPositional = args.positional.length > 0;
-
-  if (hasPositional) {
+/** Resolve raw JSON input from positional file arg or stdin. Returns null on error. */
+async function resolveInput(args: ParsedArgs): Promise<string | null> {
+  if (args.positional.length > 0) {
     try {
-      rawJson = readInput(args.positional[0]);
+      return readInput(args.positional[0]!);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(`Error reading file: ${message}`);
-      process.exitCode = CliExitCode.INPUT_ERROR;
-      return CliExitCode.INPUT_ERROR;
+      console.error(
+        `Error reading file: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      process.exitCode = cliExitCode.INPUT_ERROR;
+      return null;
     }
-  } else {
-    const stdin = await readStdin();
-    if (stdin === null) {
-      console.error("Usage: omm preview <input.json>");
-      console.error("");
-      console.error("Options:");
-      console.error("  --paper <paper>   Paper size: a3-landscape | a4-landscape (default: a3-landscape)");
-      console.error("  --port <port>     Port for the local preview server");
-      process.exitCode = CliExitCode.INPUT_ERROR;
-      return CliExitCode.INPUT_ERROR;
-    }
-    rawJson = stdin;
   }
+  const stdin = await readStdin();
+  if (stdin === null) {
+    printUsage();
+    process.exitCode = cliExitCode.INPUT_ERROR;
+    return null;
+  }
+  return stdin;
+}
 
-  // Parse JSON
-  let parsed: unknown;
+/** Parse raw JSON string. Returns null on error. */
+function parseJsonInput(raw: string): unknown | null {
   try {
-    parsed = JSON.parse(rawJson);
+    return JSON.parse(raw);
   } catch {
     console.error("Error: malformed JSON input.");
-    process.exitCode = CliExitCode.INPUT_ERROR;
-    return CliExitCode.INPUT_ERROR;
+    process.exitCode = cliExitCode.INPUT_ERROR;
+    return null;
   }
+}
 
-  // Layer 1: Structural validation → exit 1
+/** Run the 3-layer validation pipeline. Returns exit code on failure, null on success. */
+function runValidationPipeline(parsed: unknown): number | null {
   const structuralErrors = validateStructural(parsed);
   if (structuralErrors.length > 0) {
     console.error(formatValidationErrors(structuralErrors));
-    process.exitCode = CliExitCode.INPUT_ERROR;
-    return CliExitCode.INPUT_ERROR;
+    process.exitCode = cliExitCode.INPUT_ERROR;
+    return cliExitCode.INPUT_ERROR;
   }
 
   const tree = parsed as AgentMindMapList;
 
-  // Layer 2: Quality validation → exit 1
-  const qualityErrors = validateQuality(tree, DEFAULT_LIMITS.maxConceptUnitWidth);
+  const qualityErrors = validateQuality(
+    tree,
+    DEFAULT_LIMITS.maxConceptUnitWidth,
+  );
   if (qualityErrors.length > 0) {
     console.error(formatValidationErrors(qualityErrors));
-    process.exitCode = CliExitCode.INPUT_ERROR;
-    return CliExitCode.INPUT_ERROR;
+    process.exitCode = cliExitCode.INPUT_ERROR;
+    return cliExitCode.INPUT_ERROR;
   }
 
-  // Layer 3: Capacity validation → exit 2
   const capacityErrors = validateCapacity(tree, DEFAULT_LIMITS);
   if (capacityErrors.length > 0) {
     console.error(formatCapacityFeedback(capacityErrors));
-    process.exitCode = CliExitCode.CAPACITY_EXCEEDED;
-    return CliExitCode.CAPACITY_EXCEEDED;
+    process.exitCode = cliExitCode.CAPACITY_EXCEEDED;
+    return cliExitCode.CAPACITY_EXCEEDED;
   }
 
-  // Normalise whitespace (never rewrites semantics)
+  return null;
+}
+
+/** Build the PreviewPayload from a validated tree. */
+function buildPayload(
+  tree: AgentMindMapList,
+  paperOverride?: "a3-landscape" | "a4-landscape",
+): PreviewPayload {
   const normalised = normalizeConcepts(tree);
+  const paper = paperOverride ?? normalised.paper ?? "a3-landscape";
 
-  // Resolve paper: CLI flag > input contract > default
-  const paper = args.paper ?? normalised.paper ?? "a3-landscape";
-
-  // Build PreviewPayload — NO IDs, NO colors, NO organic seeds, NO OmmDocument
-  const payload: PreviewPayload = {
+  return {
     version: 1,
     source: "organic-tree",
     paper,
@@ -232,17 +241,47 @@ export async function previewCommand(argv: string[]): Promise<number> {
         }
       : undefined,
   };
+}
 
-  // Hand off to local preview server → exit 3 on failure
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+export type { PreviewPayload, PreviewOptions };
+export type { PreviewServerOptions } from "./preview-server.js";
+export { startPreviewServer } from "./preview-server.js";
+
+/**
+ * Run the preview command.
+ *
+ * @param argv - Raw process.argv (or subset starting from the command).
+ * @returns Exit code (0–3). Sets `process.exitCode` as a side-effect.
+ */
+export async function previewCommand(argv: string[]): Promise<number> {
+  const args = parseArgs(argv);
+
+  const rawJson = await resolveInput(args);
+  if (rawJson === null) return cliExitCode.INPUT_ERROR;
+
+  const parsed = parseJsonInput(rawJson);
+  if (parsed === null) return cliExitCode.INPUT_ERROR;
+
+  const validationExit = runValidationPipeline(parsed);
+  if (validationExit !== null) return validationExit;
+
+  const tree = parsed as AgentMindMapList;
+  const payload = buildPayload(tree, args.paper);
+
   try {
     await startPreviewServer(payload, { port: args.port });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error(`Preview server error: ${message}`);
-    process.exitCode = CliExitCode.SERVER_HANDOFF_ERROR;
-    return CliExitCode.SERVER_HANDOFF_ERROR;
+    console.error(
+      `Preview server error: ${err instanceof Error ? err.message : String(err)}`,
+    );
+    process.exitCode = cliExitCode.SERVER_HANDOFF_ERROR;
+    return cliExitCode.SERVER_HANDOFF_ERROR;
   }
 
-  process.exitCode = CliExitCode.OK;
-  return CliExitCode.OK;
+  process.exitCode = cliExitCode.OK;
+  return cliExitCode.OK;
 }

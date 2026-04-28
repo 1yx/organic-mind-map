@@ -6,6 +6,31 @@
  */
 
 /**
+ * Sorted ranges of code points that count as wide (2 unit-width).
+ * Each entry is [low, high] inclusive.
+ */
+const WIDE_RANGES: ReadonlyArray<readonly [number, number]> = [
+  [0x3040, 0x30ff], // Katakana/Hiragana
+  [0x3400, 0x4dbf], // CJK Extension A
+  [0x4e00, 0x9fff], // CJK Unified Ideographs
+  [0xac00, 0xd7af], // Hangul Syllables
+  [0xf900, 0xfaff], // CJK Compatibility Ideographs
+  [0xff01, 0xff60], // Fullwidth Forms
+  [0x20000, 0x2fa1f], // CJK Extension B-F
+];
+
+/**
+ * Check whether a code point falls within a CJK/fullwidth range.
+ * Uses binary-style early-return to keep cyclomatic complexity low.
+ */
+function isWideCodePoint(code: number): boolean {
+  for (const [lo, hi] of WIDE_RANGES) {
+    if (code >= lo && code <= hi) return true;
+  }
+  return false;
+}
+
+/**
  * Calculate the unit-width of a string.
  * Each CJK/fullwidth character = 2, each ASCII/halfwidth = 1.
  */
@@ -13,23 +38,7 @@ export function conceptUnitWidth(s: string): number {
   let width = 0;
   for (const char of s) {
     const code = char.codePointAt(0)!;
-    // CJK Unified Ideographs: 4E00-9FFF, Extension A: 3400-4DBF, Extension B-F: 20000-2FA1F
-    // CJK Compatibility Ideographs: F900-FAFF
-    // Fullwidth Forms: FF01-FF60, Fullwidth digits/letters: FF21-FF3A, FF41-FF5A, FF10-FF19
-    // Katakana/Hiragana/Hangul ranges
-    if (
-      (code >= 0x4e00 && code <= 0x9fff) ||
-      (code >= 0x3400 && code <= 0x4dbf) ||
-      (code >= 0xf900 && code <= 0xfaff) ||
-      (code >= 0xff01 && code <= 0xff60) ||
-      (code >= 0x3040 && code <= 0x30ff) ||
-      (code >= 0xac00 && code <= 0xd7af) ||
-      (code >= 0x20000 && code <= 0x2fa1f)
-    ) {
-      width += 2;
-    } else {
-      width += 1;
-    }
+    width += isWideCodePoint(code) ? 2 : 1;
   }
   return width;
 }

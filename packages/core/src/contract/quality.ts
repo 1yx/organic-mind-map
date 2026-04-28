@@ -6,7 +6,12 @@
  * - Within unit-width threshold (max 25)
  */
 
-import type { AgentMindMapList, ValidationError } from "./types";
+import type {
+  AgentMindMapList,
+  ValidationError,
+  MainBranch,
+  SubBranch,
+} from "./types";
 import { conceptUnitWidth } from "./unit-width";
 import { isSentenceLike } from "./sentence-detect";
 
@@ -26,40 +31,58 @@ export function validateQuality(
     ...checkConcept(input.center.concept, "center.concept", maxUnitWidth),
   );
 
-  // Branches — level-aware traversal
+  // Branches
   for (let i = 0; i < input.branches.length; i++) {
-    const branch = input.branches[i];
-    const path = `branches[${i}]`;
+    errors.push(...validateBranchQuality(input.branches[i], i, maxUnitWidth));
+  }
 
+  return errors;
+}
+
+/**
+ * Validate quality of a main branch and its children.
+ */
+function validateBranchQuality(
+  branch: MainBranch,
+  index: number,
+  maxUnitWidth: number,
+): ValidationError[] {
+  const errors: ValidationError[] = [];
+  const path = `branches[${index}]`;
+
+  errors.push(...checkConcept(branch.concept, `${path}.concept`, maxUnitWidth));
+
+  if (!branch.children) return errors;
+
+  for (let j = 0; j < branch.children.length; j++) {
+    const sub = branch.children[j];
+    const subPath = `${path}.children[${j}]`;
+    errors.push(...validateSubTree(sub, subPath, maxUnitWidth));
+  }
+
+  return errors;
+}
+
+/**
+ * Validate quality of a sub-branch and its leaf children.
+ */
+function validateSubTree(
+  sub: SubBranch,
+  subPath: string,
+  maxUnitWidth: number,
+): ValidationError[] {
+  const errors: ValidationError[] = [];
+
+  errors.push(...checkConcept(sub.concept, `${subPath}.concept`, maxUnitWidth));
+
+  if (!sub.children) return errors;
+
+  for (let k = 0; k < sub.children.length; k++) {
+    const leaf = sub.children[k];
+    const leafPath = `${subPath}.children[${k}]`;
     errors.push(
-      ...checkConcept(branch.concept, `${path}.concept`, maxUnitWidth),
+      ...checkConcept(leaf.concept, `${leafPath}.concept`, maxUnitWidth),
     );
-
-    if (branch.children) {
-      for (let j = 0; j < branch.children.length; j++) {
-        const sub = branch.children[j];
-        const subPath = `${path}.children[${j}]`;
-
-        errors.push(
-          ...checkConcept(sub.concept, `${subPath}.concept`, maxUnitWidth),
-        );
-
-        if (sub.children) {
-          for (let k = 0; k < sub.children.length; k++) {
-            const leaf = sub.children[k];
-            const leafPath = `${subPath}.children[${k}]`;
-
-            errors.push(
-              ...checkConcept(
-                leaf.concept,
-                `${leafPath}.concept`,
-                maxUnitWidth,
-              ),
-            );
-          }
-        }
-      }
-    }
   }
 
   return errors;

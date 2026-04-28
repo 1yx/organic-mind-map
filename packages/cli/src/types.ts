@@ -5,7 +5,7 @@
 import type { AgentMindMapList } from "@omm/core";
 
 /** CLI-to-browser handoff type. The CLI builds this; the browser consumes it. */
-export interface PreviewPayload {
+export type PreviewPayload = {
   version: 1;
   source: "organic-tree";
   paper: "a3-landscape" | "a4-landscape";
@@ -18,20 +18,20 @@ export interface PreviewPayload {
     sourceTitle?: string;
     sourceSummary?: string;
   };
-}
+};
 
 /** Options accepted by the preview command. */
-export interface PreviewOptions {
+export type PreviewOptions = {
   /** Paper size, defaults to "a3-landscape". CLI flag > input contract > default. */
   paper?: "a3-landscape" | "a4-landscape";
   /** Port forwarded to the local preview server (06-local-preview-server). */
   port?: number;
   /** Path to the input JSON file. When absent, stdin is checked. */
   input?: string;
-}
+};
 
 /** CLI exit codes for the preview command. */
-export const CliExitCode = {
+export const cliExitCode = {
   /** Success. */
   OK: 0,
   /** Input parse or validation error (structural or quality). */
@@ -42,4 +42,4 @@ export const CliExitCode = {
   SERVER_HANDOFF_ERROR: 3,
 } as const;
 
-export type CliExitCodeType = (typeof CliExitCode)[keyof typeof CliExitCode];
+export type CliExitCodeType = (typeof cliExitCode)[keyof typeof cliExitCode];

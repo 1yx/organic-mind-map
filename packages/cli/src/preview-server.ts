@@ -10,9 +10,9 @@
 
 import type { PreviewPayload } from "./types.js";
 
-export interface PreviewServerOptions {
+export type PreviewServerOptions = {
   port?: number;
-}
+};
 
 export async function startPreviewServer(
   payload: PreviewPayload,

@@ -9,6 +9,68 @@ import type { OmmValidationIssue } from "./types";
  * organicSeed must be a non-empty string.
  * rootMap must be a single object, not an array.
  */
+
+function ensureObject(
+  doc: Record<string, unknown>,
+  field: string,
+  issues: OmmValidationIssue[],
+): void {
+  if (!doc[field] || typeof doc[field] !== "object") {
+    issues.push({
+      path: field,
+      message: `"${field}" must be an object`,
+      code: `envelope.missing_${field}`,
+    });
+  }
+}
+
+function validateRequiredStrings(
+  doc: Record<string, unknown>,
+  issues: OmmValidationIssue[],
+): void {
+  for (const field of ["id", "title", "organicSeed"] as const) {
+    if (typeof doc[field] !== "string" || (doc[field] as string).length === 0) {
+      issues.push({
+        path: field,
+        message: `"${field}" must be a non-empty string`,
+        code: `envelope.missing_${field}`,
+      });
+    }
+  }
+}
+
+function validateVersion(
+  doc: Record<string, unknown>,
+  issues: OmmValidationIssue[],
+): void {
+  if (doc.version !== 1) {
+    issues.push({
+      path: "version",
+      message: `Document version must be 1, got ${doc.version}`,
+      code: "envelope.invalid_version",
+    });
+  }
+}
+
+function validateRootMap(
+  doc: Record<string, unknown>,
+  issues: OmmValidationIssue[],
+): void {
+  if (Array.isArray(doc.rootMap)) {
+    issues.push({
+      path: "rootMap",
+      message: "rootMap must be a single object, not an array",
+      code: "envelope.multiple_maps",
+    });
+  } else if (!doc.rootMap || typeof doc.rootMap !== "object") {
+    issues.push({
+      path: "rootMap",
+      message: `"rootMap" must be an object`,
+      code: "envelope.missing_rootMap",
+    });
+  }
+}
+
 export function validateEnvelope(doc: unknown): OmmValidationIssue[] {
   const issues: OmmValidationIssue[] = [];
 
@@ -23,75 +85,12 @@ export function validateEnvelope(doc: unknown): OmmValidationIssue[] {
 
   const d = doc as Record<string, unknown>;
 
-  // Required string fields
-  for (const field of ["id", "title", "organicSeed"] as const) {
-    if (typeof d[field] !== "string" || (d[field] as string).length === 0) {
-      issues.push({
-        path: field,
-        message: `"${field}" must be a non-empty string`,
-        code: `envelope.missing_${field}`,
-      });
-    }
-  }
+  validateRequiredStrings(d, issues);
+  validateVersion(d, issues);
+  validateRootMap(d, issues);
 
-  // Version must be 1
-  if (d.version !== 1) {
-    issues.push({
-      path: "version",
-      message: `Document version must be 1, got ${d.version}`,
-      code: "envelope.invalid_version",
-    });
-  }
-
-  // paper must be an object
-  if (!d.paper || typeof d.paper !== "object") {
-    issues.push({
-      path: "paper",
-      message: `"paper" must be an object`,
-      code: "envelope.missing_paper",
-    });
-  }
-
-  // rootMap must be an object (not array)
-  if (Array.isArray(d.rootMap)) {
-    issues.push({
-      path: "rootMap",
-      message: "rootMap must be a single object, not an array",
-      code: "envelope.multiple_maps",
-    });
-  } else if (!d.rootMap || typeof d.rootMap !== "object") {
-    issues.push({
-      path: "rootMap",
-      message: `"rootMap" must be an object`,
-      code: "envelope.missing_rootMap",
-    });
-  }
-
-  // layout must be an object
-  if (!d.layout || typeof d.layout !== "object") {
-    issues.push({
-      path: "layout",
-      message: `"layout" must be an object`,
-      code: "envelope.missing_layout",
-    });
-  }
-
-  // assets must be an object
-  if (!d.assets || typeof d.assets !== "object") {
-    issues.push({
-      path: "assets",
-      message: `"assets" must be an object`,
-      code: "envelope.missing_assets",
-    });
-  }
-
-  // meta must be an object
-  if (!d.meta || typeof d.meta !== "object") {
-    issues.push({
-      path: "meta",
-      message: `"meta" must be an object`,
-      code: "envelope.missing_meta",
-    });
+  for (const field of ["paper", "layout", "assets", "meta"] as const) {
+    ensureObject(d, field, issues);
   }
 
   return issues;

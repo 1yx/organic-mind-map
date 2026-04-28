@@ -1,5 +1,5 @@
 import type { OmmValidationIssue } from "./types";
-import type { MindNode, NodeId } from "../types";
+import type { MindNode } from "../types";
 
 /**
  * Recursively collects all node IDs from the tree.
@@ -28,29 +28,26 @@ export function collectNodeIds(nodes: MindNode[]): Map<string, true> {
  * - Preserves sibling order (does not reorder).
  * - Collects valid node IDs for layout reference checking.
  */
-export function validateTree(rootMap: unknown): {
-  issues: OmmValidationIssue[];
-  nodeIds: Map<string, true>;
-} {
-  const issues: OmmValidationIssue[] = [];
-  const nodeIds = new Map<string, true>();
 
+function validateRootMapObject(
+  rootMap: unknown,
+  issues: OmmValidationIssue[],
+): Record<string, unknown> | null {
   if (!rootMap || typeof rootMap !== "object") {
-    return {
-      issues: [
-        {
-          path: "rootMap",
-          message: "rootMap must be an object",
-          code: "tree.missing",
-        },
-      ],
-      nodeIds,
-    };
+    issues.push({
+      path: "rootMap",
+      message: "rootMap must be an object",
+      code: "tree.missing",
+    });
+    return null;
   }
+  return rootMap as Record<string, unknown>;
+}
 
-  const map = rootMap as Record<string, unknown>;
-
-  // Reject flat nodes dictionary
+function rejectFlatNodes(
+  map: Record<string, unknown>,
+  issues: OmmValidationIssue[],
+): void {
   if (map.nodes && typeof map.nodes === "object" && !Array.isArray(map.nodes)) {
     issues.push({
       path: "rootMap.nodes",
@@ -59,7 +56,12 @@ export function validateTree(rootMap: unknown): {
       code: "tree.flat_nodes",
     });
   }
+}
 
+function checkChildrenArray(
+  map: Record<string, unknown>,
+  issues: OmmValidationIssue[],
+): unknown[] | null {
   const children = map.children;
   if (!children || !Array.isArray(children)) {
     issues.push({
@@ -67,14 +69,87 @@ export function validateTree(rootMap: unknown): {
       message: "rootMap.children must be an array",
       code: "tree.missing_children",
     });
-    return { issues, nodeIds };
+    return null;
   }
+  return children;
+}
 
-  const seenIds = new Map<string, string>(); // id → path
+function checkConcept(
+  n: Record<string, unknown>,
+  parentPath: string,
+  issues: OmmValidationIssue[],
+): void {
+  if (typeof n.concept !== "string" || (n.concept as string).length === 0) {
+    issues.push({
+      path: `${parentPath}.concept`,
+      message: "Node must have a non-empty concept",
+      code: "tree.empty_concept",
+    });
+  }
+}
 
-  function validateNode(node: unknown, parentPath: string): void {
+function rejectStaleFields(
+  n: Record<string, unknown>,
+  parentPath: string,
+  issues: OmmValidationIssue[],
+): void {
+  if ("parentId" in n) {
+    issues.push({
+      path: `${parentPath}.parentId`,
+      message:
+        "Persisted runtime field 'parentId' is not allowed in .omm format",
+      code: "tree.stale_parentId",
+    });
+  }
+  if ("childIds" in n) {
+    issues.push({
+      path: `${parentPath}.childIds`,
+      message:
+        "Persisted runtime field 'childIds' is not allowed in .omm format",
+      code: "tree.stale_childIds",
+    });
+  }
+}
+
+function checkNodeId(
+  n: Record<string, unknown>,
+  parentPath: string,
+  ctx: {
+    seenIds: Map<string, string>;
+    nodeIds: Map<string, true>;
+    issues: OmmValidationIssue[];
+  },
+): boolean {
+  const nodeId = n.id;
+  if (typeof nodeId !== "string" || (nodeId as string).length === 0) {
+    ctx.issues.push({
+      path: `${parentPath}.id`,
+      message: "Node must have a non-empty string id",
+      code: "tree.empty_id",
+    });
+    return false;
+  }
+  if (ctx.seenIds.has(nodeId as string)) {
+    ctx.issues.push({
+      path: `${parentPath}.id`,
+      message: `Duplicate node id "${nodeId}" (first seen at ${ctx.seenIds.get(nodeId as string)})`,
+      code: "tree.duplicate_id",
+    });
+  } else {
+    ctx.seenIds.set(nodeId as string, parentPath);
+    ctx.nodeIds.set(nodeId as string, true);
+  }
+  return true;
+}
+
+function makeNodeValidator(ctx: {
+  seenIds: Map<string, string>;
+  nodeIds: Map<string, true>;
+  issues: OmmValidationIssue[];
+}): (node: unknown, parentPath: string) => void {
+  return (node: unknown, parentPath: string): void => {
     if (!node || typeof node !== "object") {
-      issues.push({
+      ctx.issues.push({
         path: parentPath,
         message: "Node must be an object",
         code: "tree.invalid_node",
@@ -84,76 +159,49 @@ export function validateTree(rootMap: unknown): {
 
     const n = node as Record<string, unknown>;
 
-    // Check for non-empty concept
-    if (typeof n.concept !== "string" || (n.concept as string).length === 0) {
-      issues.push({
-        path: `${parentPath}.concept`,
-        message: "Node must have a non-empty concept",
-        code: "tree.empty_concept",
-      });
-    }
+    checkConcept(n, parentPath, ctx.issues);
+    rejectStaleFields(n, parentPath, ctx.issues);
 
-    // Check for runtime topology fields
-    if ("parentId" in n) {
-      issues.push({
-        path: `${parentPath}.parentId`,
-        message:
-          "Persisted runtime field 'parentId' is not allowed in .omm format",
-        code: "tree.stale_parentId",
-      });
-    }
+    if (!checkNodeId(n, parentPath, ctx)) return;
 
-    if ("childIds" in n) {
-      issues.push({
-        path: `${parentPath}.childIds`,
-        message:
-          "Persisted runtime field 'childIds' is not allowed in .omm format",
-        code: "tree.stale_childIds",
-      });
-    }
-
-    // Check node ID uniqueness
-    const nodeId = n.id;
-    if (typeof nodeId !== "string" || (nodeId as string).length === 0) {
-      issues.push({
-        path: `${parentPath}.id`,
-        message: "Node must have a non-empty string id",
-        code: "tree.empty_id",
-      });
-      return;
-    }
-
-    if (seenIds.has(nodeId as string)) {
-      issues.push({
-        path: `${parentPath}.id`,
-        message: `Duplicate node id "${nodeId}" (first seen at ${seenIds.get(nodeId as string)})`,
-        code: "tree.duplicate_id",
-      });
-    } else {
-      seenIds.set(nodeId as string, parentPath);
-      nodeIds.set(nodeId as string, true);
-    }
-
-    // Recurse into children
     const childNodes = n.children;
     if (childNodes !== undefined) {
       if (!Array.isArray(childNodes)) {
-        issues.push({
+        ctx.issues.push({
           path: `${parentPath}.children`,
           message: "children must be an array",
           code: "tree.invalid_children",
         });
       } else {
+        const validateChild = makeNodeValidator(ctx);
         childNodes.forEach((child, i) =>
-          validateNode(child, `${parentPath}.children[${i}]`),
+          validateChild(child, `${parentPath}.children[${i}]`),
         );
       }
     }
-  }
+  };
+}
 
-  (children as unknown[]).forEach((child, i) =>
-    validateNode(child, `rootMap.children[${i}]`),
-  );
+export function validateTree(rootMap: unknown): {
+  issues: OmmValidationIssue[];
+  nodeIds: Map<string, true>;
+} {
+  const issues: OmmValidationIssue[] = [];
+  const nodeIds = new Map<string, true>();
+
+  const map = validateRootMapObject(rootMap, issues);
+  if (!map) return { issues, nodeIds };
+
+  rejectFlatNodes(map, issues);
+
+  const children = checkChildrenArray(map, issues);
+  if (!children) return { issues, nodeIds };
+
+  const seenIds = new Map<string, string>();
+  const ctx = { seenIds, nodeIds, issues };
+  const validateNode = makeNodeValidator(ctx);
+
+  children.forEach((child, i) => validateNode(child, `rootMap.children[${i}]`));
 
   return { issues, nodeIds };
 }

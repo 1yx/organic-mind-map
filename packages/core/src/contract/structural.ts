@@ -5,14 +5,7 @@
  * preserves optional hints without semantic rewriting.
  */
 
-import type {
-  AgentMindMapList,
-  AgentCenter,
-  MainBranch,
-  SubBranch,
-  LeafNode,
-  ValidationError,
-} from "./types";
+import type { ValidationError } from "./types";
 
 /**
  * Validate the structure of an agent list input.
@@ -111,6 +104,28 @@ function validateBranches(branches: unknown): ValidationError[] {
   return errors;
 }
 
+/**
+ * Validate optional hint fields (visualHint, colorHint) on a node.
+ */
+function validateHints(
+  node: Record<string, unknown>,
+  path: string,
+  errors: ValidationError[],
+): void {
+  if (node.visualHint !== undefined && typeof node.visualHint !== "string") {
+    errors.push({
+      path: `${path}.visualHint`,
+      message: "visualHint must be a string if provided",
+    });
+  }
+  if (node.colorHint !== undefined && typeof node.colorHint !== "string") {
+    errors.push({
+      path: `${path}.colorHint`,
+      message: "colorHint must be a string if provided",
+    });
+  }
+}
+
 function validateMainBranch(branch: unknown, path: string): ValidationError[] {
   const errors: ValidationError[] = [];
 
@@ -128,19 +143,7 @@ function validateMainBranch(branch: unknown, path: string): ValidationError[] {
     });
   }
 
-  // Optional hints — type-check when present
-  if (b.visualHint !== undefined && typeof b.visualHint !== "string") {
-    errors.push({
-      path: `${path}.visualHint`,
-      message: "visualHint must be a string if provided",
-    });
-  }
-  if (b.colorHint !== undefined && typeof b.colorHint !== "string") {
-    errors.push({
-      path: `${path}.colorHint`,
-      message: "colorHint must be a string if provided",
-    });
-  }
+  validateHints(b, path, errors);
 
   if (b.children !== undefined) {
     if (!Array.isArray(b.children)) {
@@ -177,12 +180,7 @@ function validateSubBranch(branch: unknown, path: string): ValidationError[] {
     });
   }
 
-  if (b.visualHint !== undefined && typeof b.visualHint !== "string") {
-    errors.push({
-      path: `${path}.visualHint`,
-      message: "visualHint must be a string if provided",
-    });
-  }
+  validateHints(b, path, errors);
 
   if (b.children !== undefined) {
     if (!Array.isArray(b.children)) {
@@ -219,12 +217,7 @@ function validateLeafNode(node: unknown, path: string): ValidationError[] {
     });
   }
 
-  if (n.visualHint !== undefined && typeof n.visualHint !== "string") {
-    errors.push({
-      path: `${path}.visualHint`,
-      message: "visualHint must be a string if provided",
-    });
-  }
+  validateHints(n, path, errors);
 
   // LeafNode must NOT have children — nesting deeper than 3 levels
   if (n.children !== undefined) {

@@ -1,5 +1,5 @@
 import type { OmmValidationIssue } from "./types";
-import type { CenterVisual, CenterVisualMode, ComplianceState } from "../types";
+import type { CenterVisualMode, ComplianceState } from "../types";
 
 const VALID_MODES: readonly CenterVisualMode[] = [
   "image",
@@ -20,33 +20,44 @@ const VALID_STATES: readonly ComplianceState[] = [
  * - minColorCount >= 2 when complianceState is "compliant".
  * - Referenced built-in assets are noted (full resolution deferred to assets validator).
  */
-export function validateCenterVisual(
-  center: unknown,
-  path = "rootMap.center",
-): OmmValidationIssue[] {
-  const issues: OmmValidationIssue[] = [];
 
+function checkNotString(
+  center: unknown,
+  path: string,
+  issues: OmmValidationIssue[],
+): boolean {
   if (typeof center === "string") {
     issues.push({
       path,
       message: "Center visual must be an object, not a plain string",
       code: "center_visual.plain_text",
     });
-    return issues;
+    return false;
   }
+  return true;
+}
 
+function checkIsObject(
+  center: unknown,
+  path: string,
+  issues: OmmValidationIssue[],
+): boolean {
   if (!center || typeof center !== "object") {
     issues.push({
       path,
       message: "Center visual must be an object",
       code: "center_visual.missing",
     });
-    return issues;
+    return false;
   }
+  return true;
+}
 
-  const cv = center as Record<string, unknown>;
-
-  // mode
+function validateMode(
+  cv: Record<string, unknown>,
+  path: string,
+  issues: OmmValidationIssue[],
+): void {
   if (
     typeof cv.mode !== "string" ||
     !VALID_MODES.includes(cv.mode as CenterVisualMode)
@@ -57,8 +68,13 @@ export function validateCenterVisual(
       code: "center_visual.invalid_mode",
     });
   }
+}
 
-  // titleText
+function validateTitleText(
+  cv: Record<string, unknown>,
+  path: string,
+  issues: OmmValidationIssue[],
+): void {
   if (
     typeof cv.titleText !== "string" ||
     (cv.titleText as string).length === 0
@@ -69,32 +85,41 @@ export function validateCenterVisual(
       code: "center_visual.missing_titleText",
     });
   }
+}
 
-  // minColorCount
+function validateColorCountAndCompliance(
+  cv: Record<string, unknown>,
+  path: string,
+  issues: OmmValidationIssue[],
+): void {
   if (typeof cv.minColorCount !== "number") {
     issues.push({
       path: `${path}.minColorCount`,
       message: "minColorCount must be a number",
       code: "center_visual.invalid_minColorCount",
     });
-  } else {
-    // complianceState validation (only check the rule if complianceState is present and valid)
-    if (
-      typeof cv.complianceState === "string" &&
-      VALID_STATES.includes(cv.complianceState as ComplianceState) &&
-      cv.complianceState === "compliant" &&
-      (cv.minColorCount as number) < 2
-    ) {
-      issues.push({
-        path: `${path}.minColorCount`,
-        message:
-          "minColorCount must be >= 2 when complianceState is 'compliant'",
-        code: "center_visual.insufficient_colors",
-      });
-    }
+    return;
   }
 
-  // complianceState
+  if (
+    typeof cv.complianceState === "string" &&
+    VALID_STATES.includes(cv.complianceState as ComplianceState) &&
+    cv.complianceState === "compliant" &&
+    (cv.minColorCount as number) < 2
+  ) {
+    issues.push({
+      path: `${path}.minColorCount`,
+      message: "minColorCount must be >= 2 when complianceState is 'compliant'",
+      code: "center_visual.insufficient_colors",
+    });
+  }
+}
+
+function validateComplianceState(
+  cv: Record<string, unknown>,
+  path: string,
+  issues: OmmValidationIssue[],
+): void {
   if (
     typeof cv.complianceState !== "string" ||
     !VALID_STATES.includes(cv.complianceState as ComplianceState)
@@ -105,6 +130,23 @@ export function validateCenterVisual(
       code: "center_visual.invalid_complianceState",
     });
   }
+}
+
+export function validateCenterVisual(
+  center: unknown,
+  path = "rootMap.center",
+): OmmValidationIssue[] {
+  const issues: OmmValidationIssue[] = [];
+
+  if (!checkNotString(center, path, issues)) return issues;
+  if (!checkIsObject(center, path, issues)) return issues;
+
+  const cv = center as Record<string, unknown>;
+
+  validateMode(cv, path, issues);
+  validateTitleText(cv, path, issues);
+  validateColorCountAndCompliance(cv, path, issues);
+  validateComplianceState(cv, path, issues);
 
   return issues;
 }

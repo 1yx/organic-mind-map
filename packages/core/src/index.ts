@@ -1,5 +1,5 @@
 /**
- * @omm/core - Document types, validation, assets, paper specs, seed utilities.
+ * \@omm/core - Document types, validation, assets, paper specs, seed utilities.
  *
  * Environment-neutral. No Node or browser API dependencies.
  */

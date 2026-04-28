@@ -9,7 +9,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { resolve } from "node:path";
 import { previewCommand } from "./preview.js";
-import { CliExitCode } from "./types.js";
+import { cliExitCode } from "./types.js";
 
 // ---------------------------------------------------------------------------
 // Mock node:tty so we can control TTY detection in tests
@@ -52,22 +52,61 @@ function captureOutput(fn: () => Promise<number>): Promise<{
 }
 
 // ---------------------------------------------------------------------------
-// Tests
+// Test helpers for forbidden-key scanning
 // ---------------------------------------------------------------------------
 
-describe("previewCommand", () => {
+const FORBIDDEN_KEYS = [
+  "id",
+  "nodeId",
+  "color",
+  "fill",
+  "stroke",
+  "organicSeed",
+  "seed",
+  "centerVisualId",
+  "branchStyle",
+  "layout",
+  "position",
+  "bounds",
+  "svgPath",
+  "ommVersion",
+  "exportPng",
+  "snapshot",
+];
+
+function findForbiddenKeys(obj: unknown, path: string): string[] {
+  const hits: string[] = [];
+  if (!obj || typeof obj !== "object") return hits;
+  for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+    if (FORBIDDEN_KEYS.includes(key)) hits.push(`${path}.${key}`);
+    if (Array.isArray(value)) {
+      for (let i = 0; i < value.length; i++)
+        hits.push(...findForbiddenKeys(value[i], `${path}[${i}]`));
+    } else if (value && typeof value === "object") {
+      hits.push(...findForbiddenKeys(value, `${path}.${key}`));
+    }
+  }
+  return hits;
+}
+
+/** Setup/teardown shared by all previewCommand describe blocks. */
+function usePreviewLifecycle(): void {
   beforeEach(() => {
     process.exitCode = undefined as unknown as number;
-    // Default: stdin is NOT a TTY (pipe mode) — but we always provide
-    // a positional file argument in tests so readStdin is never called.
-    // For the "no input" test, we set isatty to true.
     mockIsatty.mockReturnValue(false);
   });
-
   afterEach(() => {
     process.exitCode = undefined as unknown as number;
     mockIsatty.mockReset();
   });
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+describe("previewCommand — input & parsing", () => {
+  usePreviewLifecycle();
 
   // 7.1: Valid fixture succeeds and starts preview handoff
   it("succeeds for a valid fixture and starts preview handoff", async () => {
@@ -75,8 +114,8 @@ describe("previewCommand", () => {
       previewCommand([fixture("valid-handoff.json")]),
     );
 
-    expect(code).toBe(CliExitCode.OK);
-    expect(process.exitCode).toBe(CliExitCode.OK);
+    expect(code).toBe(cliExitCode.OK);
+    expect(process.exitCode).toBe(cliExitCode.OK);
     expect(stdout).toEqual(
       expect.arrayContaining([
         expect.stringContaining("PreviewPayload ready for browser consumption"),
@@ -89,15 +128,12 @@ describe("previewCommand", () => {
 
   // 7.2: Missing input returns usage error (exit 1)
   it("returns usage error when no input and no stdin (exit 1)", async () => {
-    // Make stdin appear as a TTY (interactive) so the command prints usage
     mockIsatty.mockReturnValue(true);
 
-    const { code, stderr } = await captureOutput(() =>
-      previewCommand([]),
-    );
+    const { code, stderr } = await captureOutput(() => previewCommand([]));
 
-    expect(code).toBe(CliExitCode.INPUT_ERROR);
-    expect(process.exitCode).toBe(CliExitCode.INPUT_ERROR);
+    expect(code).toBe(cliExitCode.INPUT_ERROR);
+    expect(process.exitCode).toBe(cliExitCode.INPUT_ERROR);
     expect(stderr.join(" ")).toContain("Usage: omm preview <input.json>");
   });
 
@@ -107,26 +143,28 @@ describe("previewCommand", () => {
       previewCommand([fixture("invalid-json.json")]),
     );
 
-    expect(code).toBe(CliExitCode.INPUT_ERROR);
-    expect(process.exitCode).toBe(CliExitCode.INPUT_ERROR);
+    expect(code).toBe(cliExitCode.INPUT_ERROR);
+    expect(process.exitCode).toBe(cliExitCode.INPUT_ERROR);
     expect(stderr.join(" ")).toContain("malformed JSON");
   });
+});
+
+describe("previewCommand — validation", () => {
+  usePreviewLifecycle();
 
   // 7.4: Invalid OrganicTree exits with code 1 and path-specific errors
   it("exits with code 1 for invalid contract and shows path-specific errors", async () => {
-    // Test missing fields
     const missing = await captureOutput(() =>
       previewCommand([fixture("invalid-contract-missing-fields.json")]),
     );
-    expect(missing.code).toBe(CliExitCode.INPUT_ERROR);
+    expect(missing.code).toBe(cliExitCode.INPUT_ERROR);
     expect(missing.stderr.join(" ")).toContain("Invalid OrganicTree");
     expect(missing.stderr.join(" ")).toContain("center.concept");
 
-    // Test malformed hierarchy
     const malformed = await captureOutput(() =>
       previewCommand([fixture("invalid-contract-malformed-hierarchy.json")]),
     );
-    expect(malformed.code).toBe(CliExitCode.INPUT_ERROR);
+    expect(malformed.code).toBe(cliExitCode.INPUT_ERROR);
     expect(malformed.stderr.join(" ")).toContain("Invalid OrganicTree");
   });
 
@@ -136,35 +174,43 @@ describe("previewCommand", () => {
       previewCommand([fixture("oversized-capacity.json")]),
     );
 
-    expect(code).toBe(CliExitCode.CAPACITY_EXCEEDED);
-    expect(process.exitCode).toBe(CliExitCode.CAPACITY_EXCEEDED);
+    expect(code).toBe(cliExitCode.CAPACITY_EXCEEDED);
+    expect(process.exitCode).toBe(cliExitCode.CAPACITY_EXCEEDED);
     expect(stderr.join(" ")).toContain("Input exceeds MVP capacity");
-    expect(stderr.join(" ")).toContain("Please regenerate a shorter concept list");
+    expect(stderr.join(" ")).toContain(
+      "Please regenerate a shorter concept list",
+    );
   });
+});
+
+describe("previewCommand — payload shape", () => {
+  usePreviewLifecycle();
 
   // 7.6: CLI passes PreviewPayload to the preview server, not OmmDocument
   it("passes PreviewPayload to the preview server with correct shape", async () => {
     const serverModule = await import("./preview-server.js");
-    const spy = vi.spyOn(serverModule, "startPreviewServer").mockResolvedValue();
+    const spy = vi
+      .spyOn(serverModule, "startPreviewServer")
+      .mockResolvedValue();
 
     const code = await previewCommand([fixture("valid-handoff.json")]);
 
-    expect(code).toBe(CliExitCode.OK);
+    expect(code).toBe(cliExitCode.OK);
     expect(spy).toHaveBeenCalledOnce();
 
     const payload = spy.mock.calls[0]![0] as unknown;
-    // Verify it's a PreviewPayload, not an OmmDocument
     expect(payload).toHaveProperty("version", 1);
     expect(payload).toHaveProperty("source", "organic-tree");
     expect(payload).toHaveProperty("paper");
     expect(payload).toHaveProperty("tree");
-    // Must NOT have OmmDocument fields
     expect(payload).not.toHaveProperty("layout");
     expect(payload).not.toHaveProperty("exportPng");
     expect(payload).not.toHaveProperty("snapshot");
 
-    // The tree should be the AgentMindMapList — has center and branches
-    const tree = (payload as Record<string, unknown>).tree as Record<string, unknown>;
+    const tree = (payload as Record<string, unknown>).tree as Record<
+      string,
+      unknown
+    >;
     expect(tree).toHaveProperty("center");
     expect(tree).toHaveProperty("branches");
     expect(tree).toHaveProperty("version", 1);
@@ -183,82 +229,49 @@ describe("previewCommand", () => {
       previewCommand([fixture("valid-handoff.json")]),
     );
 
-    expect(code).toBe(CliExitCode.SERVER_HANDOFF_ERROR);
-    expect(process.exitCode).toBe(CliExitCode.SERVER_HANDOFF_ERROR);
+    expect(code).toBe(cliExitCode.SERVER_HANDOFF_ERROR);
+    expect(process.exitCode).toBe(cliExitCode.SERVER_HANDOFF_ERROR);
     expect(stderr.join(" ")).toContain("Preview server error");
 
     spy.mockRestore();
   });
+});
+
+describe("previewCommand — forbidden artifacts", () => {
+  usePreviewLifecycle();
 
   // 7.8: CLI does NOT implement ID generation, color assignment, etc.
   it("PreviewPayload contains no generated IDs, colors, organic seeds, or OmmDocument artifacts", async () => {
     const serverModule = await import("./preview-server.js");
     let capturedPayload: unknown;
-    const spy = vi.spyOn(serverModule, "startPreviewServer").mockImplementation(
-      async (p) => {
+    const spy = vi
+      .spyOn(serverModule, "startPreviewServer")
+      .mockImplementation(async (p) => {
         capturedPayload = p;
-      },
-    );
+      });
 
     await previewCommand([fixture("no-generated-ids.json")]);
 
     const payload = capturedPayload as Record<string, unknown>;
-
-    // Helper: check an object and all nested arrays for forbidden keys
-    const forbiddenKeys = [
-      "id",
-      "nodeId",
-      "color",
-      "fill",
-      "stroke",
-      "organicSeed",
-      "seed",
-      "centerVisualId",
-      "branchStyle",
-      "layout",
-      "position",
-      "bounds",
-      "svgPath",
-      "ommVersion",
-      "exportPng",
-      "snapshot",
-    ];
-
-    function objectHasForbiddenKeys(obj: unknown, path: string): string[] {
-      const hits: string[] = [];
-      if (!obj || typeof obj !== "object") return hits;
-      for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
-        if (forbiddenKeys.includes(key)) {
-          hits.push(`${path}.${key}`);
-        }
-        if (Array.isArray(value)) {
-          for (let i = 0; i < value.length; i++) {
-            hits.push(...objectHasForbiddenKeys(value[i], `${path}[${i}]`));
-          }
-        } else if (value && typeof value === "object") {
-          hits.push(...objectHasForbiddenKeys(value, `${path}.${key}`));
-        }
-      }
-      return hits;
-    }
-
-    const hits = objectHasForbiddenKeys(payload, "payload");
-    expect(hits).toEqual([]);
+    expect(findForbiddenKeys(payload, "payload")).toEqual([]);
 
     spy.mockRestore();
   });
+});
+
+describe("previewCommand — flags", () => {
+  usePreviewLifecycle();
 
   // Additional: --paper flag overrides input contract
   it("respects --paper flag overriding input contract", async () => {
     const serverModule = await import("./preview-server.js");
     let capturedPayload: unknown;
-    const spy = vi.spyOn(serverModule, "startPreviewServer").mockImplementation(
-      async (p) => {
+    const spy = vi
+      .spyOn(serverModule, "startPreviewServer")
+      .mockImplementation(async (p) => {
         capturedPayload = p;
-      },
-    );
+      });
 
-    // valid-handoff.json has paper "a4-landscape"
     await previewCommand([
       "--paper",
       "a3-landscape",
@@ -275,17 +288,13 @@ describe("previewCommand", () => {
   it("forwards --port to the preview server", async () => {
     const serverModule = await import("./preview-server.js");
     let capturedOptions: unknown;
-    const spy = vi.spyOn(serverModule, "startPreviewServer").mockImplementation(
-      async (_p, opts) => {
+    const spy = vi
+      .spyOn(serverModule, "startPreviewServer")
+      .mockImplementation(async (_p, opts) => {
         capturedOptions = opts;
-      },
-    );
+      });
 
-    await previewCommand([
-      "--port",
-      "5173",
-      fixture("valid-handoff.json"),
-    ]);
+    await previewCommand(["--port", "5173", fixture("valid-handoff.json")]);
 
     expect(capturedOptions).toEqual({ port: 5173 });
 
@@ -296,13 +305,12 @@ describe("previewCommand", () => {
   it("defaults paper to a3-landscape when unspecified", async () => {
     const serverModule = await import("./preview-server.js");
     let capturedPayload: unknown;
-    const spy = vi.spyOn(serverModule, "startPreviewServer").mockImplementation(
-      async (p) => {
+    const spy = vi
+      .spyOn(serverModule, "startPreviewServer")
+      .mockImplementation(async (p) => {
         capturedPayload = p;
-      },
-    );
+      });
 
-    // no-generated-ids.json has no paper field
     await previewCommand([fixture("no-generated-ids.json")]);
 
     const payload = capturedPayload as Record<string, unknown>;

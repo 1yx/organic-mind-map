@@ -4,13 +4,11 @@ import {
   traverseBranches,
   conceptUnitWidth,
   isSentenceLike,
-} from "./index";
-import {
   DEFAULT_LIMITS,
   validateCapacity,
   formatCapacityFeedback,
 } from "./index";
-import type { AgentListLimits, AgentMindMapList } from "./index";
+import type { AgentListLimits, AgentMindMapList } from "./types";
 
 // Inline fixtures for test isolation (no fs dependency)
 const fixtures: Record<string, unknown> = {
@@ -157,7 +155,7 @@ const fixtures: Record<string, unknown> = {
   },
 };
 
-describe("validateAgentList", () => {
+describe("validateAgentList — valid inputs", () => {
   // 5.1 Valid minimal and representative fixtures pass
   it("accepts valid Chinese concept-unit fixture", () => {
     const result = validateAgentList(fixtures["valid-chinese.json"]);
@@ -187,7 +185,9 @@ describe("validateAgentList", () => {
     });
     expect(result.valid).toBe(true);
   });
+});
 
+describe("validateAgentList — structural errors", () => {
   // 5.2 Unsupported contract version
   it("rejects unsupported contract version with version path error", () => {
     const result = validateAgentList(fixtures["invalid-wrong-version.json"]);
@@ -210,7 +210,9 @@ describe("validateAgentList", () => {
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.path.includes("children"))).toBe(true);
   });
+});
 
+describe("validateAgentList — quality errors", () => {
   // 5.4 Sentence-like concepts fail as Error
   it("rejects Chinese sentence-like concept as Error", () => {
     const result = validateAgentList(fixtures["invalid-sentence-like.json"]);
@@ -242,7 +244,9 @@ describe("validateAgentList", () => {
       result.errors.some((e) => e.message.includes("maximum depth of 3")),
     ).toBe(true);
   });
+});
 
+describe("validateAgentList — capacity errors", () => {
   // 5.7 Oversized input fails with retry-friendly capacity feedback
   it("rejects oversized input with capacity feedback", () => {
     const strictLimits: AgentListLimits = { ...DEFAULT_LIMITS, maxNodes: 10 };
@@ -263,7 +267,9 @@ describe("validateAgentList", () => {
     expect(msg).toContain("exceeds");
     expect(msg).toContain("regenerate a shorter concept list");
   });
+});
 
+describe("validateAgentList — hint fields", () => {
   // 5.8 Optional hints are preserved
   it("preserves optional visualHint and colorHint in validated output", () => {
     const input = {
