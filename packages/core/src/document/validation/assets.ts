@@ -1,14 +1,14 @@
 import type { OmmValidationIssue } from "./types";
 import type { MindNode } from "../types";
+import { BUILTIN_ASSET_ID_SET } from "../constants";
 
 /**
  * Validates the asset manifest and cross-references.
  *
  * Phase 1 rules:
  * - Asset source must be "builtin". Rejects "uploaded" and "generated".
- * - Asset must have a builtinId string.
+ * - Asset must have a builtinId from the Phase 1 built-in asset registry.
  * - Rejects embedded Base64 data (no data field, no embeddedSvg, etc.).
- * - Accepts any string for builtinId since the registry is not yet built.
  * - Validates that all asset references from center/nodes resolve to known assets.
  */
 export function validateAssets(
@@ -60,12 +60,18 @@ export function validateAssets(
       });
     }
 
-    // builtinId is required when source is builtin
+    // builtinId is required and must be known when source is builtin.
     if (typeof image.builtinId !== "string" || (image.builtinId as string).length === 0) {
       issues.push({
         path: `${imgPath}.builtinId`,
         message: "Built-in asset must have a non-empty builtinId",
         code: "assets.missing_builtinId",
+      });
+    } else if (image.source === "builtin" && !BUILTIN_ASSET_ID_SET.has(image.builtinId as string)) {
+      issues.push({
+        path: `${imgPath}.builtinId`,
+        message: `Unknown built-in asset id "${image.builtinId as string}"`,
+        code: "assets.unknown_builtinId",
       });
     }
 

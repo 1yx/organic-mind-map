@@ -10,6 +10,20 @@ export const PAPER_SPECS: Record<PaperKind, { widthMm: number; heightMm: number 
 };
 
 /**
+ * Built-in center visual assets available in Phase 1.
+ *
+ * The renderer owns the actual SVG/template registry. Core validation keeps a
+ * matching ID allowlist so .omm files cannot reference arbitrary built-in IDs.
+ */
+export const BUILTIN_ASSET_IDS = [
+  "mandala-colorful",
+] as const;
+
+export type BuiltinAssetId = (typeof BUILTIN_ASSET_IDS)[number];
+
+export const BUILTIN_ASSET_ID_SET: ReadonlySet<string> = new Set(BUILTIN_ASSET_IDS);
+
+/**
  * Returns the canonical PaperSpec for a given paper kind.
  * @throws Error if the paper kind is not supported.
  */

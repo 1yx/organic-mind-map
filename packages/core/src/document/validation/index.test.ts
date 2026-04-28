@@ -203,6 +203,20 @@ describe("validateOmmDocument", () => {
       // This fixture has a valid built-in asset
       expect(result.valid).toBe(true);
     });
+
+    it("rejects unknown built-in asset IDs", () => {
+      const doc = loadFixture("valid-a4-with-center-visual");
+      const modified = JSON.parse(JSON.stringify(doc)) as Record<string, unknown>;
+      const assets = modified.assets as Record<string, unknown>;
+      const images = assets.images as Record<string, unknown>[];
+      images[0].builtinId = "does-not-exist";
+
+      const result = validateOmmDocument(modified) as OmmValidationResult;
+
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.code === "assets.unknown_builtinId")).toBe(true);
+      expect(result.errors.some((e) => e.path === "assets.images[0].builtinId")).toBe(true);
+    });
   });
 
   describe("layout validation", () => {

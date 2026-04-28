@@ -96,6 +96,10 @@ The system SHALL store built-in templates and built-in visual assets by stable I
 - **WHEN** an image asset has `source: "builtin"` and a known `builtinId`
 - **THEN** validation accepts the asset without requiring embedded `data`
 
+#### Scenario: Unknown built-in asset reference
+- **WHEN** an image asset has `source: "builtin"` and a `builtinId` that is not in the Phase 1 built-in asset registry
+- **THEN** validation fails with a path-specific unknown built-in asset error
+
 #### Scenario: Built-in asset embeds duplicated data
 - **WHEN** an image asset has `source: "builtin"` and also stores unnecessary embedded payload data
 - **THEN** validation rejects the asset as non-canonical for Phase 1 `.omm`

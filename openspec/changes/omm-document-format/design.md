@@ -176,6 +176,8 @@ interface ImageAsset {
 
 For `source: "builtin"`, `builtinId` is required and embedded payload data must be omitted. External paths can be recorded as optional references, but they are not rendering dependencies in Phase 1.
 
+Core validation maintains a Phase 1 built-in asset ID allowlist that mirrors the renderer's built-in template registry. A document with `source: "builtin"` and an unknown `builtinId` must fail validation instead of being treated as a valid asset reference.
+
 ## Validation
 
 Validation should ensure:
@@ -191,6 +193,7 @@ Validation should ensure:
 * layout snapshot references only existing node ids
 * layout paths and boxes are present for renderable nodes and branches
 * built-in asset references point to known registry IDs
+* unknown built-in asset IDs produce path-specific validation errors
 * uploaded/Base64 assets are not present in Phase 1 `.omm`
 
 ## Non-stored State
