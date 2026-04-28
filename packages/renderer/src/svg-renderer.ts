@@ -28,7 +28,9 @@ export function renderSvg(
   const parts: string[] = [];
 
   // SVG header
-  parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${layout.viewBox}" width="${layout.paperBounds.width}" height="${layout.paperBounds.height}">`);
+  parts.push(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${layout.viewBox}" width="${layout.paperBounds.width}" height="${layout.paperBounds.height}">`,
+  );
 
   // Paper background
   parts.push(renderPaperBackground(layout, paperBackground));
@@ -107,25 +109,29 @@ function renderSingleBranch(
   const textPathId = `textpath-${nodeId}`;
   const fontSize = branch.depth === 1 ? 80 : branch.depth === 2 ? 56 : 42;
   const fontWeight = branch.depth === 1 ? "bold" : "normal";
-  const textAnchor = branch.boundingBox.x < branch.boundingBox.x + branch.boundingBox.width / 2
-    ? "end"
-    : "start";
   const startOffset = branch.depth === 1 ? "30%" : "25%";
 
   // Branch path with tapered stroke — using a single <path> with stroke-width
   // For true tapering, we use a filled shape instead of a stroked path
   const parts: string[] = [];
-  parts.push(`  <!-- Branch: ${escapeAttr(branch.concept)} (${nodeId}) -->`);
+  parts.push(`  <!-- Branch: ${escapeComment(nodeId)} -->`);
 
-  // Use filled tapered shape for better visual appearance
-  parts.push(`  <path id="${pathId}" d="${branch.branchPath}" fill="none" stroke="${escapeAttr(branch.color)}" stroke-width="${branch.strokeWidthStart}" stroke-linecap="round" opacity="0.9"/>`);
+  // Filled tapered shape: two offset outlines connected at ends
+  const taperedPath = buildTaperedPath(
+    { start: branch.startPoint, end: branch.endPoint },
+    branch.strokeWidthStart,
+    branch.strokeWidthEnd,
+  );
+  parts.push(
+    `  <path id="${pathId}" d="${taperedPath}" fill="${escapeAttr(branch.color)}" stroke="none" stroke-linecap="round" opacity="0.9"/>`,
+  );
 
   // Text on path
-  const displayText = branch.textClipped
-    ? escapeXml(branch.concept)
-    : escapeXml(branch.concept);
+  const displayText = escapeXml(branch.concept);
 
-  parts.push(`  <path id="${textPathId}" d="${branch.textPath}" fill="none" stroke="none"/>`);
+  parts.push(
+    `  <path id="${textPathId}" d="${branch.textPath}" fill="none" stroke="none"/>`,
+  );
   parts.push(`  <text font-size="${fontSize}" font-family="Arial, Helvetica, sans-serif" font-weight="${fontWeight}" fill="${escapeAttr(branch.color)}" opacity="0.95">
     <textPath href="#${textPathId}" startOffset="${startOffset}" text-anchor="middle">
       ${displayText}
@@ -166,4 +172,34 @@ function escapeAttr(str: string): string {
     .replace(/"/g, "&quot;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
+}
+
+function escapeComment(str: string): string {
+  return str.replace(/--/g, "\\u002d\\u002d").replace(/-/g, "\\u002d");
+}
+
+type Vec2 = { x: number; y: number };
+
+function buildTaperedPath(
+  line: { start: Vec2; end: Vec2 },
+  widthStart: number,
+  widthEnd: number,
+): string {
+  const { start, end } = line;
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const len = Math.sqrt(dx * dx + dy * dy) || 1;
+  const nx = -dy / len;
+  const ny = dx / len;
+
+  const hs = widthStart / 2;
+  const he = widthEnd / 2;
+
+  const a = { x: start.x + nx * hs, y: start.y + ny * hs };
+  const b = { x: end.x + nx * he, y: end.y + ny * he };
+  const c = { x: end.x - nx * he, y: end.y - ny * he };
+  const d = { x: start.x - nx * hs, y: start.y - ny * hs };
+
+  const f = (v: Vec2) => `${v.x.toFixed(1)},${v.y.toFixed(1)}`;
+  return `M${f(a)} L${f(b)} Q${f(end)} ${f(c)} L${f(d)} Q${f(start)} Z`;
 }
