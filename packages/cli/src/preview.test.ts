@@ -222,6 +222,10 @@ describe("previewCommand — payload shape", () => {
 
     spy.mockRestore();
   });
+});
+
+describe("previewCommand — server handoff errors", () => {
+  usePreviewLifecycle();
 
   // 7.7: Preview server handoff failures exit with code 3
   it("exits with code 3 when preview server throws", async () => {
@@ -253,7 +257,13 @@ describe("previewCommand — forbidden artifacts", () => {
       .spyOn(serverModule, "startPreviewServerAsync")
       .mockImplementation(async (p) => {
         capturedPayload = p;
-        return { host: "127.0.0.1", port: 5173, url: "http://127.0.0.1:5173", pid: 1, server: {} as any };
+        return {
+          host: "127.0.0.1",
+          port: 5173,
+          url: "http://127.0.0.1:5173",
+          pid: 1,
+          server: {} as any,
+        };
       });
 
     await previewCommand([fixture("no-generated-ids.json")]);
@@ -276,7 +286,13 @@ describe("previewCommand — flags", () => {
       .spyOn(serverModule, "startPreviewServerAsync")
       .mockImplementation(async (p) => {
         capturedPayload = p;
-        return { host: "127.0.0.1", port: 5173, url: "http://127.0.0.1:5173", pid: 1, server: {} as any };
+        return {
+          host: "127.0.0.1",
+          port: 5173,
+          url: "http://127.0.0.1:5173",
+          pid: 1,
+          server: {} as any,
+        };
       });
 
     await previewCommand([
@@ -290,6 +306,10 @@ describe("previewCommand — flags", () => {
 
     spy.mockRestore();
   });
+});
+
+describe("previewCommand — port flag", () => {
+  usePreviewLifecycle();
 
   // Additional: --port flag is forwarded to preview server
   it("forwards --port to the preview server", async () => {
@@ -299,7 +319,13 @@ describe("previewCommand — flags", () => {
       .spyOn(serverModule, "startPreviewServerAsync")
       .mockImplementation(async (_p, opts) => {
         capturedOptions = opts;
-        return { host: "127.0.0.1", port: 5173, url: "http://127.0.0.1:5173", pid: 1, server: {} as any };
+        return {
+          host: "127.0.0.1",
+          port: 5173,
+          url: "http://127.0.0.1:5173",
+          pid: 1,
+          server: {} as any,
+        };
       });
 
     await previewCommand(["--port", "5173", fixture("valid-handoff.json")]);
@@ -317,7 +343,13 @@ describe("previewCommand — flags", () => {
       .spyOn(serverModule, "startPreviewServerAsync")
       .mockImplementation(async (p) => {
         capturedPayload = p;
-        return { host: "127.0.0.1", port: 5173, url: "http://127.0.0.1:5173", pid: 1, server: {} as any };
+        return {
+          host: "127.0.0.1",
+          port: 5173,
+          url: "http://127.0.0.1:5173",
+          pid: 1,
+          server: {} as any,
+        };
       });
 
     await previewCommand([fixture("no-generated-ids.json")]);
@@ -339,7 +371,13 @@ describe("previewCommand — svgUrl allowlist (allowed)", () => {
       .spyOn(serverModule, "startPreviewServerAsync")
       .mockImplementation(async (p) => {
         capturedPayload = p;
-        return { host: "127.0.0.1", port: 5173, url: "http://127.0.0.1:5173", pid: 1, server: {} as any };
+        return {
+          host: "127.0.0.1",
+          port: 5173,
+          url: "http://127.0.0.1:5173",
+          pid: 1,
+          server: {} as any,
+        };
       });
 
     const code = await previewCommand([fixture("svg-url-allowlisted.json")]);
@@ -369,7 +407,13 @@ describe("previewCommand — svgUrl allowlist (rejected/absent)", () => {
       .spyOn(serverModule, "startPreviewServerAsync")
       .mockImplementation(async (p) => {
         capturedPayload = p;
-        return { host: "127.0.0.1", port: 5173, url: "http://127.0.0.1:5173", pid: 1, server: {} as any };
+        return {
+          host: "127.0.0.1",
+          port: 5173,
+          url: "http://127.0.0.1:5173",
+          pid: 1,
+          server: {} as any,
+        };
       });
 
     const code = await previewCommand([
@@ -393,7 +437,13 @@ describe("previewCommand — svgUrl allowlist (rejected/absent)", () => {
       .spyOn(serverModule, "startPreviewServerAsync")
       .mockImplementation(async (p) => {
         capturedPayload = p;
-        return { host: "127.0.0.1", port: 5173, url: "http://127.0.0.1:5173", pid: 1, server: {} as any };
+        return {
+          host: "127.0.0.1",
+          port: 5173,
+          url: "http://127.0.0.1:5173",
+          pid: 1,
+          server: {} as any,
+        };
       });
 
     const code = await previewCommand([fixture("no-svg-url.json")]);

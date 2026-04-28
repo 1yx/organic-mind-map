@@ -111,9 +111,7 @@ async function fetchAndInlineSvgAsset(url: string): Promise<string | null> {
  * @param url - The URL of the external image asset
  * @returns A data:image/...;base64,... URL, or null if inlining failed
  */
-async function fetchAndInlineImageAsset(
-  url: string,
-): Promise<string | null> {
+async function fetchAndInlineImageAsset(url: string): Promise<string | null> {
   try {
     const response = await fetch(url);
     if (!response.ok) return null;
@@ -138,27 +136,15 @@ function blobToDataUrl(blob: Blob): Promise<string> {
 }
 
 /**
- * Inline all external SVG and image assets in a cloned SVG DOM.
- *
- * Tasks 2.3-2.5: Inline external assets, replace with data URLs or inline SVG,
- * use fallbacks when inlining fails.
- *
- * Strategy:
- * - For <image> elements with external hrefs, fetch and convert to data:image URLs
- * - For <use> elements referencing external SVGs, fetch and inline the SVG content
- * - Assets that cannot be inlined are removed (the renderer already uses inline SVG
- *   or built-in fallbacks, so this is a safety net)
- *
- * @param clone - The cloned SVG DOM to process
- * @returns The number of assets inlined (for diagnostics)
+ * Inline all <image> elements with external hrefs as data URLs.
+ * Returns counts of inlined and failed assets.
  */
-export async function inlineExternalAssets(
+async function inlineImageAssets(
   clone: SVGSVGElement,
 ): Promise<{ inlined: number; failed: number }> {
   let inlined = 0;
   let failed = 0;
 
-  // Process <image> elements with external href
   const images = Array.from(clone.querySelectorAll("image"));
   for (const img of images) {
     const href = img.getAttribute("href") ?? img.getAttribute("xlink:href");
@@ -170,25 +156,33 @@ export async function inlineExternalAssets(
       img.removeAttribute("xlink:href");
       inlined++;
     } else {
-      // Remove the un-inlinable external image to avoid canvas taint
       img.remove();
       failed++;
     }
   }
 
-  // Process <use> elements with external href (SVG fragments)
+  return { inlined, failed };
+}
+
+/**
+ * Inline all <use> elements with external hrefs as inline SVG.
+ * Returns counts of inlined and failed assets.
+ */
+async function inlineUseAssets(
+  clone: SVGSVGElement,
+): Promise<{ inlined: number; failed: number }> {
+  let inlined = 0;
+  let failed = 0;
+
   const uses = Array.from(clone.querySelectorAll("use"));
   for (const use of uses) {
     const href = use.getAttribute("href") ?? use.getAttribute("xlink:href");
     if (!href || !isExternalUrl(href)) continue;
 
-    // Try to fetch as SVG and inline
     const svgContent = await fetchAndInlineSvgAsset(href);
     if (svgContent) {
-      // Replace <use> with inline <g> containing the SVG content
       const g = document.createElementNS(SVG_NS, "g");
       g.innerHTML = svgContent;
-      // Remove outer <svg> tag if present, keep inner content
       const innerSvg = g.querySelector("svg");
       if (innerSvg) {
         const fragment = document.createDocumentFragment();
@@ -201,13 +195,33 @@ export async function inlineExternalAssets(
       use.replaceWith(g);
       inlined++;
     } else {
-      // Remove the un-inlinable reference
       use.remove();
       failed++;
     }
   }
 
   return { inlined, failed };
+}
+
+/**
+ * Inline all external SVG and image assets in a cloned SVG DOM.
+ *
+ * Tasks 2.3-2.5: Inline external assets, replace with data URLs or inline SVG,
+ * use fallbacks when inlining fails.
+ *
+ * @param clone - The cloned SVG DOM to process
+ * @returns The number of assets inlined (for diagnostics)
+ */
+export async function inlineExternalAssets(
+  clone: SVGSVGElement,
+): Promise<{ inlined: number; failed: number }> {
+  const images = await inlineImageAssets(clone);
+  const uses = await inlineUseAssets(clone);
+
+  return {
+    inlined: images.inlined + uses.inlined,
+    failed: images.failed + uses.failed,
+  };
 }
 
 // ─── Serialization ───────────────────────────────────────────────────────
@@ -275,7 +289,10 @@ export async function prepareSvgForExport(
   const serialized = serializeInlinedSvg(clone);
 
   if (!serialized || !serialized.includes("<svg")) {
-    return { svg: null, error: "SVG serialization produced empty or invalid output." };
+    return {
+      svg: null,
+      error: "SVG serialization produced empty or invalid output.",
+    };
   }
 
   return { svg: serialized, error: null };

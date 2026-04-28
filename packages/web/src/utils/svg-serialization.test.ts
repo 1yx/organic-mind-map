@@ -15,10 +15,7 @@ import { describe, it, expect } from "vitest";
 describe("SVG serialization - namespace handling", () => {
   it("includes xmlns and xmlns:xlink in serialized output", () => {
     // Create a minimal SVG element
-    const svg = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "svg",
-    );
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("viewBox", "0 0 800 600");
     svg.setAttribute("width", "800");
     svg.setAttribute("height", "600");
@@ -44,10 +41,7 @@ describe("SVG serialization - namespace handling", () => {
   });
 
   it("produces valid SVG output with all expected sections", () => {
-    const svg = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "svg",
-    );
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("viewBox", "0 0 1000 700");
     svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
     svg.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
@@ -87,10 +81,7 @@ describe("SVG serialization - namespace handling", () => {
 
 describe("SVG serialization - cloning", () => {
   it("clones the latest DOM state (not stale)", () => {
-    const svg = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "svg",
-    );
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("viewBox", "0 0 100 100");
 
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");

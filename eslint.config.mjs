@@ -72,7 +72,7 @@ export default [
       // Node dependencies.
       "node_modules/**",
       // Common build output directories.
-      "dist/**",
+      "**/dist/**",
       // Test coverage output.
       "coverage/**",
       // ESLint config itself — not in tsconfig, TSDoc comments cause warnings.

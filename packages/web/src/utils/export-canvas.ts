@@ -13,10 +13,7 @@
  * - 3.7: Convert canvas with toBlob("image/png") and trigger download
  */
 
-import {
-  svgToBlobUrl,
-  revokeBlobUrl,
-} from "./svg-serialization.js";
+import { svgToBlobUrl, revokeBlobUrl } from "./svg-serialization.js";
 import type { ExportCanvasOptions } from "./export-canvas-types.js";
 
 // ─── Paper Aspect Ratios ─────────────────────────────────────────────────
@@ -49,93 +46,107 @@ const MAX_CANVAS_PIXELS = 67_108_864; // 8192 × 8192 = ~67M pixels
 
 // ─── Canvas Dimension Calculation ────────────────────────────────────────
 
-export interface CanvasDimensions {
+export type CanvasDimensions = {
   /** Canvas width in CSS pixels. */
   width: number;
   /** Canvas height in CSS pixels. */
   height: number;
   /** The scale factor applied (DPR × adjustment). */
   scaleFactor: number;
+};
+
+/**
+ * Resolve effective DPR from options or window, clamped to [1, 3].
+ */
+function resolveDpr(options?: ExportCanvasOptions): number {
+  const raw =
+    options?.devicePixelRatio ??
+    (typeof window !== "undefined" ? window.devicePixelRatio : undefined) ??
+    1;
+  return Math.max(1, Math.min(raw, 3));
 }
+
+/**
+ * Fit a rectangle into the container while preserving the target aspect ratio.
+ * Returns the fitted width and height (before DPR scaling).
+ */
+function fitToAspectRatio(
+  containerWidth: number,
+  containerHeight: number,
+  aspectRatio: number,
+): { fitWidth: number; fitHeight: number } {
+  if (containerWidth / containerHeight > aspectRatio) {
+    return {
+      fitHeight: containerHeight,
+      fitWidth: containerHeight * aspectRatio,
+    };
+  }
+  return { fitWidth: containerWidth, fitHeight: containerWidth / aspectRatio };
+}
+
+/**
+ * Clamp canvas dimensions to stay within the maximum pixel dimension limit.
+ */
+function clampToMaxDimension(width: number, height: number): number[] {
+  if (width <= MAX_CANVAS_DIMENSION && height <= MAX_CANVAS_DIMENSION) {
+    return [width, height];
+  }
+  const scale = Math.min(
+    MAX_CANVAS_DIMENSION / width,
+    MAX_CANVAS_DIMENSION / height,
+  );
+  return [Math.round(width * scale), Math.round(height * scale)];
+}
+
+/**
+ * Clamp canvas dimensions to stay within the maximum pixel count budget.
+ */
+function clampToMaxPixels(width: number, height: number): number[] {
+  if (width * height <= MAX_CANVAS_PIXELS) {
+    return [width, height];
+  }
+  const scale = Math.sqrt(MAX_CANVAS_PIXELS / (width * height));
+  return [Math.round(width * scale), Math.round(height * scale)];
+}
+
+export type CalculateCanvasDimensionsOptions = {
+  /** The visible container width in CSS pixels. */
+  containerWidth: number;
+  /** The visible container height in CSS pixels. */
+  containerHeight: number;
+  /** The paper size (e.g. "a3-landscape", "a4-landscape"). */
+  paperKind?: string;
+  /** Optional export configuration. */
+  options?: ExportCanvasOptions;
+};
 
 /**
  * Calculate safe canvas dimensions preserving paper aspect ratio.
  *
- * Tasks 3.3-3.6: Derive dimensions from container size and DPR,
+ * Tasks 3.3-3.6: Derive dimensions from container and DPR,
  * preserve paper ratio, avoid exceeding browser limits.
- *
- * @param containerWidth - The visible container width in CSS pixels
- * @param containerHeight - The visible container height in CSS pixels
- * @param paperKind - The paper size (e.g. "a3-landscape", "a4-landscape")
- * @param options - Optional export configuration
- * @returns Canvas dimensions, or an error message if limits are exceeded
  */
 export function calculateCanvasDimensions(
-  containerWidth: number,
-  containerHeight: number,
-  paperKind?: string,
-  options?: ExportCanvasOptions,
+  dims: CalculateCanvasDimensionsOptions,
 ): CanvasDimensions | { error: string } {
+  const { containerWidth, containerHeight, paperKind, options } = dims;
   const aspectRatio =
     (paperKind ? PAPER_ASPECT_RATIOS[paperKind] : undefined) ??
     DEFAULT_ASPECT_RATIO;
 
-  const dpr =
-    options?.devicePixelRatio ??
-    (typeof window !== "undefined" ? window.devicePixelRatio : undefined) ??
-    1;
-  // Clamp DPR to reasonable range
-  const clampedDpr = Math.max(1, Math.min(dpr, 3));
+  const dpr = resolveDpr(options);
+  const { fitWidth, fitHeight } = fitToAspectRatio(
+    containerWidth,
+    containerHeight,
+    aspectRatio,
+  );
 
-  // Use the actual container dimensions as the base
-  const baseWidth = containerWidth;
-  const baseHeight = containerHeight;
+  let [canvasWidth, canvasHeight] = clampToMaxDimension(
+    Math.round(fitWidth * dpr),
+    Math.round(fitHeight * dpr),
+  );
+  [canvasWidth, canvasHeight] = clampToMaxPixels(canvasWidth, canvasHeight);
 
-  // Apply DPR
-  let canvasWidth = Math.round(baseWidth * clampedDpr);
-  let canvasHeight = Math.round(baseHeight * clampedDpr);
-
-  // Adjust to match paper aspect ratio while fitting within container
-  // We fit the paper ratio into the container (letterbox approach)
-  const containerRatio = baseWidth / baseHeight;
-  let fitWidth: number;
-  let fitHeight: number;
-
-  if (containerRatio > aspectRatio) {
-    // Container is wider than paper — fit by height
-    fitHeight = baseHeight;
-    fitWidth = baseHeight * aspectRatio;
-  } else {
-    // Container is taller than paper — fit by width
-    fitWidth = baseWidth;
-    fitHeight = baseWidth / aspectRatio;
-  }
-
-  canvasWidth = Math.round(fitWidth * clampedDpr);
-  canvasHeight = Math.round(fitHeight * clampedDpr);
-
-  // Enforce safe limits (task 3.6)
-  const totalPixels = canvasWidth * canvasHeight;
-
-  if (canvasWidth > MAX_CANVAS_DIMENSION || canvasHeight > MAX_CANVAS_DIMENSION) {
-    // Reduce scale to fit within dimension limit
-    const scaleDown = Math.min(
-      MAX_CANVAS_DIMENSION / canvasWidth,
-      MAX_CANVAS_DIMENSION / canvasHeight,
-    );
-    canvasWidth = Math.round(canvasWidth * scaleDown);
-    canvasHeight = Math.round(canvasHeight * scaleDown);
-  }
-
-  // Check pixel count after dimension adjustment
-  if (canvasWidth * canvasHeight > MAX_CANVAS_PIXELS) {
-    // Further reduce to stay within pixel budget
-    const pixelScaleDown = Math.sqrt(MAX_CANVAS_PIXELS / (canvasWidth * canvasHeight));
-    canvasWidth = Math.round(canvasWidth * pixelScaleDown);
-    canvasHeight = Math.round(canvasHeight * pixelScaleDown);
-  }
-
-  // Final safety check
   if (canvasWidth < 1 || canvasHeight < 1) {
     return { error: "Canvas dimensions too small after safety adjustments." };
   }
@@ -234,7 +245,10 @@ export function canvasToPngBlob(
  * @param blob - The PNG Blob to download
  * @param filename - The download filename (without extension)
  */
-export function downloadPngBlob(blob: Blob, filename: string = "mind-map"): void {
+export function downloadPngBlob(
+  blob: Blob,
+  filename: string = "mind-map",
+): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -247,17 +261,30 @@ export function downloadPngBlob(blob: Blob, filename: string = "mind-map"): void
 
 // ─── Full Export Pipeline ─────────────────────────────────────────────────
 
-export interface ExportPngResult {
+export type ExportPngResult = {
   success: true;
   filename: string;
-}
+};
 
-export interface ExportPngError {
+export type ExportPngError = {
   success: false;
   error: string;
-}
+};
 
 export type ExportPngOutcome = ExportPngResult | ExportPngError;
+
+export type ExportPngOptions = {
+  /** The serialized, self-contained SVG string. */
+  svgString: string;
+  /** The preview container width in CSS pixels. */
+  containerWidth: number;
+  /** The preview container height in CSS pixels. */
+  containerHeight: number;
+  /** The paper kind for aspect ratio. */
+  paperKind?: string;
+  /** Optional export configuration. */
+  exportOptions?: ExportCanvasOptions & { filename?: string };
+};
 
 /**
  * Full PNG export pipeline.
@@ -266,39 +293,31 @@ export type ExportPngOutcome = ExportPngResult | ExportPngError;
  * 2. Draw serialized SVG onto canvas
  * 3. Convert canvas to PNG
  * 4. Trigger download
- *
- * @param svgString - The serialized, self-contained SVG string
- * @param containerWidth - The preview container width in CSS pixels
- * @param containerHeight - The preview container height in CSS pixels
- * @param paperKind - The paper kind for aspect ratio
- * @param options - Optional export configuration
- * @returns Export result or error
  */
 export async function exportPng(
-  svgString: string,
-  containerWidth: number,
-  containerHeight: number,
-  paperKind?: string,
-  options?: ExportCanvasOptions & { filename?: string },
+  opts: ExportPngOptions,
 ): Promise<ExportPngOutcome> {
+  const {
+    svgString,
+    containerWidth,
+    containerHeight,
+    paperKind,
+    exportOptions: options,
+  } = opts;
   // Calculate safe dimensions (tasks 3.3-3.6)
-  const dims = calculateCanvasDimensions(
+  const dims = calculateCanvasDimensions({
     containerWidth,
     containerHeight,
     paperKind,
     options,
-  );
+  });
 
   if ("error" in dims) {
     return { success: false, error: dims.error };
   }
 
   // Draw SVG to canvas (task 3.2)
-  const drawResult = await drawSvgToCanvas(
-    svgString,
-    dims.width,
-    dims.height,
-  );
+  const drawResult = await drawSvgToCanvas(svgString, dims.width, dims.height);
 
   if ("error" in drawResult) {
     return { success: false, error: drawResult.error };

@@ -271,8 +271,14 @@ function buildPayload(
 // ---------------------------------------------------------------------------
 
 export type { PreviewPayload, PreviewOptions };
-export type { PreviewServerOptions, PreviewServerResult } from "./preview-server.js";
-export { startPreviewServer, startPreviewServerAsync } from "./preview-server.js";
+export type {
+  PreviewServerOptions,
+  PreviewServerResult,
+} from "./preview-server.js";
+export {
+  startPreviewServer,
+  startPreviewServerAsync,
+} from "./preview-server.js";
 
 /**
  * Run the preview command.
@@ -296,7 +302,10 @@ export async function previewCommand(argv: string[]): Promise<number> {
   const payload = buildPayload(tree, args.paper);
 
   try {
-    await startPreviewServerAsync(payload, { host: args.host, port: args.port });
+    await startPreviewServerAsync(payload, {
+      host: args.host,
+      port: args.port,
+    });
   } catch (err: unknown) {
     console.error(
       `Preview server error: ${err instanceof Error ? err.message : String(err)}`,

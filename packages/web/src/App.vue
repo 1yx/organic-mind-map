@@ -56,12 +56,12 @@ function handleExportPng() {
   const rect = el.getBoundingClientRect();
   const paperKind = documentData.value?.paper;
 
-  doExport(
-    el.querySelector(".svg-container") ?? el,
-    rect.width,
-    rect.height,
+  doExport({
+    container: el.querySelector(".svg-container") ?? el,
+    containerWidth: rect.width,
+    containerHeight: rect.height,
     paperKind,
-  );
+  });
 }
 
 // ─── Fetch & Render ─────────────────────────────────────────────────────

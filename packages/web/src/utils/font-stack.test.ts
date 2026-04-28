@@ -22,11 +22,18 @@ function findFiles(dir: string, exts: string[]): string[] {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
-    if (entry.isDirectory() && !entry.name.startsWith(".") && entry.name !== "node_modules") {
+    if (
+      entry.isDirectory() &&
+      !entry.name.startsWith(".") &&
+      entry.name !== "node_modules"
+    ) {
       results.push(...findFiles(fullPath, exts));
     } else if (entry.isFile() && exts.some((ext) => entry.name.endsWith(ext))) {
       // Exclude test files from scanning (they may contain font patterns as test data)
-      if (!entry.name.endsWith(".test.ts") && !entry.name.endsWith(".test.vue")) {
+      if (
+        !entry.name.endsWith(".test.ts") &&
+        !entry.name.endsWith(".test.vue")
+      ) {
         results.push(fullPath);
       }
     }
@@ -46,7 +53,10 @@ describe("System font stack enforcement", () => {
     const webFontPattern = /@font-face\s*\{/;
     for (const file of sourceFiles) {
       const content = fs.readFileSync(file, "utf-8");
-      expect(webFontPattern.test(content), `${path.relative(webDir, file)} contains @font-face`).toBe(false);
+      expect(
+        webFontPattern.test(content),
+        `${path.relative(webDir, file)} contains @font-face`,
+      ).toBe(false);
     }
   });
 
@@ -54,7 +64,10 @@ describe("System font stack enforcement", () => {
     const remoteFontPattern = /fonts\.googleapis\.com/;
     for (const file of sourceFiles) {
       const content = fs.readFileSync(file, "utf-8");
-      expect(remoteFontPattern.test(content), `${path.relative(webDir, file)} references Google Fonts`).toBe(false);
+      expect(
+        remoteFontPattern.test(content),
+        `${path.relative(webDir, file)} references Google Fonts`,
+      ).toBe(false);
     }
   });
 
@@ -62,16 +75,23 @@ describe("System font stack enforcement", () => {
     const woffPattern = /\.(woff2?|eot|ttf|otf)(\?|$|['")])/;
     for (const file of sourceFiles) {
       const content = fs.readFileSync(file, "utf-8");
-      expect(woffPattern.test(content), `${path.relative(webDir, file)} references bundled font files`).toBe(false);
+      expect(
+        woffPattern.test(content),
+        `${path.relative(webDir, file)} references bundled font files`,
+      ).toBe(false);
     }
   });
 
   it("no source file uses font Base64 inlining patterns", () => {
     // Base64 font inlining would look like: font/woff2;base64, or data:application/font-*
-    const base64FontPattern = /data:application\/font|font\/woff2?\s*;\s*base64/;
+    const base64FontPattern =
+      /data:application\/font|font\/woff2?\s*;\s*base64/;
     for (const file of sourceFiles) {
       const content = fs.readFileSync(file, "utf-8");
-      expect(base64FontPattern.test(content), `${path.relative(webDir, file)} contains font Base64 inlining`).toBe(false);
+      expect(
+        base64FontPattern.test(content),
+        `${path.relative(webDir, file)} contains font Base64 inlining`,
+      ).toBe(false);
     }
   });
 });

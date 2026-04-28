@@ -91,8 +91,7 @@ describe("fixture-validation — concept quality", () => {
       expect(
         result.errors.filter(
           (e) =>
-            e.message.includes("sentence") ||
-            e.message.includes("unit-width"),
+            e.message.includes("sentence") || e.message.includes("unit-width"),
         ),
       ).toHaveLength(0);
     });
@@ -120,7 +119,9 @@ describe("fixture-validation — capacity", () => {
   }
 
   it("invalid-oversized-capacity.json exceeds DEFAULT_LIMITS", () => {
-    const data = loadAgentListFixture("invalid-oversized-capacity") as AgentMindMapList;
+    const data = loadAgentListFixture(
+      "invalid-oversized-capacity",
+    ) as AgentMindMapList;
     const errors = validateCapacity(data, DEFAULT_LIMITS);
     expect(errors.length).toBeGreaterThan(0);
   });
@@ -145,7 +146,9 @@ describe("fixture-validation — sentence-like detection", () => {
 
 describe("fixture-validation — capacity feedback", () => {
   it("invalid-oversized-capacity.json produces actionable feedback", () => {
-    const data = loadAgentListFixture("invalid-oversized-capacity") as AgentMindMapList;
+    const data = loadAgentListFixture(
+      "invalid-oversized-capacity",
+    ) as AgentMindMapList;
     const errors = validateCapacity(data, DEFAULT_LIMITS);
     expect(errors.length).toBeGreaterThan(0);
 

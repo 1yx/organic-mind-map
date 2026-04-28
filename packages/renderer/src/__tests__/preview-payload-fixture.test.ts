@@ -9,7 +9,11 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { describe, it, expect } from "vitest";
 import { renderFromPreview } from "../render";
-import type { PreviewPayload, TextMeasurementAdapter, TextMetrics } from "../types";
+import type {
+  PreviewPayload,
+  TextMeasurementAdapter,
+  TextMetrics,
+} from "../types";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 

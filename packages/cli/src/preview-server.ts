@@ -15,13 +15,20 @@
  * - Expose editing, mutation, or filesystem browsing endpoints
  */
 
-import { createServer, type IncomingMessage, type ServerResponse, type Server } from "node:http";
+import {
+  createServer,
+  type IncomingMessage,
+  type ServerResponse,
+  type Server,
+} from "node:http";
 import { readFile } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join, resolve, extname, dirname } from "node:path";
 import type { PreviewPayload } from "./types.js";
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const __filename = fileURLToPath(import.meta.url);
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const __dirname = dirname(__filename);
 
 // ─── Public Types ──────────────────────────────────────────────────────────
@@ -130,7 +137,10 @@ function createPreviewServer(
   webDist: string,
 ): Server {
   const server = createServer((req: IncomingMessage, res: ServerResponse) => {
-    const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
+    const url = new URL(
+      req.url ?? "/",
+      `http://${req.headers.host ?? "localhost"}`,
+    );
 
     // GET /api/document — return the process-scoped preview data
     if (url.pathname === "/api/document") {
@@ -184,9 +194,7 @@ export function startPreviewServer(
         `Error: Port ${port} is already in use. Use --port <number> to specify a different port, or stop the process using port ${port}.`,
       );
     } else {
-      console.error(
-        `Error: Failed to start preview server: ${err.message}`,
-      );
+      console.error(`Error: Failed to start preview server: ${err.message}`);
     }
     process.exitCode = 3;
     server.close();
@@ -264,4 +272,11 @@ export function startPreviewServerAsync(
 
 // ─── Export for testing ───────────────────────────────────────────────────
 
-export { READY_MARKER_PREFIX, DEFAULT_HOST, DEFAULT_PORT, resolveWebDist, getMimeType, MIME_TYPES };
+export {
+  READY_MARKER_PREFIX,
+  DEFAULT_HOST,
+  DEFAULT_PORT,
+  resolveWebDist,
+  getMimeType,
+  MIME_TYPES,
+};

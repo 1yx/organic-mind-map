@@ -8,11 +8,14 @@
 
 import { describe, it, expect } from "vitest";
 import { calculateCanvasDimensions } from "./export-canvas.js";
-import type { ExportCanvasOptions } from "./export-canvas-types.js";
 
 describe("calculateCanvasDimensions", () => {
   it("returns canvas dimensions preserving A3 landscape aspect ratio", () => {
-    const result = calculateCanvasDimensions(1200, 800, "a3-landscape");
+    const result = calculateCanvasDimensions({
+      containerWidth: 1200,
+      containerHeight: 800,
+      paperKind: "a3-landscape",
+    });
     expect("error" in result).toBe(false);
     if (!("error" in result)) {
       const ratio = result.width / result.height;
@@ -23,7 +26,11 @@ describe("calculateCanvasDimensions", () => {
   });
 
   it("returns canvas dimensions preserving A4 landscape aspect ratio", () => {
-    const result = calculateCanvasDimensions(1200, 800, "a4-landscape");
+    const result = calculateCanvasDimensions({
+      containerWidth: 1200,
+      containerHeight: 800,
+      paperKind: "a4-landscape",
+    });
     expect("error" in result).toBe(false);
     if (!("error" in result)) {
       const ratio = result.width / result.height;
@@ -33,7 +40,10 @@ describe("calculateCanvasDimensions", () => {
   });
 
   it("uses A3 as default when no paper kind is specified", () => {
-    const result = calculateCanvasDimensions(1200, 800);
+    const result = calculateCanvasDimensions({
+      containerWidth: 1200,
+      containerHeight: 800,
+    });
     expect("error" in result).toBe(false);
     if (!("error" in result)) {
       const ratio = result.width / result.height;
@@ -41,13 +51,21 @@ describe("calculateCanvasDimensions", () => {
       expect(Math.abs(ratio - expectedRatio)).toBeLessThan(0.02);
     }
   });
+});
 
+describe("calculateCanvasDimensions — DPR handling", () => {
   it("applies devicePixelRatio to dimensions", () => {
-    const base = calculateCanvasDimensions(800, 600, "a3-landscape", {
-      devicePixelRatio: 1,
+    const base = calculateCanvasDimensions({
+      containerWidth: 800,
+      containerHeight: 600,
+      paperKind: "a3-landscape",
+      options: { devicePixelRatio: 1 },
     });
-    const retina = calculateCanvasDimensions(800, 600, "a3-landscape", {
-      devicePixelRatio: 2,
+    const retina = calculateCanvasDimensions({
+      containerWidth: 800,
+      containerHeight: 600,
+      paperKind: "a3-landscape",
+      options: { devicePixelRatio: 2 },
     });
     expect("error" in base).toBe(false);
     expect("error" in retina).toBe(false);
@@ -60,8 +78,11 @@ describe("calculateCanvasDimensions", () => {
   });
 
   it("clamps DPR to maximum of 3", () => {
-    const result = calculateCanvasDimensions(800, 600, "a3-landscape", {
-      devicePixelRatio: 10,
+    const result = calculateCanvasDimensions({
+      containerWidth: 800,
+      containerHeight: 600,
+      paperKind: "a3-landscape",
+      options: { devicePixelRatio: 10 },
     });
     expect("error" in result).toBe(false);
     if (!("error" in result)) {
@@ -70,18 +91,27 @@ describe("calculateCanvasDimensions", () => {
   });
 
   it("clamps DPR to minimum of 1", () => {
-    const result = calculateCanvasDimensions(800, 600, "a3-landscape", {
-      devicePixelRatio: 0.5,
+    const result = calculateCanvasDimensions({
+      containerWidth: 800,
+      containerHeight: 600,
+      paperKind: "a3-landscape",
+      options: { devicePixelRatio: 0.5 },
     });
     expect("error" in result).toBe(false);
     if (!("error" in result)) {
       expect(result.scaleFactor).toBeGreaterThanOrEqual(1);
     }
   });
+});
 
+describe("calculateCanvasDimensions — fitting and limits", () => {
   it("fits wide containers by height", () => {
     // Very wide container
-    const result = calculateCanvasDimensions(2000, 400, "a3-landscape");
+    const result = calculateCanvasDimensions({
+      containerWidth: 2000,
+      containerHeight: 400,
+      paperKind: "a3-landscape",
+    });
     expect("error" in result).toBe(false);
     if (!("error" in result)) {
       const ratio = result.width / result.height;
@@ -92,7 +122,11 @@ describe("calculateCanvasDimensions", () => {
 
   it("fits tall containers by width", () => {
     // Very tall container
-    const result = calculateCanvasDimensions(400, 2000, "a3-landscape");
+    const result = calculateCanvasDimensions({
+      containerWidth: 400,
+      containerHeight: 2000,
+      paperKind: "a3-landscape",
+    });
     expect("error" in result).toBe(false);
     if (!("error" in result)) {
       const ratio = result.width / result.height;
@@ -103,8 +137,11 @@ describe("calculateCanvasDimensions", () => {
 
   it("enforces maximum canvas dimension limit", () => {
     // Extremely large container that would exceed 16384px limit
-    const result = calculateCanvasDimensions(50000, 50000, "a3-landscape", {
-      devicePixelRatio: 3,
+    const result = calculateCanvasDimensions({
+      containerWidth: 50000,
+      containerHeight: 50000,
+      paperKind: "a3-landscape",
+      options: { devicePixelRatio: 3 },
     });
     expect("error" in result).toBe(false);
     if (!("error" in result)) {
@@ -112,10 +149,16 @@ describe("calculateCanvasDimensions", () => {
       expect(result.height).toBeLessThanOrEqual(16384);
     }
   });
+});
 
+describe("calculateCanvasDimensions — edge cases", () => {
   it("returns error for dimensions that become too small", () => {
     // Extremely tiny container
-    const result = calculateCanvasDimensions(0, 0, "a3-landscape");
+    const result = calculateCanvasDimensions({
+      containerWidth: 0,
+      containerHeight: 0,
+      paperKind: "a3-landscape",
+    });
     expect("error" in result).toBe(true);
     if ("error" in result) {
       expect(result.error).toBeTruthy();
@@ -123,7 +166,11 @@ describe("calculateCanvasDimensions", () => {
   });
 
   it("scale factor is always positive", () => {
-    const result = calculateCanvasDimensions(800, 600, "a4-landscape");
+    const result = calculateCanvasDimensions({
+      containerWidth: 800,
+      containerHeight: 600,
+      paperKind: "a4-landscape",
+    });
     expect("error" in result).toBe(false);
     if (!("error" in result)) {
       expect(result.scaleFactor).toBeGreaterThan(0);
@@ -133,15 +180,18 @@ describe("calculateCanvasDimensions", () => {
 
 describe("calculateCanvasDimensions - memory safety", () => {
   it("keeps total pixel count within safe limits", () => {
-    const MAX_SAFE_PIXELS = 67_108_864;
-    const result = calculateCanvasDimensions(10000, 10000, "a3-landscape", {
-      devicePixelRatio: 3,
+    const maxSafePixels = 67_108_864;
+    const result = calculateCanvasDimensions({
+      containerWidth: 10000,
+      containerHeight: 10000,
+      paperKind: "a3-landscape",
+      options: { devicePixelRatio: 3 },
     });
     expect("error" in result).toBe(false);
     if (!("error" in result)) {
       const totalPixels = result.width * result.height;
       // Allow small overshoot due to integer rounding (within 0.1%)
-      expect(totalPixels).toBeLessThanOrEqual(MAX_SAFE_PIXELS * 1.001);
+      expect(totalPixels).toBeLessThanOrEqual(maxSafePixels * 1.001);
     }
   });
 });

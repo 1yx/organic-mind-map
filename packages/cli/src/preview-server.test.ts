@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, afterEach, vi } from "vitest";
-import http from "node:http";
+import http, { type Server } from "node:http";
 import { resolve } from "node:path";
 import { mkdir, writeFile, rm } from "node:fs/promises";
 import {
@@ -16,7 +16,6 @@ import {
   DEFAULT_HOST,
   READY_MARKER_PREFIX,
 } from "./preview-server.js";
-import type { Server } from "node:http";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -40,25 +39,33 @@ const FIXTURE_PAYLOAD = {
   },
 };
 
-function httpGet(url: string): Promise<{ status: number; headers: Record<string, string>; body: string }> {
+function httpGet(
+  url: string,
+): Promise<{ status: number; headers: Record<string, string>; body: string }> {
   return new Promise((resolveP, reject) => {
-    http.get(url, (res) => {
-      let body = "";
-      res.on("data", (chunk: Buffer) => { body += chunk.toString(); });
-      res.on("end", () => {
-        resolveP({
-          status: res.statusCode ?? 0,
-          headers: res.headers as Record<string, string>,
-          body,
+    http
+      .get(url, (res) => {
+        let body = "";
+        res.on("data", (chunk: Buffer) => {
+          body += chunk.toString();
         });
-      });
-      res.on("error", reject);
-    }).on("error", reject);
+        res.on("end", () => {
+          resolveP({
+            status: res.statusCode ?? 0,
+            headers: res.headers as Record<string, string>,
+            body,
+          });
+        });
+        res.on("error", reject);
+      })
+      .on("error", reject);
   });
 }
 
-function httpRequest(options: http.RequestOptions): Promise<{ status: number }> {
-  return new Promise((resolveP, reject) => {
+function httpRequest(
+  options: http.RequestOptions,
+): Promise<{ status: number }> {
+  return new Promise((resolveP) => {
     const req = http.request(options, (res) => {
       resolveP({ status: res.statusCode ?? 0 });
       res.resume();
@@ -92,10 +99,15 @@ async function cleanupTmp(): Promise<void> {
 
 // ─── Tests ────────────────────────────────────────────────────────────────
 
-describe("preview-server", () => {
+/** Shared afterEach for all preview-server tests. */
+function afterEachCleanup(): void {
   afterEach(async () => {
     await cleanupTmp();
   });
+}
+
+describe("preview-server — startup & binding", () => {
+  afterEachCleanup();
 
   // 6.1: Server startup with valid PreviewPayload
   it("starts server with valid PreviewPayload (6.1)", async () => {
@@ -116,26 +128,6 @@ describe("preview-server", () => {
     await closeServer(result.server);
   });
 
-  // 6.2: /api/document response test
-  it("returns PreviewPayload JSON from GET /api/document (6.2)", async () => {
-    const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, { port: 0 });
-
-    const res = await httpGet(`${result.url}/api/document`);
-    expect(res.status).toBe(200);
-    expect(res.headers["content-type"]).toContain("application/json");
-
-    const data = JSON.parse(res.body);
-    expect(data.version).toBe(1);
-    expect(data.source).toBe("organic-tree");
-    expect(data.paper).toBe("a3-landscape");
-    expect(data.tree.title).toBe("Test Map");
-    expect(data.tree.center.concept).toBe("Center");
-    expect(data.tree.branches).toHaveLength(1);
-    expect(data.tree.branches[0].concept).toBe("Branch 1");
-
-    await closeServer(result.server);
-  });
-
   // 6.3: Localhost default binding test
   it("binds to localhost (127.0.0.1) by default (6.3)", async () => {
     const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, { port: 0 });
@@ -145,6 +137,10 @@ describe("preview-server", () => {
 
     await closeServer(result.server);
   });
+});
+
+describe("preview-server — port conflicts", () => {
+  afterEachCleanup();
 
   // 6.4: Port conflict behavior test
   it("rejects with error when port is already in use (6.4)", async () => {
@@ -164,83 +160,6 @@ describe("preview-server", () => {
     } finally {
       await closeServer(first.server);
     }
-  });
-
-  // 6.5: Web preview smoke test for document fetch and paper ratio
-  it("serves index.html for / and /api/document for data (6.5)", async () => {
-    const webDist = await createFakeWebDist();
-    const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, {
-      port: 0,
-      webDistPath: webDist,
-    });
-
-    // Check index.html is served
-    const indexRes = await httpGet(result.url);
-    expect(indexRes.status).toBe(200);
-    expect(indexRes.body).toContain("Test Preview");
-
-    // Check /api/document returns JSON with paper
-    const docRes = await httpGet(`${result.url}/api/document`);
-    expect(docRes.status).toBe(200);
-    const doc = JSON.parse(docRes.body);
-    expect(doc.paper).toBe("a3-landscape"); // A3 landscape aspect: 420/297 ≈ 1.414
-
-    await closeServer(result.server);
-  });
-
-  // 6.6: Renderer integration smoke test using fixture payload
-  it("serves payload that can be consumed by the renderer (6.6)", async () => {
-    const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, { port: 0 });
-
-    const res = await httpGet(`${result.url}/api/document`);
-    const data = JSON.parse(res.body);
-
-    // Verify the payload has all fields needed by renderFromPreview
-    expect(data).toHaveProperty("version", 1);
-    expect(data).toHaveProperty("source", "organic-tree");
-    expect(data).toHaveProperty("paper");
-    expect(data).toHaveProperty("tree");
-    expect(data.tree).toHaveProperty("center");
-    expect(data.tree).toHaveProperty("branches");
-    expect(data.tree).toHaveProperty("title");
-
-    // Verify no renderer-related fields are in the payload (those belong in RenderResult)
-    expect(data).not.toHaveProperty("svg");
-    expect(data).not.toHaveProperty("viewBox");
-    expect(data).not.toHaveProperty("diagnostics");
-    expect(data).not.toHaveProperty("layout");
-
-    await closeServer(result.server);
-  });
-
-  // 6.7: Test that production serving uses static assets and does not invoke a frontend dev server
-  it("serves static files from webDist without starting a dev server (6.7)", async () => {
-    const webDist = await createFakeWebDist();
-
-    // Write an additional static file
-    await writeFile(
-      resolve(webDist, "test.js"),
-      "console.log('test');",
-    );
-
-    const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, {
-      port: 0,
-      webDistPath: webDist,
-    });
-
-    // Serve the custom static file
-    const jsRes = await httpGet(`${result.url}/test.js`);
-    expect(jsRes.status).toBe(200);
-    expect(jsRes.body).toBe("console.log('test');");
-
-    // 404 for non-existent files
-    const missingRes = await httpGet(`${result.url}/nonexistent.js`);
-    expect(missingRes.status).toBe(404);
-
-    // No Vite/Webpack/Rollup dev server headers
-    expect(jsRes.headers["x-vite-dev-server"]).toBeUndefined();
-
-    await closeServer(result.server);
   });
 
   // 6.8: Test for exact ready marker format including PID and URL
@@ -272,18 +191,56 @@ describe("preview-server", () => {
     logSpy.mockRestore();
     await closeServer(result.server);
   });
+});
 
-  // 6.9: No file watcher / live reload / WebSocket / SSE
-  it("does not implement WebSocket, SSE, or live reload endpoints (6.9)", async () => {
+describe("preview-server — /api/document endpoint", () => {
+  afterEachCleanup();
+
+  // 6.2: /api/document response test
+  it("returns PreviewPayload JSON from GET /api/document (6.2)", async () => {
     const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, { port: 0 });
 
-    // SSE endpoint should not exist
-    const sseRes = await httpGet(`${result.url}/api/events`);
-    expect(sseRes.status).toBe(404);
+    const res = await httpGet(`${result.url}/api/document`);
+    expect(res.status).toBe(200);
+    expect(res.headers["content-type"]).toContain("application/json");
 
-    // __vite_hmr endpoint should not exist (no Vite dev server)
-    const hmrRes = await httpGet(`${result.url}/@vite/client`);
-    expect(hmrRes.status).toBe(404);
+    const data = JSON.parse(res.body);
+    expect(data.version).toBe(1);
+    expect(data.source).toBe("organic-tree");
+    expect(data.paper).toBe("a3-landscape");
+    expect(data.tree.title).toBe("Test Map");
+    expect(data.tree.center.concept).toBe("Center");
+    expect(data.tree.branches).toHaveLength(1);
+    expect(data.tree.branches[0].concept).toBe("Branch 1");
+
+    await closeServer(result.server);
+  });
+});
+
+describe("preview-server — payload shape validation", () => {
+  afterEachCleanup();
+
+  // 6.6: Renderer integration smoke test using fixture payload
+  it("serves payload that can be consumed by the renderer (6.6)", async () => {
+    const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, { port: 0 });
+
+    const res = await httpGet(`${result.url}/api/document`);
+    const data = JSON.parse(res.body);
+
+    // Verify the payload has all fields needed by renderFromPreview
+    expect(data).toHaveProperty("version", 1);
+    expect(data).toHaveProperty("source", "organic-tree");
+    expect(data).toHaveProperty("paper");
+    expect(data).toHaveProperty("tree");
+    expect(data.tree).toHaveProperty("center");
+    expect(data.tree).toHaveProperty("branches");
+    expect(data.tree).toHaveProperty("title");
+
+    // Verify no renderer-related fields are in the payload (those belong in RenderResult)
+    expect(data).not.toHaveProperty("svg");
+    expect(data).not.toHaveProperty("viewBox");
+    expect(data).not.toHaveProperty("diagnostics");
+    expect(data).not.toHaveProperty("layout");
 
     await closeServer(result.server);
   });
@@ -302,6 +259,78 @@ describe("preview-server", () => {
 
     await closeServer(result.server);
   });
+});
+
+describe("preview-server — static assets & negative tests", () => {
+  afterEachCleanup();
+
+  // 6.5: Web preview smoke test for document fetch and paper ratio
+  it("serves index.html for / and /api/document for data (6.5)", async () => {
+    const webDist = await createFakeWebDist();
+    const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, {
+      port: 0,
+      webDistPath: webDist,
+    });
+
+    // Check index.html is served
+    const indexRes = await httpGet(result.url);
+    expect(indexRes.status).toBe(200);
+    expect(indexRes.body).toContain("Test Preview");
+
+    // Check /api/document returns JSON with paper
+    const docRes = await httpGet(`${result.url}/api/document`);
+    expect(docRes.status).toBe(200);
+    const doc = JSON.parse(docRes.body);
+    expect(doc.paper).toBe("a3-landscape"); // A3 landscape aspect: 420/297 ≈ 1.414
+
+    await closeServer(result.server);
+  });
+
+  // 6.7: Test that production serving uses static assets and does not invoke a frontend dev server
+  it("serves static files from webDist without starting a dev server (6.7)", async () => {
+    const webDist = await createFakeWebDist();
+
+    // Write an additional static file
+    await writeFile(resolve(webDist, "test.js"), "console.log('test');");
+
+    const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, {
+      port: 0,
+      webDistPath: webDist,
+    });
+
+    // Serve the custom static file
+    const jsRes = await httpGet(`${result.url}/test.js`);
+    expect(jsRes.status).toBe(200);
+    expect(jsRes.body).toBe("console.log('test');");
+
+    // 404 for non-existent files
+    const missingRes = await httpGet(`${result.url}/nonexistent.js`);
+    expect(missingRes.status).toBe(404);
+
+    // No Vite/Webpack/Rollup dev server headers
+    expect(jsRes.headers["x-vite-dev-server"]).toBeUndefined();
+
+    await closeServer(result.server);
+  });
+
+  // 6.9: No file watcher / live reload / WebSocket / SSE
+  it("does not implement WebSocket, SSE, or live reload endpoints (6.9)", async () => {
+    const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, { port: 0 });
+
+    // SSE endpoint should not exist
+    const sseRes = await httpGet(`${result.url}/api/events`);
+    expect(sseRes.status).toBe(404);
+
+    // __vite_hmr endpoint should not exist (no Vite dev server)
+    const hmrRes = await httpGet(`${result.url}/@vite/client`);
+    expect(hmrRes.status).toBe(404);
+
+    await closeServer(result.server);
+  });
+});
+
+describe("preview-server — 404 handling", () => {
+  afterEachCleanup();
 
   // Additional: serve index.html for any non-API route (SPA fallback)
   it("returns 404 for non-existent static files", async () => {

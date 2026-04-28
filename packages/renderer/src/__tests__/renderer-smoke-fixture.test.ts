@@ -9,8 +9,12 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import { describe, it, expect } from "vitest";
-import { renderFromPreview, renderFromOmm, render } from "../render";
-import type { PreviewPayload, TextMeasurementAdapter, TextMetrics } from "../types";
+import { renderFromPreview, renderFromOmm } from "../render";
+import type {
+  PreviewPayload,
+  TextMeasurementAdapter,
+  TextMetrics,
+} from "../types";
 import type { OmmDocument } from "@omm/core";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -87,7 +91,9 @@ describe("renderer-smoke-fixture — deeper hierarchy", () => {
 
 describe("renderer-smoke-fixture — OmmDocument rendering", () => {
   it("valid-a4-with-center-visual.json renders to non-empty SVG with concepts", () => {
-    const ommData = loadOmmFixture("valid-a4-with-center-visual") as OmmDocument;
+    const ommData = loadOmmFixture(
+      "valid-a4-with-center-visual",
+    ) as OmmDocument;
     const result = renderFromOmm(ommData, {
       measure: createMockMeasure(),
     });

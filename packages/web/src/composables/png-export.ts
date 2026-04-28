@@ -14,13 +14,24 @@
  * - 5.1: Keep PNG export in the Web preview code path
  */
 
-import { ref, computed, type Ref } from "vue";
+import { ref, computed, type Ref, type ComputedRef } from "vue";
 import { prepareSvgForExport } from "../utils/svg-serialization.js";
 import { exportPng } from "../utils/export-canvas.js";
-import {
-  isCenterVisualSafeForExport,
-} from "../utils/export-helpers.js";
+import { isCenterVisualSafeForExport } from "../utils/export-helpers.js";
 import type { ExportCanvasOptions } from "../utils/export-canvas-types.js";
+
+export type DoExportParams = {
+  /** The DOM element holding the rendered SVG. */
+  container: HTMLElement;
+  /** Container width in CSS pixels. */
+  containerWidth: number;
+  /** Container height in CSS pixels. */
+  containerHeight: number;
+  /** Paper kind for aspect ratio. */
+  paperKind?: string;
+  /** Optional export configuration. */
+  options?: ExportCanvasOptions & { filename?: string };
+};
 
 export type PngExportState = {
   /** Whether the export is currently in progress. */
@@ -29,23 +40,81 @@ export type PngExportState = {
   exportError: Readonly<Ref<string | null>>;
   /** Whether the Export PNG button should be enabled. */
   canExport: Readonly<Ref<boolean>>;
-  /**
-   * Trigger PNG export.
-   *
-   * @param container - The DOM element holding the rendered SVG
-   * @param containerWidth - Container width in CSS pixels
-   * @param containerHeight - Container height in CSS pixels
-   * @param paperKind - Paper kind for aspect ratio
-   * @param options - Optional export configuration
-   */
-  doExport: (
-    container: HTMLElement,
-    containerWidth: number,
-    containerHeight: number,
-    paperKind?: string,
-    options?: ExportCanvasOptions & { filename?: string },
-  ) => Promise<void>;
+  /** Trigger PNG export. */
+  doExport: (params: DoExportParams) => Promise<void>;
 };
+
+/** Compute whether export is currently allowed. */
+function computeCanExport(
+  exporting: Ref<boolean>,
+  params: {
+    renderReady: Readonly<Ref<boolean>>;
+    inlineSvg: Readonly<Ref<string | null>>;
+    fellBack: Readonly<Ref<boolean>>;
+  },
+): ComputedRef<boolean> {
+  return computed(() => {
+    if (exporting.value) return false;
+    if (!params.renderReady.value) return false;
+    if (
+      !isCenterVisualSafeForExport(
+        params.inlineSvg.value,
+        params.fellBack.value,
+      )
+    )
+      return false;
+    return true;
+  });
+}
+
+export type ExportExecutionState = {
+  canExport: ComputedRef<boolean>;
+  exporting: Ref<boolean>;
+  exportError: Ref<string | null>;
+};
+
+/** Execute the PNG export pipeline. */
+async function executeExport(
+  state: ExportExecutionState,
+  params: DoExportParams,
+): Promise<void> {
+  if (!state.canExport.value) return;
+
+  const { container, containerWidth, containerHeight, paperKind, options } =
+    params;
+
+  state.exporting.value = true;
+  state.exportError.value = null;
+
+  try {
+    const { svg, error: prepareError } = await prepareSvgForExport(container);
+    if (prepareError || !svg) {
+      state.exportError.value = prepareError ?? "SVG preparation failed.";
+      return;
+    }
+
+    const result = await exportPng({
+      svgString: svg,
+      containerWidth,
+      containerHeight,
+      paperKind,
+      exportOptions: options,
+    });
+
+    if (!result.success) {
+      state.exportError.value = (
+        result as { success: false; error: string }
+      ).error;
+    }
+  } catch (e) {
+    state.exportError.value =
+      e instanceof Error
+        ? e.message
+        : "Export failed with an unexpected error.";
+  } finally {
+    state.exporting.value = false;
+  }
+}
 
 /**
  * Create PNG export state for the preview page.
@@ -63,74 +132,11 @@ export function usePngExport(params: {
 }): PngExportState {
   const exporting = ref(false);
   const exportError = ref<string | null>(null);
+  const canExport = computeCanExport(exporting, params);
 
-  /**
-   * Export is ready when:
-   * - Preview has rendered (renderReady)
-   * - Center visual is safe for export (tasks 4.1-4.3)
-   * - Not already exporting
-   */
-  const canExport = computed(() => {
-    if (exporting.value) return false;
-    if (!params.renderReady.value) return false;
-
-    // Check center visual safety (task 4.2)
-    const safe = isCenterVisualSafeForExport(
-      params.inlineSvg.value,
-      params.fellBack.value,
-    );
-    if (!safe) return false;
-
-    return true;
-  });
-
-  async function doExport(
-    container: HTMLElement,
-    containerWidth: number,
-    containerHeight: number,
-    paperKind?: string,
-    options?: ExportCanvasOptions & { filename?: string },
-  ): Promise<void> {
-    if (!canExport.value) return;
-
-    exporting.value = true;
-    exportError.value = null;
-
-    try {
-      // Prepare SVG: clone, inline assets, serialize
-      const { svg, error: prepareError } =
-        await prepareSvgForExport(container);
-
-      if (prepareError || !svg) {
-        exportError.value = prepareError ?? "SVG preparation failed.";
-        return;
-      }
-
-      // Export to PNG via canvas pipeline
-      const result = await exportPng(
-        svg,
-        containerWidth,
-        containerHeight,
-        paperKind,
-        options,
-      );
-
-      if (!result.success) {
-        exportError.value = result.error;
-      }
-      // On success, the download has been triggered automatically
-    } catch (e) {
-      exportError.value =
-        e instanceof Error ? e.message : "Export failed with an unexpected error.";
-    } finally {
-      exporting.value = false;
-    }
+  async function doExport(doParams: DoExportParams): Promise<void> {
+    await executeExport({ canExport, exporting, exportError }, doParams);
   }
 
-  return {
-    exporting,
-    exportError,
-    canExport,
-    doExport,
-  };
+  return { exporting, exportError, canExport, doExport };
 }
