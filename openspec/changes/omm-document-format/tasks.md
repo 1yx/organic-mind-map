@@ -33,7 +33,7 @@
 
 - [x] 5.1 Validate that every document has a center visual object rather than plain center text.
 - [x] 5.2 Validate center visual modes, minimum color count, compliance state, and referenced built-in assets.
-- [x] 5.3 Implement built-in asset validation using stable built-in IDs without embedded payload duplication.
+- [x] 5.3 Implement built-in asset validation using a Phase 1 known built-in ID registry without embedded payload duplication.
 - [x] 5.4 Reject uploaded, generated, or Base64-embedded image assets in Phase 1 `.omm`.
 - [x] 5.5 Validate that every asset reference from the center or nodes resolves to a known built-in asset.
 
@@ -58,7 +58,7 @@
 - [x] 8.2 Test that unsupported paper kinds and wrong dimensions fail with path-specific errors.
 - [x] 8.3 Test that duplicate node IDs and persisted runtime topology fields fail validation.
 - [x] 8.4 Test that missing or inconsistent layout snapshot references fail validation.
-- [x] 8.5 Test that built-in assets require known IDs and do not require embedded data.
+- [x] 8.5 Test that built-in assets require known registry IDs, reject unknown `builtinId`, and do not require embedded data.
 - [x] 8.6 Test that uploaded custom assets, generated payloads, and Base64 data fail validation in Phase 1.
 - [x] 8.7 Test that excluded editor, render artifact, Plus, source snapshot, and submap state is rejected or stripped.
 
