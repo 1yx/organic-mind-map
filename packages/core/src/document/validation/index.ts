@@ -39,8 +39,11 @@ export function validateOmmDocument(data: unknown): OmmValidationResult {
   // Early exit if envelope is fundamentally broken
   if (envelopeErrors.length > 0) {
     const hasCritical = envelopeErrors.some(
-      (e) => e.code === "envelope.missing" || e.code === "envelope.missing_rootMap" ||
-            e.code === "envelope.missing_layout" || e.code === "envelope.missing_assets",
+      (e) =>
+        e.code === "envelope.missing" ||
+        e.code === "envelope.missing_rootMap" ||
+        e.code === "envelope.missing_layout" ||
+        e.code === "envelope.missing_assets",
     );
     if (hasCritical) {
       return { valid: false, errors: allErrors, data };
@@ -59,7 +62,10 @@ export function validateOmmDocument(data: unknown): OmmValidationResult {
 
   // 4. Center visual validation
   const rootMap = doc.rootMap as Record<string, unknown> | undefined;
-  const centerVisualErrors = validateCenterVisual(rootMap?.center, "rootMap.center");
+  const centerVisualErrors = validateCenterVisual(
+    rootMap?.center,
+    "rootMap.center",
+  );
   allErrors.push(...centerVisualErrors);
 
   // 5. Asset validation (collect all referenced asset IDs)
@@ -69,7 +75,11 @@ export function validateOmmDocument(data: unknown): OmmValidationResult {
     ? collectNodeAssetIds(treeChildren as import("../types").MindNode[])
     : [];
   const allReferencedAssetIds = new Set([...centerAssetIds, ...nodeAssetIds]);
-  const assetErrors = validateAssets(doc.assets, allReferencedAssetIds, "assets");
+  const assetErrors = validateAssets(
+    doc.assets,
+    allReferencedAssetIds,
+    "assets",
+  );
   allErrors.push(...assetErrors);
 
   // 6. Layout validation (requires node IDs from tree)

@@ -12,13 +12,25 @@ import type { OmmValidationIssue } from "./types";
 const EDITOR_STATE_FIELDS = ["selection", "dragSession", "undoStack"] as const;
 
 /** Render artifact fields to reject on nodes */
-const RENDER_ARTIFACT_FIELDS = ["displayText", "ellipsisText", "truncationText"] as const;
+const RENDER_ARTIFACT_FIELDS = [
+  "displayText",
+  "ellipsisText",
+  "truncationText",
+] as const;
 
 /** Plus platform state fields to reject */
-const PLUS_STATE_FIELDS = ["cloudPermissions", "ragIndex", "versionHistory"] as const;
+const PLUS_STATE_FIELDS = [
+  "cloudPermissions",
+  "ragIndex",
+  "versionHistory",
+] as const;
 
 /** Source/submap state fields to reject */
-const SOURCE_STATE_FIELDS = ["sourceSnapshots", "sourceObjectMappings", "submapNavigation"] as const;
+const SOURCE_STATE_FIELDS = [
+  "sourceSnapshots",
+  "sourceObjectMappings",
+  "submapNavigation",
+] as const;
 
 const ALL_EXCLUDED_NODE_FIELDS: readonly string[] = [
   ...EDITOR_STATE_FIELDS,
@@ -63,21 +75,30 @@ function checkObjectExcludedFields(
 /**
  * Checks a node for excluded state fields (editor state + render artifacts + Plus + source).
  */
-export function checkNodeExcludedState(node: Record<string, unknown>, path: string): OmmValidationIssue[] {
+export function checkNodeExcludedState(
+  node: Record<string, unknown>,
+  path: string,
+): OmmValidationIssue[] {
   return checkObjectExcludedFields(node, ALL_EXCLUDED_NODE_FIELDS, path);
 }
 
 /**
  * Checks the rootMap for excluded state fields (editor state + Plus + source).
  */
-export function checkRootMapExcludedState(rootMap: Record<string, unknown>, path = "rootMap"): OmmValidationIssue[] {
+export function checkRootMapExcludedState(
+  rootMap: Record<string, unknown>,
+  path = "rootMap",
+): OmmValidationIssue[] {
   return checkObjectExcludedFields(rootMap, ALL_EXCLUDED_ROOTMAP_FIELDS, path);
 }
 
 /**
  * Checks the document for excluded state fields (editor state + Plus + source).
  */
-export function checkDocExcludedState(doc: Record<string, unknown>, path = ""): OmmValidationIssue[] {
+export function checkDocExcludedState(
+  doc: Record<string, unknown>,
+  path = "",
+): OmmValidationIssue[] {
   return checkObjectExcludedFields(doc, ALL_EXCLUDED_DOC_FIELDS, path);
 }
 
@@ -100,7 +121,9 @@ export function checkTreeExcludedState(
 
     const childNodes = n.children;
     if (childNodes !== undefined && Array.isArray(childNodes)) {
-      issues.push(...checkTreeExcludedState(childNodes, `${nodePath}.children`));
+      issues.push(
+        ...checkTreeExcludedState(childNodes, `${nodePath}.children`),
+      );
     }
   });
 

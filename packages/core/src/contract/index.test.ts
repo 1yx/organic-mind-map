@@ -1,6 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { validateAgentList, traverseBranches, conceptUnitWidth, isSentenceLike } from "./index";
-import { DEFAULT_LIMITS, validateCapacity, formatCapacityFeedback } from "./index";
+import {
+  validateAgentList,
+  traverseBranches,
+  conceptUnitWidth,
+  isSentenceLike,
+} from "./index";
+import {
+  DEFAULT_LIMITS,
+  validateCapacity,
+  formatCapacityFeedback,
+} from "./index";
 import type { AgentListLimits, AgentMindMapList } from "./index";
 
 // Inline fixtures for test isolation (no fs dependency)
@@ -14,8 +23,14 @@ const fixtures: Record<string, unknown> = {
       {
         concept: "客户细分",
         children: [
-          { concept: "企业客户", children: [{ concept: "中小企业" }, { concept: "大型企业" }] },
-          { concept: "个人用户", children: [{ concept: "学生群体" }, { concept: "职场人士" }] },
+          {
+            concept: "企业客户",
+            children: [{ concept: "中小企业" }, { concept: "大型企业" }],
+          },
+          {
+            concept: "个人用户",
+            children: [{ concept: "学生群体" }, { concept: "职场人士" }],
+          },
         ],
       },
       {
@@ -35,8 +50,14 @@ const fixtures: Record<string, unknown> = {
       {
         concept: "MARKET FIT",
         children: [
-          { concept: "TARGET USERS", children: [{ concept: "STARTUPS" }, { concept: "ENTERPRISE" }] },
-          { concept: "USE CASES", children: [{ concept: "AUTOMATION" }, { concept: "ANALYTICS" }] },
+          {
+            concept: "TARGET USERS",
+            children: [{ concept: "STARTUPS" }, { concept: "ENTERPRISE" }],
+          },
+          {
+            concept: "USE CASES",
+            children: [{ concept: "AUTOMATION" }, { concept: "ANALYTICS" }],
+          },
         ],
       },
     ],
@@ -46,8 +67,17 @@ const fixtures: Record<string, unknown> = {
     title: "Mixed Concept Test",
     center: { concept: "AI提示词工程" },
     branches: [
-      { concept: "PROMPT设计", children: [{ concept: "Few-shot学习" }, { concept: "Chain-of-Thought" }] },
-      { concept: "应用场景", children: [{ concept: "代码生成" }, { concept: "文档摘要" }] },
+      {
+        concept: "PROMPT设计",
+        children: [
+          { concept: "Few-shot学习" },
+          { concept: "Chain-of-Thought" },
+        ],
+      },
+      {
+        concept: "应用场景",
+        children: [{ concept: "代码生成" }, { concept: "文档摘要" }],
+      },
     ],
   },
   "invalid-missing-center.json": {
@@ -68,7 +98,10 @@ const fixtures: Record<string, unknown> = {
     center: { concept: "商业模式" },
     branches: [
       { concept: "我们需要先分析用户为什么会流失", children: [] },
-      { concept: "This is important because pricing affects conversion", children: [] },
+      {
+        concept: "This is important because pricing affects conversion",
+        children: [],
+      },
     ],
   },
   "invalid-oversized-concept.json": {
@@ -171,7 +204,9 @@ describe("validateAgentList", () => {
   });
 
   it("rejects malformed children with correct branch path", () => {
-    const result = validateAgentList(fixtures["invalid-malformed-children.json"]);
+    const result = validateAgentList(
+      fixtures["invalid-malformed-children.json"],
+    );
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.path.includes("children"))).toBe(true);
   });
@@ -180,16 +215,22 @@ describe("validateAgentList", () => {
   it("rejects Chinese sentence-like concept as Error", () => {
     const result = validateAgentList(fixtures["invalid-sentence-like.json"]);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.message.includes("sentence"))).toBe(true);
+    expect(result.errors.some((e) => e.message.includes("sentence"))).toBe(
+      true,
+    );
     // Ensure no rewriting — data should be null
     expect(result.data).toBeNull();
   });
 
   // 5.5 Concepts exceeding unit-width 25 fail as Error
   it("rejects concept exceeding unit-width 25", () => {
-    const result = validateAgentList(fixtures["invalid-oversized-concept.json"]);
+    const result = validateAgentList(
+      fixtures["invalid-oversized-concept.json"],
+    );
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.message.includes("unit-width"))).toBe(true);
+    expect(result.errors.some((e) => e.message.includes("unit-width"))).toBe(
+      true,
+    );
     expect(result.data).toBeNull();
   });
 
@@ -197,19 +238,26 @@ describe("validateAgentList", () => {
   it("rejects nesting deeper than 3 levels", () => {
     const result = validateAgentList(fixtures["invalid-deep-nesting.json"]);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.message.includes("maximum depth of 3"))).toBe(true);
+    expect(
+      result.errors.some((e) => e.message.includes("maximum depth of 3")),
+    ).toBe(true);
   });
 
   // 5.7 Oversized input fails with retry-friendly capacity feedback
   it("rejects oversized input with capacity feedback", () => {
     const strictLimits: AgentListLimits = { ...DEFAULT_LIMITS, maxNodes: 10 };
-    const result = validateAgentList(fixtures["invalid-oversized-capacity.json"], strictLimits);
+    const result = validateAgentList(
+      fixtures["invalid-oversized-capacity.json"],
+      strictLimits,
+    );
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.message.includes("exceeds"))).toBe(true);
   });
 
   it("capacity feedback message is retry-friendly", () => {
-    const data = fixtures["invalid-oversized-capacity.json"] as AgentMindMapList;
+    const data = fixtures[
+      "invalid-oversized-capacity.json"
+    ] as AgentMindMapList;
     const capErrors = validateCapacity(data, DEFAULT_LIMITS);
     const msg = formatCapacityFeedback(capErrors);
     expect(msg).toContain("exceeds");
@@ -227,9 +275,7 @@ describe("validateAgentList", () => {
           concept: "B1",
           visualHint: "箭头",
           colorHint: "#FF5733",
-          children: [
-            { concept: "S1", visualHint: "气泡" },
-          ],
+          children: [{ concept: "S1", visualHint: "气泡" }],
         },
       ],
     };
@@ -247,7 +293,11 @@ describe("validateAgentList", () => {
       title: "Bad Hints",
       center: { concept: "中心", visualHint: 42 },
       branches: [
-        { concept: "B1", colorHint: true, children: [{ concept: "S1", visualHint: null }] },
+        {
+          concept: "B1",
+          colorHint: true,
+          children: [{ concept: "S1", visualHint: null }],
+        },
       ],
     };
     const result = validateAgentList(input);
@@ -281,7 +331,9 @@ describe("isSentenceLike", () => {
   });
 
   it("detects English sentence patterns", () => {
-    expect(isSentenceLike("This is important because pricing affects conversion")).toBe(true);
+    expect(
+      isSentenceLike("This is important because pricing affects conversion"),
+    ).toBe(true);
   });
 
   it("accepts concise concept units", () => {
@@ -300,9 +352,7 @@ describe("traverseBranches", () => {
       branches: [
         {
           concept: "B1",
-          children: [
-            { concept: "S1", children: [{ concept: "L1" }] },
-          ],
+          children: [{ concept: "S1", children: [{ concept: "L1" }] }],
         },
         {
           concept: "B2",
@@ -319,7 +369,11 @@ describe("traverseBranches", () => {
       { concept: "ROOT", path: "center.concept", depth: 0 },
       { concept: "B1", path: "branches[0].concept", depth: 1 },
       { concept: "S1", path: "branches[0].children[0].concept", depth: 2 },
-      { concept: "L1", path: "branches[0].children[0].children[0].concept", depth: 3 },
+      {
+        concept: "L1",
+        path: "branches[0].children[0].children[0].concept",
+        depth: 3,
+      },
       { concept: "B2", path: "branches[1].concept", depth: 1 },
     ]);
   });

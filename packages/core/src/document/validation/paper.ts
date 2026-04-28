@@ -8,11 +8,18 @@ import type { PaperKind } from "../types";
  * - `paper.kind` must be a supported PaperKind.
  * - `paper.widthMm` / `paper.heightMm` must match canonical dimensions.
  */
-export function validatePaper(paper: unknown, path = "paper"): OmmValidationIssue[] {
+export function validatePaper(
+  paper: unknown,
+  path = "paper",
+): OmmValidationIssue[] {
   const issues: OmmValidationIssue[] = [];
 
   if (!paper || typeof paper !== "object") {
-    issues.push({ path, message: "Paper must be an object", code: "paper.missing" });
+    issues.push({
+      path,
+      message: "Paper must be an object",
+      code: "paper.missing",
+    });
     return issues;
   }
 

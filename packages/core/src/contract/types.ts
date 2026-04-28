@@ -10,7 +10,7 @@
 
 // --- Contract Types ---
 
-export interface AgentMindMapList {
+export type AgentMindMapList = {
   version: 1;
   title: string;
   paper?: "a3-landscape" | "a4-landscape";
@@ -20,40 +20,40 @@ export interface AgentMindMapList {
     sourceTitle?: string;
     sourceSummary?: string;
   };
-}
+};
 
-export interface AgentCenter {
+export type AgentCenter = {
   concept: string;
   visualHint?: string;
-}
+};
 
-export interface MainBranch {
+export type MainBranch = {
   concept: string;
   children?: SubBranch[];
   visualHint?: string;
   colorHint?: string;
-}
+};
 
-export interface SubBranch {
+export type SubBranch = {
   concept: string;
   children?: LeafNode[];
   visualHint?: string;
-}
+};
 
-export interface LeafNode {
+export type LeafNode = {
   concept: string;
   visualHint?: string;
-}
+};
 
 // --- Capacity Limits ---
 
-export interface AgentListLimits {
+export type AgentListLimits = {
   maxNodes: number;
   maxDepth: 3;
   maxSiblingsPerNode: number;
   maxConceptUnitWidth: 25;
   maxMainBranches: number;
-}
+};
 
 export const DEFAULT_LIMITS: AgentListLimits = {
   maxNodes: 45,
@@ -65,25 +65,25 @@ export const DEFAULT_LIMITS: AgentListLimits = {
 
 // --- Validation Errors ---
 
-export interface ValidationError {
+export type ValidationError = {
   path: string;
   message: string;
-}
+};
 
-export interface ValidationResult {
+export type ValidationResult = {
   valid: boolean;
   errors: ValidationError[];
   data: AgentMindMapList | null;
-}
+};
 
-export interface CapacityError {
+export type CapacityError = {
   path: string;
   message: string;
   limit: number;
   actual: number;
-}
+};
 
-export interface CapacityResult {
+export type CapacityResult = {
   withinCapacity: boolean;
   errors: CapacityError[];
-}
+};

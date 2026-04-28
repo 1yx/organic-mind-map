@@ -83,7 +83,10 @@ function validateCenter(center: unknown): ValidationError[] {
 
   // visualHint is optional — type-check when present
   if (c.visualHint !== undefined && typeof c.visualHint !== "string") {
-    errors.push({ path: "center.visualHint", message: "visualHint must be a string if provided" });
+    errors.push({
+      path: "center.visualHint",
+      message: "visualHint must be a string if provided",
+    });
   }
   return errors;
 }
@@ -108,10 +111,7 @@ function validateBranches(branches: unknown): ValidationError[] {
   return errors;
 }
 
-function validateMainBranch(
-  branch: unknown,
-  path: string,
-): ValidationError[] {
+function validateMainBranch(branch: unknown, path: string): ValidationError[] {
   const errors: ValidationError[] = [];
 
   if (!branch || typeof branch !== "object") {
@@ -122,23 +122,37 @@ function validateMainBranch(
   const b = branch as Record<string, unknown>;
 
   if (typeof b.concept !== "string" || b.concept.trim().length === 0) {
-    errors.push({ path: `${path}.concept`, message: "concept must be a non-empty string" });
+    errors.push({
+      path: `${path}.concept`,
+      message: "concept must be a non-empty string",
+    });
   }
 
   // Optional hints — type-check when present
   if (b.visualHint !== undefined && typeof b.visualHint !== "string") {
-    errors.push({ path: `${path}.visualHint`, message: "visualHint must be a string if provided" });
+    errors.push({
+      path: `${path}.visualHint`,
+      message: "visualHint must be a string if provided",
+    });
   }
   if (b.colorHint !== undefined && typeof b.colorHint !== "string") {
-    errors.push({ path: `${path}.colorHint`, message: "colorHint must be a string if provided" });
+    errors.push({
+      path: `${path}.colorHint`,
+      message: "colorHint must be a string if provided",
+    });
   }
 
   if (b.children !== undefined) {
     if (!Array.isArray(b.children)) {
-      errors.push({ path: `${path}.children`, message: "children must be an array" });
+      errors.push({
+        path: `${path}.children`,
+        message: "children must be an array",
+      });
     } else {
       for (let j = 0; j < b.children.length; j++) {
-        errors.push(...validateSubBranch(b.children[j], `${path}.children[${j}]`));
+        errors.push(
+          ...validateSubBranch(b.children[j], `${path}.children[${j}]`),
+        );
       }
     }
   }
@@ -146,10 +160,7 @@ function validateMainBranch(
   return errors;
 }
 
-function validateSubBranch(
-  branch: unknown,
-  path: string,
-): ValidationError[] {
+function validateSubBranch(branch: unknown, path: string): ValidationError[] {
   const errors: ValidationError[] = [];
 
   if (!branch || typeof branch !== "object") {
@@ -160,19 +171,30 @@ function validateSubBranch(
   const b = branch as Record<string, unknown>;
 
   if (typeof b.concept !== "string" || b.concept.trim().length === 0) {
-    errors.push({ path: `${path}.concept`, message: "concept must be a non-empty string" });
+    errors.push({
+      path: `${path}.concept`,
+      message: "concept must be a non-empty string",
+    });
   }
 
   if (b.visualHint !== undefined && typeof b.visualHint !== "string") {
-    errors.push({ path: `${path}.visualHint`, message: "visualHint must be a string if provided" });
+    errors.push({
+      path: `${path}.visualHint`,
+      message: "visualHint must be a string if provided",
+    });
   }
 
   if (b.children !== undefined) {
     if (!Array.isArray(b.children)) {
-      errors.push({ path: `${path}.children`, message: "children must be an array" });
+      errors.push({
+        path: `${path}.children`,
+        message: "children must be an array",
+      });
     } else {
       for (let k = 0; k < b.children.length; k++) {
-        errors.push(...validateLeafNode(b.children[k], `${path}.children[${k}]`));
+        errors.push(
+          ...validateLeafNode(b.children[k], `${path}.children[${k}]`),
+        );
       }
     }
   }
@@ -180,10 +202,7 @@ function validateSubBranch(
   return errors;
 }
 
-function validateLeafNode(
-  node: unknown,
-  path: string,
-): ValidationError[] {
+function validateLeafNode(node: unknown, path: string): ValidationError[] {
   const errors: ValidationError[] = [];
 
   if (!node || typeof node !== "object") {
@@ -194,18 +213,25 @@ function validateLeafNode(
   const n = node as Record<string, unknown>;
 
   if (typeof n.concept !== "string" || n.concept.trim().length === 0) {
-    errors.push({ path: `${path}.concept`, message: "concept must be a non-empty string" });
+    errors.push({
+      path: `${path}.concept`,
+      message: "concept must be a non-empty string",
+    });
   }
 
   if (n.visualHint !== undefined && typeof n.visualHint !== "string") {
-    errors.push({ path: `${path}.visualHint`, message: "visualHint must be a string if provided" });
+    errors.push({
+      path: `${path}.visualHint`,
+      message: "visualHint must be a string if provided",
+    });
   }
 
   // LeafNode must NOT have children — nesting deeper than 3 levels
   if (n.children !== undefined) {
     errors.push({
       path: `${path}.children`,
-      message: "Nesting exceeds maximum depth of 3 levels (MainBranch -> SubBranch -> LeafNode)",
+      message:
+        "Nesting exceeds maximum depth of 3 levels (MainBranch -> SubBranch -> LeafNode)",
     });
   }
 

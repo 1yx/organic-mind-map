@@ -53,7 +53,9 @@ describe("validateOmmDocument", () => {
     it("rejects missing document (not an object)", () => {
       const result = validateOmmDocument(null) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "envelope.missing")).toBe(true);
+      expect(result.errors.some((e) => e.code === "envelope.missing")).toBe(
+        true,
+      );
     });
 
     it("rejects missing version", () => {
@@ -62,7 +64,9 @@ describe("validateOmmDocument", () => {
       const without = { ...rest, version: undefined };
       const result = validateOmmDocument(without) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "envelope.invalid_version")).toBe(true);
+      expect(
+        result.errors.some((e) => e.code === "envelope.invalid_version"),
+      ).toBe(true);
     });
 
     it("rejects wrong version", () => {
@@ -70,7 +74,9 @@ describe("validateOmmDocument", () => {
       const modified = { ...(doc as Record<string, unknown>), version: 2 };
       const result = validateOmmDocument(modified) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "envelope.invalid_version")).toBe(true);
+      expect(
+        result.errors.some((e) => e.code === "envelope.invalid_version"),
+      ).toBe(true);
     });
 
     it("rejects missing organicSeed", () => {
@@ -78,15 +84,22 @@ describe("validateOmmDocument", () => {
       const modified = { ...(doc as Record<string, unknown>), organicSeed: "" };
       const result = validateOmmDocument(modified) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "envelope.missing_organicSeed")).toBe(true);
+      expect(
+        result.errors.some((e) => e.code === "envelope.missing_organicSeed"),
+      ).toBe(true);
     });
 
     it("rejects array rootMap (multiple maps)", () => {
       const doc = loadFixture("valid-minimal-a3");
-      const modified = { ...(doc as Record<string, unknown>), rootMap: [{ id: "1" }] };
+      const modified = {
+        ...(doc as Record<string, unknown>),
+        rootMap: [{ id: "1" }],
+      };
       const result = validateOmmDocument(modified) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "envelope.multiple_maps")).toBe(true);
+      expect(
+        result.errors.some((e) => e.code === "envelope.multiple_maps"),
+      ).toBe(true);
     });
   });
 
@@ -95,7 +108,9 @@ describe("validateOmmDocument", () => {
       const doc = loadFixture("invalid-unsupported-paper");
       const result = validateOmmDocument(doc) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "paper.unsupported_kind")).toBe(true);
+      expect(
+        result.errors.some((e) => e.code === "paper.unsupported_kind"),
+      ).toBe(true);
     });
   });
 
@@ -104,32 +119,43 @@ describe("validateOmmDocument", () => {
       const doc = loadFixture("invalid-duplicate-node-ids");
       const result = validateOmmDocument(doc) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "tree.duplicate_id")).toBe(true);
+      expect(result.errors.some((e) => e.code === "tree.duplicate_id")).toBe(
+        true,
+      );
     });
 
     it("rejects persisted parentId on nodes", () => {
       const doc = loadFixture("invalid-stale-parent-child-ids");
       const result = validateOmmDocument(doc) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "tree.stale_parentId")).toBe(true);
+      expect(result.errors.some((e) => e.code === "tree.stale_parentId")).toBe(
+        true,
+      );
     });
 
     it("rejects persisted childIds on nodes", () => {
       const doc = loadFixture("invalid-stale-parent-child-ids");
       const result = validateOmmDocument(doc) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "tree.stale_childIds")).toBe(true);
+      expect(result.errors.some((e) => e.code === "tree.stale_childIds")).toBe(
+        true,
+      );
     });
 
     it("rejects empty concept", () => {
       const doc = loadFixture("valid-minimal-a3");
-      const modified = JSON.parse(JSON.stringify(doc)) as Record<string, unknown>;
+      const modified = JSON.parse(JSON.stringify(doc)) as Record<
+        string,
+        unknown
+      >;
       const rootMap = modified.rootMap as Record<string, unknown>;
       const children = rootMap.children as Record<string, unknown>[];
       (children[0] as Record<string, unknown>).concept = "";
       const result = validateOmmDocument(modified) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "tree.empty_concept")).toBe(true);
+      expect(result.errors.some((e) => e.code === "tree.empty_concept")).toBe(
+        true,
+      );
     });
   });
 
@@ -138,29 +164,43 @@ describe("validateOmmDocument", () => {
       const doc = loadFixture("invalid-missing-center-visual");
       const result = validateOmmDocument(doc) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "center_visual.plain_text")).toBe(true);
+      expect(
+        result.errors.some((e) => e.code === "center_visual.plain_text"),
+      ).toBe(true);
     });
 
     it("rejects missing center visual object", () => {
       const doc = loadFixture("valid-minimal-a3");
-      const modified = JSON.parse(JSON.stringify(doc)) as Record<string, unknown>;
+      const modified = JSON.parse(JSON.stringify(doc)) as Record<
+        string,
+        unknown
+      >;
       const rootMap = modified.rootMap as Record<string, unknown>;
       delete rootMap.center;
       const result = validateOmmDocument(modified) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "center_visual.missing")).toBe(true);
+      expect(
+        result.errors.some((e) => e.code === "center_visual.missing"),
+      ).toBe(true);
     });
 
     it("rejects compliant state with minColorCount < 2", () => {
       const doc = loadFixture("valid-minimal-a3");
-      const modified = JSON.parse(JSON.stringify(doc)) as Record<string, unknown>;
+      const modified = JSON.parse(JSON.stringify(doc)) as Record<
+        string,
+        unknown
+      >;
       const rootMap = modified.rootMap as Record<string, unknown>;
       const center = rootMap.center as Record<string, unknown>;
       center.minColorCount = 1;
       center.complianceState = "compliant";
       const result = validateOmmDocument(modified) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "center_visual.insufficient_colors")).toBe(true);
+      expect(
+        result.errors.some(
+          (e) => e.code === "center_visual.insufficient_colors",
+        ),
+      ).toBe(true);
     });
   });
 
@@ -169,14 +209,18 @@ describe("validateOmmDocument", () => {
       const doc = loadFixture("invalid-missing-asset-refs");
       const result = validateOmmDocument(doc) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "assets.unresolved_ref")).toBe(true);
+      expect(
+        result.errors.some((e) => e.code === "assets.unresolved_ref"),
+      ).toBe(true);
     });
 
     it("rejects source: uploaded", () => {
       const doc = loadFixture("invalid-uploaded-base64-assets");
       const result = validateOmmDocument(doc) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "assets.unsupported_source")).toBe(true);
+      expect(
+        result.errors.some((e) => e.code === "assets.unsupported_source"),
+      ).toBe(true);
     });
 
     it("rejects source: generated", () => {
@@ -185,7 +229,9 @@ describe("validateOmmDocument", () => {
       expect(result.valid).toBe(false);
       // generated-1 has source "generated"
       const genError = result.errors.find(
-        (e) => e.code === "assets.unsupported_source" && e.path.includes("images[1]"),
+        (e) =>
+          e.code === "assets.unsupported_source" &&
+          e.path.includes("images[1]"),
       );
       expect(genError).toBeDefined();
     });
@@ -194,7 +240,9 @@ describe("validateOmmDocument", () => {
       const doc = loadFixture("invalid-uploaded-base64-assets");
       const result = validateOmmDocument(doc) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "assets.embedded_data")).toBe(true);
+      expect(result.errors.some((e) => e.code === "assets.embedded_data")).toBe(
+        true,
+      );
     });
 
     it("accepts built-in assets with builtinId", () => {
@@ -206,7 +254,10 @@ describe("validateOmmDocument", () => {
 
     it("rejects unknown built-in asset IDs", () => {
       const doc = loadFixture("valid-a4-with-center-visual");
-      const modified = JSON.parse(JSON.stringify(doc)) as Record<string, unknown>;
+      const modified = JSON.parse(JSON.stringify(doc)) as Record<
+        string,
+        unknown
+      >;
       const assets = modified.assets as Record<string, unknown>;
       const images = assets.images as Record<string, unknown>[];
       images[0].builtinId = "does-not-exist";
@@ -214,8 +265,12 @@ describe("validateOmmDocument", () => {
       const result = validateOmmDocument(modified) as OmmValidationResult;
 
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "assets.unknown_builtinId")).toBe(true);
-      expect(result.errors.some((e) => e.path === "assets.images[0].builtinId")).toBe(true);
+      expect(
+        result.errors.some((e) => e.code === "assets.unknown_builtinId"),
+      ).toBe(true);
+      expect(
+        result.errors.some((e) => e.path === "assets.images[0].builtinId"),
+      ).toBe(true);
     });
   });
 
@@ -224,12 +279,17 @@ describe("validateOmmDocument", () => {
       const doc = loadFixture("invalid-missing-layout");
       const result = validateOmmDocument(doc) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code.startsWith("layout."))).toBe(true);
+      expect(result.errors.some((e) => e.code.startsWith("layout."))).toBe(
+        true,
+      );
     });
 
     it("rejects layout referencing unknown node ID", () => {
       const doc = loadFixture("valid-minimal-a3");
-      const modified = JSON.parse(JSON.stringify(doc)) as Record<string, unknown>;
+      const modified = JSON.parse(JSON.stringify(doc)) as Record<
+        string,
+        unknown
+      >;
       const layout = modified.layout as Record<string, unknown>;
       const nodes = layout.nodes as Record<string, unknown>;
       nodes["nonexistent-node"] = {
@@ -239,12 +299,17 @@ describe("validateOmmDocument", () => {
       };
       const result = validateOmmDocument(modified) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "layout.unknown_node_ref")).toBe(true);
+      expect(
+        result.errors.some((e) => e.code === "layout.unknown_node_ref"),
+      ).toBe(true);
     });
 
     it("rejects branch referencing unknown node ID", () => {
       const doc = loadFixture("valid-minimal-a3");
-      const modified = JSON.parse(JSON.stringify(doc)) as Record<string, unknown>;
+      const modified = JSON.parse(JSON.stringify(doc)) as Record<
+        string,
+        unknown
+      >;
       const layout = modified.layout as Record<string, unknown>;
       const branches = layout.branches as Record<string, unknown>;
       branches["nonexistent-branch"] = {
@@ -256,7 +321,9 @@ describe("validateOmmDocument", () => {
       };
       const result = validateOmmDocument(modified) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "layout.unknown_branch_ref")).toBe(true);
+      expect(
+        result.errors.some((e) => e.code === "layout.unknown_branch_ref"),
+      ).toBe(true);
     });
   });
 
@@ -265,21 +332,27 @@ describe("validateOmmDocument", () => {
       const doc = loadFixture("invalid-display-text");
       const result = validateOmmDocument(doc) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "excluded_state.displayText")).toBe(true);
+      expect(
+        result.errors.some((e) => e.code === "excluded_state.displayText"),
+      ).toBe(true);
     });
 
     it("rejects ellipsisText on nodes", () => {
       const doc = loadFixture("invalid-display-text");
       const result = validateOmmDocument(doc) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "excluded_state.ellipsisText")).toBe(true);
+      expect(
+        result.errors.some((e) => e.code === "excluded_state.ellipsisText"),
+      ).toBe(true);
     });
 
     it("rejects truncationText on nodes", () => {
       const doc = loadFixture("invalid-display-text");
       const result = validateOmmDocument(doc) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "excluded_state.truncationText")).toBe(true);
+      expect(
+        result.errors.some((e) => e.code === "excluded_state.truncationText"),
+      ).toBe(true);
     });
 
     it("rejects editor state fields at document level", () => {
@@ -291,8 +364,12 @@ describe("validateOmmDocument", () => {
       };
       const result = validateOmmDocument(modified) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "excluded_state.selection")).toBe(true);
-      expect(result.errors.some((e) => e.code === "excluded_state.undoStack")).toBe(true);
+      expect(
+        result.errors.some((e) => e.code === "excluded_state.selection"),
+      ).toBe(true);
+      expect(
+        result.errors.some((e) => e.code === "excluded_state.undoStack"),
+      ).toBe(true);
     });
 
     it("rejects Plus state fields", () => {
@@ -305,9 +382,15 @@ describe("validateOmmDocument", () => {
       };
       const result = validateOmmDocument(modified) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "excluded_state.cloudPermissions")).toBe(true);
-      expect(result.errors.some((e) => e.code === "excluded_state.ragIndex")).toBe(true);
-      expect(result.errors.some((e) => e.code === "excluded_state.versionHistory")).toBe(true);
+      expect(
+        result.errors.some((e) => e.code === "excluded_state.cloudPermissions"),
+      ).toBe(true);
+      expect(
+        result.errors.some((e) => e.code === "excluded_state.ragIndex"),
+      ).toBe(true);
+      expect(
+        result.errors.some((e) => e.code === "excluded_state.versionHistory"),
+      ).toBe(true);
     });
 
     it("rejects source snapshots and submapNavigation", () => {
@@ -320,9 +403,17 @@ describe("validateOmmDocument", () => {
       };
       const result = validateOmmDocument(modified) as OmmValidationResult;
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "excluded_state.sourceSnapshots")).toBe(true);
-      expect(result.errors.some((e) => e.code === "excluded_state.sourceObjectMappings")).toBe(true);
-      expect(result.errors.some((e) => e.code === "excluded_state.submapNavigation")).toBe(true);
+      expect(
+        result.errors.some((e) => e.code === "excluded_state.sourceSnapshots"),
+      ).toBe(true);
+      expect(
+        result.errors.some(
+          (e) => e.code === "excluded_state.sourceObjectMappings",
+        ),
+      ).toBe(true);
+      expect(
+        result.errors.some((e) => e.code === "excluded_state.submapNavigation"),
+      ).toBe(true);
     });
   });
 });

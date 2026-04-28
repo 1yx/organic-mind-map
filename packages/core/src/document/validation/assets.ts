@@ -19,7 +19,11 @@ export function validateAssets(
   const issues: OmmValidationIssue[] = [];
 
   if (!assets || typeof assets !== "object") {
-    issues.push({ path, message: "Assets must be an object", code: "assets.missing" });
+    issues.push({
+      path,
+      message: "Assets must be an object",
+      code: "assets.missing",
+    });
     return issues;
   }
 
@@ -27,7 +31,11 @@ export function validateAssets(
 
   // images must be an array
   if (!Array.isArray(a.images)) {
-    issues.push({ path: `${path}.images`, message: "assets.images must be an array", code: "assets.missing_images" });
+    issues.push({
+      path: `${path}.images`,
+      message: "assets.images must be an array",
+      code: "assets.missing_images",
+    });
     return issues;
   }
 
@@ -38,7 +46,11 @@ export function validateAssets(
     const imgPath = `${path}.images[${i}]`;
 
     if (!img || typeof img !== "object") {
-      issues.push({ path: imgPath, message: "Image asset must be an object", code: "assets.invalid_image" });
+      issues.push({
+        path: imgPath,
+        message: "Image asset must be an object",
+        code: "assets.invalid_image",
+      });
       continue;
     }
 
@@ -46,7 +58,11 @@ export function validateAssets(
 
     // Must have an id
     if (typeof image.id !== "string" || (image.id as string).length === 0) {
-      issues.push({ path: `${imgPath}.id`, message: "Image asset must have a non-empty id", code: "assets.missing_id" });
+      issues.push({
+        path: `${imgPath}.id`,
+        message: "Image asset must have a non-empty id",
+        code: "assets.missing_id",
+      });
       continue;
     }
     knownAssetIds.add(image.id as string);
@@ -61,13 +77,19 @@ export function validateAssets(
     }
 
     // builtinId is required and must be known when source is builtin.
-    if (typeof image.builtinId !== "string" || (image.builtinId as string).length === 0) {
+    if (
+      typeof image.builtinId !== "string" ||
+      (image.builtinId as string).length === 0
+    ) {
       issues.push({
         path: `${imgPath}.builtinId`,
         message: "Built-in asset must have a non-empty builtinId",
         code: "assets.missing_builtinId",
       });
-    } else if (image.source === "builtin" && !BUILTIN_ASSET_ID_SET.has(image.builtinId as string)) {
+    } else if (
+      image.source === "builtin" &&
+      !BUILTIN_ASSET_ID_SET.has(image.builtinId as string)
+    ) {
       issues.push({
         path: `${imgPath}.builtinId`,
         message: `Unknown built-in asset id "${image.builtinId as string}"`,
@@ -76,7 +98,12 @@ export function validateAssets(
     }
 
     // Reject embedded data fields (Base64, embedded SVG, etc.)
-    for (const forbidden of ["data", "dataBase64", "embeddedSvg", "dataUri"] as const) {
+    for (const forbidden of [
+      "data",
+      "dataBase64",
+      "embeddedSvg",
+      "dataUri",
+    ] as const) {
       if (forbidden in image) {
         issues.push({
           path: `${imgPath}.${forbidden}`,
@@ -87,7 +114,10 @@ export function validateAssets(
     }
 
     // mimeType should be present
-    if (typeof image.mimeType !== "string" || (image.mimeType as string).length === 0) {
+    if (
+      typeof image.mimeType !== "string" ||
+      (image.mimeType as string).length === 0
+    ) {
       issues.push({
         path: `${imgPath}.mimeType`,
         message: "Image asset must have a mimeType",

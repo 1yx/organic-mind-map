@@ -28,14 +28,24 @@ export function collectNodeIds(nodes: MindNode[]): Map<string, true> {
  * - Preserves sibling order (does not reorder).
  * - Collects valid node IDs for layout reference checking.
  */
-export function validateTree(
-  rootMap: unknown,
-): { issues: OmmValidationIssue[]; nodeIds: Map<string, true> } {
+export function validateTree(rootMap: unknown): {
+  issues: OmmValidationIssue[];
+  nodeIds: Map<string, true>;
+} {
   const issues: OmmValidationIssue[] = [];
   const nodeIds = new Map<string, true>();
 
   if (!rootMap || typeof rootMap !== "object") {
-    return { issues: [{ path: "rootMap", message: "rootMap must be an object", code: "tree.missing" }], nodeIds };
+    return {
+      issues: [
+        {
+          path: "rootMap",
+          message: "rootMap must be an object",
+          code: "tree.missing",
+        },
+      ],
+      nodeIds,
+    };
   }
 
   const map = rootMap as Record<string, unknown>;
@@ -44,7 +54,8 @@ export function validateTree(
   if (map.nodes && typeof map.nodes === "object" && !Array.isArray(map.nodes)) {
     issues.push({
       path: "rootMap.nodes",
-      message: "Flat nodes dictionary (runtime topology) is not allowed in .omm format",
+      message:
+        "Flat nodes dictionary (runtime topology) is not allowed in .omm format",
       code: "tree.flat_nodes",
     });
   }
@@ -86,7 +97,8 @@ export function validateTree(
     if ("parentId" in n) {
       issues.push({
         path: `${parentPath}.parentId`,
-        message: "Persisted runtime field 'parentId' is not allowed in .omm format",
+        message:
+          "Persisted runtime field 'parentId' is not allowed in .omm format",
         code: "tree.stale_parentId",
       });
     }
@@ -94,7 +106,8 @@ export function validateTree(
     if ("childIds" in n) {
       issues.push({
         path: `${parentPath}.childIds`,
-        message: "Persisted runtime field 'childIds' is not allowed in .omm format",
+        message:
+          "Persisted runtime field 'childIds' is not allowed in .omm format",
         code: "tree.stale_childIds",
       });
     }
@@ -131,12 +144,16 @@ export function validateTree(
           code: "tree.invalid_children",
         });
       } else {
-        childNodes.forEach((child, i) => validateNode(child, `${parentPath}.children[${i}]`));
+        childNodes.forEach((child, i) =>
+          validateNode(child, `${parentPath}.children[${i}]`),
+        );
       }
     }
   }
 
-  (children as unknown[]).forEach((child, i) => validateNode(child, `rootMap.children[${i}]`));
+  (children as unknown[]).forEach((child, i) =>
+    validateNode(child, `rootMap.children[${i}]`),
+  );
 
   return { issues, nodeIds };
 }

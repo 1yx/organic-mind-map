@@ -16,7 +16,11 @@ export function validateLayout(
   const issues: OmmValidationIssue[] = [];
 
   if (!layout || typeof layout !== "object") {
-    issues.push({ path, message: "Layout must be an object", code: "layout.missing" });
+    issues.push({
+      path,
+      message: "Layout must be an object",
+      code: "layout.missing",
+    });
     return issues;
   }
 
@@ -36,7 +40,11 @@ export function validateLayout(
   // Viewport validation
   const viewport = l.viewport;
   if (!viewport || typeof viewport !== "object") {
-    issues.push({ path: `${path}.viewport`, message: "viewport must be an object", code: "layout.missing_viewport" });
+    issues.push({
+      path: `${path}.viewport`,
+      message: "viewport must be an object",
+      code: "layout.missing_viewport",
+    });
   } else {
     const v = viewport as Record<string, unknown>;
     for (const field of ["widthPx", "heightPx", "viewBox"] as const) {
@@ -53,18 +61,30 @@ export function validateLayout(
   // Center layout
   const center = l.center;
   if (!center || typeof center !== "object") {
-    issues.push({ path: `${path}.center`, message: "center layout must be an object", code: "layout.missing_center" });
+    issues.push({
+      path: `${path}.center`,
+      message: "center layout must be an object",
+      code: "layout.missing_center",
+    });
   } else {
     const c = center as Record<string, unknown>;
     if (!c.box || typeof c.box !== "object") {
-      issues.push({ path: `${path}.center.box`, message: "center.box must be an object", code: "layout.missing_center_box" });
+      issues.push({
+        path: `${path}.center.box`,
+        message: "center.box must be an object",
+        code: "layout.missing_center_box",
+      });
     }
   }
 
   // Nodes layout
   const nodes = l.nodes;
   if (!nodes || typeof nodes !== "object" || Array.isArray(nodes)) {
-    issues.push({ path: `${path}.nodes`, message: "nodes must be a record", code: "layout.missing_nodes" });
+    issues.push({
+      path: `${path}.nodes`,
+      message: "nodes must be a record",
+      code: "layout.missing_nodes",
+    });
   } else {
     const nodesMap = nodes as Record<string, unknown>;
     for (const nodeId of Object.keys(nodesMap)) {
@@ -138,7 +158,11 @@ export function validateLayout(
   // Branches layout
   const branches = l.branches;
   if (!branches || typeof branches !== "object" || Array.isArray(branches)) {
-    issues.push({ path: `${path}.branches`, message: "branches must be a record", code: "layout.missing_branches" });
+    issues.push({
+      path: `${path}.branches`,
+      message: "branches must be a record",
+      code: "layout.missing_branches",
+    });
   } else {
     const branchesMap = branches as Record<string, unknown>;
     for (const nodeId of Object.keys(branchesMap)) {
@@ -168,7 +192,12 @@ export function validateLayout(
         });
       }
 
-      for (const field of ["branchPath", "textPath", "strokeWidthStart", "strokeWidthEnd"] as const) {
+      for (const field of [
+        "branchPath",
+        "textPath",
+        "strokeWidthStart",
+        "strokeWidthEnd",
+      ] as const) {
         if (field === "strokeWidthStart" || field === "strokeWidthEnd") {
           if (typeof bl[field] !== "number") {
             issues.push({
@@ -178,7 +207,10 @@ export function validateLayout(
             });
           }
         } else {
-          if (typeof bl[field] !== "string" || (bl[field] as string).length === 0) {
+          if (
+            typeof bl[field] !== "string" ||
+            (bl[field] as string).length === 0
+          ) {
             issues.push({
               path: `${path}.branches.${nodeId}.${field}`,
               message: `${field} must be a non-empty string`,

@@ -86,8 +86,6 @@ export function validateCapacity(
  * Format capacity errors into a retry-friendly message for Agent CLIs.
  */
 export function formatCapacityFeedback(errors: CapacityError[]): string {
-  const lines = errors.map(
-    (e) => `- ${e.path || "total"}: ${e.message}`,
-  );
+  const lines = errors.map((e) => `- ${e.path || "total"}: ${e.message}`);
   return `Input exceeds MVP capacity:\n${lines.join("\n")}\nPlease regenerate a shorter concept list.`;
 }
