@@ -1,0 +1,49 @@
+{
+  "id": "omm-test-web-fonts-001",
+  "version": 1,
+  "title": "Invalid Web Fonts Declaration",
+  "paper": { "kind": "a4-landscape", "widthMm": 297, "heightMm": 210 },
+  "organicSeed": "testseed001",
+  "rootMap": {
+    "id": "map-webfont-001",
+    "title": "Invalid Web Fonts Declaration",
+    "center": {
+      "mode": "styled-text",
+      "titleText": "Font Test",
+      "minColorCount": 3,
+      "complianceState": "compliant"
+    },
+    "children": [
+      { "id": "node-1", "concept": "Branch One" }
+    ]
+  },
+  "layout": {
+    "engineVersion": "0.1.0",
+    "measuredAt": "2026-04-29T00:00:00Z",
+    "viewport": { "widthPx": 1188, "heightPx": 840, "viewBox": "0 0 1188 840" },
+    "center": { "box": { "x": 494, "y": 370, "width": 200, "height": 100 } },
+    "nodes": {
+      "node-1": {
+        "nodeId": "node-1",
+        "textAnchor": { "x": 600, "y": 420 },
+        "textBox": { "x": 540, "y": 400, "width": 120, "height": 30 }
+      }
+    },
+    "branches": {
+      "node-1": {
+        "nodeId": "node-1",
+        "branchPath": "M594,420 C594,400 640,420 660,420",
+        "textPath": "branch-text-node-1",
+        "strokeWidthStart": 6,
+        "strokeWidthEnd": 2
+      }
+    }
+  },
+  "assets": { "images": [] },
+  "meta": { "createdAt": "2026-04-29T00:00:00Z", "tool": "test" },
+  "theme": {
+    "id": "theme-webfont-001",
+    "name": "Custom Google Font",
+    "fontFamily": "https://fonts.googleapis.com/css2?family=Roboto&display=swap"
+  }
+}

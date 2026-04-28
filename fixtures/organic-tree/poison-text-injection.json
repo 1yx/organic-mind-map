@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "title": "Poison Text Injection",
+  "paper": "a4-landscape",
+  "center": { "concept": "<script>alert(1)</script>" },
+  "branches": [
+    { "concept": "<img src=x onerror=alert(1)>", "children": [
+      {"concept": "&lt;script&gt;alert(1)&lt;/script&gt;"},
+      {"concept": "{{constructor.constructor('return this')()}}"}
+    ]},
+    { "concept": "NORMAL BRANCH" }
+  ]
+}

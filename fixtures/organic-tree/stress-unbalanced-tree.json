@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "title": "Stress Unbalanced Tree",
+  "paper": "a3-landscape",
+  "center": { "concept": "ASYMMETRY TEST" },
+  "branches": [
+    { "concept": "HEAVY BRANCH", "children": [
+      {"concept":"H1","children":[{"concept":"H1A"},{"concept":"H1B"},{"concept":"H1C"},{"concept":"H1D"}]},
+      {"concept":"H2","children":[{"concept":"H2A"},{"concept":"H2B"},{"concept":"H2C"},{"concept":"H2D"}]},
+      {"concept":"H3","children":[{"concept":"H3A"},{"concept":"H3B"},{"concept":"H3C"},{"concept":"H3D"}]},
+      {"concept":"H4","children":[{"concept":"H4A"},{"concept":"H4B"},{"concept":"H4C"},{"concept":"H4D"}]},
+      {"concept":"H5","children":[{"concept":"H5A"},{"concept":"H5B"},{"concept":"H5C"},{"concept":"H5D"}]},
+      {"concept":"H6","children":[{"concept":"H6A"},{"concept":"H6B"},{"concept":"H6C"},{"concept":"H6D"}]},
+      {"concept":"H7","children":[{"concept":"H7A"},{"concept":"H7B"}]},
+      {"concept":"H8","children":[{"concept":"H8A"}]}
+    ]},
+    { "concept": "LIGHT ONE" },
+    { "concept": "LIGHT TWO" },
+    { "concept": "LIGHT THREE" },
+    { "concept": "LIGHT FOUR" }
+  ]
+}

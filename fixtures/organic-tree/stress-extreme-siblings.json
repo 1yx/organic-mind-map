@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "title": "Stress Extreme Siblings",
+  "paper": "a3-landscape",
+  "center": { "concept": "STRESS DENSITY TEST" },
+  "branches": [
+    { "concept": "ALPHA", "children": [{"concept":"A1"},{"concept":"A2"},{"concept":"A3"},{"concept":"A4"},{"concept":"A5"},{"concept":"A6"},{"concept":"A7"},{"concept":"A8"}] },
+    { "concept": "BETA", "children": [{"concept":"B1"},{"concept":"B2"},{"concept":"B3"},{"concept":"B4"},{"concept":"B5"},{"concept":"B6"},{"concept":"B7"},{"concept":"B8"}] },
+    { "concept": "GAMMA", "children": [{"concept":"G1"},{"concept":"G2"},{"concept":"G3"},{"concept":"G4"},{"concept":"G5"},{"concept":"G6"},{"concept":"G7"},{"concept":"G8"}] },
+    { "concept": "DELTA", "children": [{"concept":"D1"},{"concept":"D2"},{"concept":"D3"},{"concept":"D4"},{"concept":"D5"},{"concept":"D6"},{"concept":"D7"},{"concept":"D8"}] },
+    { "concept": "EPSILON", "children": [{"concept":"E1"},{"concept":"E2"},{"concept":"E3"},{"concept":"E4"},{"concept":"E5"},{"concept":"E6"},{"concept":"E7"}] }
+  ]
+}

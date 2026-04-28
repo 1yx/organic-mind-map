@@ -22,6 +22,7 @@ import { validateLayout } from "./layout";
 import { validateCenterVisual, collectCenterAssetIds } from "./center-visual";
 import { validateAssets, collectNodeAssetIds } from "./assets";
 import { checkExcludedState } from "./excluded-state";
+import { validateFontSafety } from "./font-safety";
 
 /**
  * Validates a full .omm document against all Phase 1 rules.
@@ -89,6 +90,10 @@ export function validateOmmDocument(data: unknown): OmmValidationResult {
   // 7. Excluded state checks
   const excludedErrors = checkExcludedState(doc);
   allErrors.push(...excludedErrors);
+
+  // 8. Font safety — fail fast on web font declarations
+  const fontErrors = validateFontSafety(doc);
+  allErrors.push(...fontErrors);
 
   return {
     valid: allErrors.length === 0,

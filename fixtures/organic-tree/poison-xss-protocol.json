@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "title": "Poison XSS Protocol",
+  "paper": "a4-landscape",
+  "center": { "concept": "XSS PROBE", "svgUrl": "javascript:alert(document.cookie)" },
+  "branches": [
+    { "concept": "SECURITY", "children": [{"concept":"INJECTION"}] }
+  ]
+}

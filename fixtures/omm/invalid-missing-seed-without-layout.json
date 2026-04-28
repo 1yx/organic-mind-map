@@ -1,0 +1,30 @@
+{
+  "id": "omm-invalid-no-seed-no-layout-001",
+  "version": 1,
+  "title": "Invalid Missing Seed Without Layout",
+  "paper": { "kind": "a4-landscape", "widthMm": 297, "heightMm": 210 },
+  "organicSeed": "",
+  "rootMap": {
+    "id": "map-noseed-001",
+    "title": "No Seed No Layout",
+    "center": {
+      "mode": "styled-text",
+      "titleText": "No Seed",
+      "minColorCount": 3,
+      "complianceState": "compliant"
+    },
+    "children": [
+      { "id": "node-1", "concept": "Branch One" }
+    ]
+  },
+  "layout": {
+    "engineVersion": "0.1.0",
+    "measuredAt": "2026-04-29T00:00:00Z",
+    "viewport": { "widthPx": 1188, "heightPx": 840, "viewBox": "0 0 1188 840" },
+    "center": { "box": { "x": 494, "y": 370, "width": 200, "height": 100 } },
+    "nodes": {},
+    "branches": {}
+  },
+  "assets": { "images": [] },
+  "meta": { "createdAt": "2026-04-29T00:00:00Z", "tool": "test" }
+}
