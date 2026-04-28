@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { useCenterVisual } from "./composables/center-visual.js";
+import { usePngExport } from "./composables/png-export.js";
 import {
   renderFromPreview,
   createCanvasMeasurementAdapter,
@@ -15,6 +16,7 @@ const error = ref<string | null>(null);
 const loading = ref(true);
 const renderResult = ref<RenderResult | null>(null);
 const renderError = ref<string | null>(null);
+const paperSurfaceRef = ref<HTMLElement | null>(null);
 
 // ─── Center Visual ──────────────────────────────────────────────────────
 
@@ -34,6 +36,33 @@ const paperAspect = computed(() => {
   const paper = documentData.value?.paper;
   return paper ? (PAPER_ASPECT[paper] ?? 420 / 297) : 420 / 297;
 });
+
+// ─── PNG Export ─────────────────────────────────────────────────────────
+
+const renderReady = computed(
+  () => !loading.value && !renderError.value && renderResult.value !== null,
+);
+
+const { exporting, exportError, canExport, doExport } = usePngExport({
+  renderReady,
+  inlineSvg,
+  fellBack,
+});
+
+function handleExportPng() {
+  const el = paperSurfaceRef.value;
+  if (!el) return;
+
+  const rect = el.getBoundingClientRect();
+  const paperKind = documentData.value?.paper;
+
+  doExport(
+    el.querySelector(".svg-container") ?? el,
+    rect.width,
+    rect.height,
+    paperKind,
+  );
+}
 
 // ─── Fetch & Render ─────────────────────────────────────────────────────
 
@@ -99,8 +128,21 @@ onMounted(async () => {
 
     <!-- Success state: SVG preview -->
     <div v-else-if="renderResult" class="map-canvas">
+      <!-- Export controls -->
+      <div class="export-controls">
+        <button
+          class="export-png-btn"
+          :disabled="!canExport || exporting"
+          @click="handleExportPng"
+        >
+          {{ exporting ? "Exporting…" : "Export PNG" }}
+        </button>
+        <span v-if="exportError" class="export-error">{{ exportError }}</span>
+      </div>
+
       <!-- Paper-proportional viewport -->
       <div
+        ref="paperSurfaceRef"
         class="paper-surface"
         :style="{ aspectRatio: String(paperAspect) }"
       >
@@ -128,7 +170,7 @@ onMounted(async () => {
 <style>
 body {
   margin: 0;
-  font-family: system-ui, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: #f0f0f0;
 }
 
@@ -168,6 +210,42 @@ body {
 .loading-state {
   color: #666;
   font-size: 1rem;
+}
+
+/* ─── Export Controls ─────────────────────────────────────────────────── */
+
+.export-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.export-png-btn {
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: inherit;
+  color: #fff;
+  background: #2563eb;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.export-png-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.export-png-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.export-error {
+  color: #c00;
+  font-size: 0.8rem;
 }
 
 /* ─── Map canvas ──────────────────────────────────────────────────────── */
