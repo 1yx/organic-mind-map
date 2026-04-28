@@ -69,14 +69,12 @@ const UNSAFE_PATTERNS = [
  * This is intentionally conservative — when in doubt, reject.
  */
 export function isSvgSafe(svgContent: string): boolean {
-  // Check unsafe patterns
   for (const pattern of UNSAFE_PATTERNS) {
     if (pattern.test(svgContent)) {
       return false;
     }
   }
 
-  // Verify it looks like SVG (starts with <svg or whitespace then <svg)
   const trimmed = svgContent.trimStart();
   if (!trimmed.startsWith("<svg")) {
     return false;
@@ -89,11 +87,7 @@ export function isSvgSafe(svgContent: string): boolean {
  * Fetch a controlled SVG URL with timeout and size limit.
  * Returns the SVG content string if safe, or null on any failure.
  *
- * This function:
- * - Enforces a response timeout
- * - Enforces a maximum response size
- * - Applies lightweight safety checks on the response
- * - Never throws — returns null on all failure paths
+ * Never throws — returns null on all failure paths.
  */
 export async function loadControlledSvg(
   url: string,
@@ -103,76 +97,89 @@ export async function loadControlledSvg(
   const maxSizeBytes = options?.maxSizeBytes ?? DEFAULT_MAX_SIZE_BYTES;
 
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-    const response = await fetch(url, {
-      signal: controller.signal,
-      mode: "cors",
-    });
-
-    clearTimeout(timeoutId);
-
+    const response = await fetchWithTimeout(url, timeoutMs);
     if (!response.ok) return null;
 
-    // Check content type
-    const contentType = response.headers.get("content-type") ?? "";
-    const isSvg =
-      contentType.includes("image/svg+xml") ||
-      contentType.includes("text/svg") ||
-      contentType.includes("application/svg");
+    const text = await readBodyWithSizeLimit(response, maxSizeBytes);
+    if (text === null) return null;
 
-    // Even without a perfect content-type, we'll check the content itself
-    // But if the type is clearly not SVG (html, json, etc.), reject early
-    if (
-      contentType.includes("text/html") ||
-      contentType.includes("application/json")
-    ) {
-      return null;
-    }
-
-    // Read with size limit
-    const reader = response.body?.getReader();
-    if (!reader) return null;
-
-    const chunks: Uint8Array[] = [];
-    let totalSize = 0;
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      totalSize += value.byteLength;
-      if (totalSize > maxSizeBytes) return null;
-
-      chunks.push(value);
-    }
-
-    // Combine chunks
-    const combined = new Uint8Array(totalSize);
-    let offset = 0;
-    for (const chunk of chunks) {
-      combined.set(chunk, offset);
-      offset += chunk.byteLength;
-    }
-
-    const text = new TextDecoder().decode(combined);
-
-    // If not identified as SVG by content-type, require <svg prefix
-    if (!isSvg && !text.trimStart().startsWith("<svg")) {
-      return null;
-    }
-
-    // Apply safety guard
-    if (!isSvgSafe(text)) {
-      return null;
-    }
-
-    return text;
+    return validateSvgResponse(text, response);
   } catch {
-    // Network error, timeout, abort — all non-fatal
     return null;
   }
+}
+
+async function fetchWithTimeout(
+  url: string,
+  timeoutMs: number,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  const response = await fetch(url, {
+    signal: controller.signal,
+    mode: "cors",
+  });
+
+  clearTimeout(timeoutId);
+  return response;
+}
+
+async function readBodyWithSizeLimit(
+  response: Response,
+  maxSizeBytes: number,
+): Promise<string | null> {
+  const contentType = response.headers.get("content-type") ?? "";
+
+  if (
+    contentType.includes("text/html") ||
+    contentType.includes("application/json")
+  ) {
+    return null;
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) return null;
+
+  const chunks: Uint8Array[] = [];
+  let totalSize = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    totalSize += value.byteLength;
+    if (totalSize > maxSizeBytes) return null;
+
+    chunks.push(value);
+  }
+
+  const combined = new Uint8Array(totalSize);
+  let offset = 0;
+  for (const chunk of chunks) {
+    combined.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  return new TextDecoder().decode(combined);
+}
+
+function validateSvgResponse(text: string, response: Response): string | null {
+  const contentType = response.headers.get("content-type") ?? "";
+  const isSvg =
+    contentType.includes("image/svg+xml") ||
+    contentType.includes("text/svg") ||
+    contentType.includes("application/svg");
+
+  if (!isSvg && !text.trimStart().startsWith("<svg")) {
+    return null;
+  }
+
+  if (!isSvgSafe(text)) {
+    return null;
+  }
+
+  return text;
 }
 
 /** Get the list of unsafe tag names (for testing). */

@@ -12,12 +12,14 @@
 import { describe, it, expect } from "vitest";
 import { isAllowedSvgUrl, getAllowedHosts } from "./svg-allowlist.js";
 
-describe("isAllowedSvgUrl", () => {
+describe("isAllowedSvgUrl — allowed hosts", () => {
   it("accepts valid HTTPS URL from allowlisted host (api.iconify.design)", () => {
     const result = isAllowedSvgUrl(
       "https://api.iconify.design/fluent-emoji-flat/brain.svg",
     );
-    expect(result).toBe("https://api.iconify.design/fluent-emoji-flat/brain.svg");
+    expect(result).toBe(
+      "https://api.iconify.design/fluent-emoji-flat/brain.svg",
+    );
   });
 
   it("accepts valid HTTPS URL from allowlisted host (cdn.jsdelivr.net)", () => {
@@ -29,6 +31,13 @@ describe("isAllowedSvgUrl", () => {
     );
   });
 
+  it("trims whitespace from URL", () => {
+    const result = isAllowedSvgUrl("  https://api.iconify.design/test.svg  ");
+    expect(result).toBe("https://api.iconify.design/test.svg");
+  });
+});
+
+describe("isAllowedSvgUrl — rejected URLs", () => {
   it("rejects non-HTTPS URL (http)", () => {
     const result = isAllowedSvgUrl(
       "http://api.iconify.design/fluent-emoji-flat/brain.svg",
@@ -37,9 +46,7 @@ describe("isAllowedSvgUrl", () => {
   });
 
   it("rejects URL from non-allowlisted host", () => {
-    const result = isAllowedSvgUrl(
-      "https://example.com/icon.svg",
-    );
+    const result = isAllowedSvgUrl("https://example.com/icon.svg");
     expect(result).toBeNull();
   });
 
@@ -73,13 +80,6 @@ describe("isAllowedSvgUrl", () => {
     expect(result).toBeNull();
   });
 
-  it("trims whitespace from URL", () => {
-    const result = isAllowedSvgUrl(
-      "  https://api.iconify.design/test.svg  ",
-    );
-    expect(result).toBe("https://api.iconify.design/test.svg");
-  });
-
   it("rejects URL exceeding max length", () => {
     const longPath = "a".repeat(3000);
     const result = isAllowedSvgUrl(
@@ -87,8 +87,10 @@ describe("isAllowedSvgUrl", () => {
     );
     expect(result).toBeNull();
   });
+});
 
-  it("getAllowedHosts returns expected hosts", () => {
+describe("getAllowedHosts", () => {
+  it("returns expected hosts", () => {
     const hosts = getAllowedHosts();
     expect(hosts.has("api.iconify.design")).toBe(true);
     expect(hosts.has("cdn.jsdelivr.net")).toBe(true);
