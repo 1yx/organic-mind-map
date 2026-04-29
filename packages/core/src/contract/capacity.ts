@@ -1,16 +1,16 @@
 /**
- * Capacity threshold validation for agent list input.
+ * Capacity threshold validation for OrganicTree input.
  *
  * Checks total nodes, depth, siblings per node, and main branches
  * against configurable MVP limits.
  */
 
-import type { AgentMindMapList, AgentListLimits, CapacityError } from "./types";
+import type { OrganicTree, OrganicTreeLimits, CapacityError } from "./types";
 
 /**
- * Count all nodes in the agent list (center + branches + children).
+ * Count all nodes in the OrganicTree (center + branches + children).
  */
-function countTotalNodes(input: AgentMindMapList): number {
+function countTotalNodes(input: OrganicTree): number {
   let total = 1; // center
   for (const branch of input.branches) {
     total += 1; // main branch
@@ -30,7 +30,7 @@ function countTotalNodes(input: AgentMindMapList): number {
  * Check siblings-per-node limit for all branch levels.
  */
 function checkSiblingsPerNode(
-  input: AgentMindMapList,
+  input: OrganicTree,
   maxSiblings: number,
 ): CapacityError[] {
   const errors: CapacityError[] = [];
@@ -63,12 +63,12 @@ function checkSiblingsPerNode(
 }
 
 /**
- * Validate that the agent list stays within capacity limits.
+ * Validate that the OrganicTree stays within capacity limits.
  * Returns capacity errors if any limit is exceeded.
  */
 export function validateCapacity(
-  input: AgentMindMapList,
-  limits: AgentListLimits,
+  input: OrganicTree,
+  limits: OrganicTreeLimits,
 ): CapacityError[] {
   const errors: CapacityError[] = [];
 

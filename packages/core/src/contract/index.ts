@@ -1,5 +1,5 @@
 /**
- * Agent list validation — main entrypoint.
+ * OrganicTree validation — main entrypoint.
  *
  * Orchestrates structural, quality, and capacity validation.
  * Never rewrites, merges, splits, or semantically compresses concepts.
@@ -45,8 +45,8 @@
 
 import {
   DEFAULT_LIMITS,
-  type AgentMindMapList,
-  type AgentListLimits,
+  type OrganicTree,
+  type OrganicTreeLimits,
   type ValidationError,
   type ValidationResult,
 } from "./types";
@@ -62,13 +62,13 @@ export { isSentenceLike } from "./sentence-detect";
 export * from "./types";
 
 /**
- * Validate an agent list input through all layers: structural, quality, capacity.
+ * Validate an OrganicTree input through all layers: structural, quality, capacity.
  * Returns a ValidationResult with errors if any validation fails.
- * On success, the data field contains the typed AgentMindMapList.
+ * On success, the data field contains the typed OrganicTree.
  */
-export function validateAgentList(
+export function validateOrganicTree(
   input: unknown,
-  limits: AgentListLimits = DEFAULT_LIMITS,
+  limits: OrganicTreeLimits = DEFAULT_LIMITS,
 ): ValidationResult {
   // Layer 1: Structural validation
   const structuralErrors = validateStructural(input);
@@ -76,7 +76,7 @@ export function validateAgentList(
     return { valid: false, errors: structuralErrors, data: null };
   }
 
-  const data = input as AgentMindMapList;
+  const data = input as OrganicTree;
 
   // Layer 2: Quality validation
   const qualityErrors = validateQuality(data, limits.maxConceptUnitWidth);
@@ -100,8 +100,8 @@ export function validateAgentList(
 /**
  * Traverse sub-branches and their leaf children for a main branch.
  */
-function traverseSubBranches(
-  children: import("./types").SubBranch[],
+function traverseOrganicSubBranches(
+  children: import("./types").OrganicSubBranch[],
   mainPath: string,
   callback: (concept: string, path: string, depth: number) => void,
 ): void {
@@ -124,7 +124,7 @@ function traverseSubBranches(
  * and reports stable path strings.
  */
 export function traverseBranches(
-  input: AgentMindMapList,
+  input: OrganicTree,
   callback: (concept: string, path: string, depth: number) => void,
 ): void {
   // Center
@@ -137,7 +137,7 @@ export function traverseBranches(
     callback(main.concept, `${mainPath}.concept`, 1);
 
     if (main.children) {
-      traverseSubBranches(main.children, mainPath, callback);
+      traverseOrganicSubBranches(main.children, mainPath, callback);
     }
   }
 }

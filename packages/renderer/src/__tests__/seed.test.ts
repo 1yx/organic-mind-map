@@ -15,11 +15,11 @@ import {
   assignBranchSectors,
   MAIN_BRANCH_COLORS,
 } from "../seed";
-import type { AgentMindMapList } from "@omm/core";
+import type { OrganicTree } from "@omm/core";
 
 // ─── Fixture ───────────────────────────────────────────────────────────────
 
-const SAMPLE_TREE: AgentMindMapList = {
+const SAMPLE_TREE: OrganicTree = {
   version: 1,
   title: "Mind Map Test",
   center: { concept: "Center Topic" },
@@ -41,7 +41,7 @@ const SAMPLE_TREE: AgentMindMapList = {
   ],
 };
 
-const DIFFERENT_TREE: AgentMindMapList = {
+const DIFFERENT_TREE: OrganicTree = {
   version: 1,
   title: "Different Map",
   center: { concept: "Other Center" },
@@ -126,13 +126,13 @@ describe("stableSerializeTree", () => {
   });
 
   it("is independent of key order in input (sorted keys)", () => {
-    const tree1: AgentMindMapList = {
+    const tree1: OrganicTree = {
       version: 1,
       title: "Test",
       center: { concept: "C" },
       branches: [{ concept: "B1" }, { concept: "B2" }],
     };
-    const tree2: AgentMindMapList = {
+    const tree2: OrganicTree = {
       branches: [{ concept: "B1" }, { concept: "B2" }],
       version: 1,
       title: "Test",
@@ -246,7 +246,7 @@ describe("generateNodeIds - edge cases", () => {
   });
 
   it("handles a tree with only main branches", () => {
-    const tree: AgentMindMapList = {
+    const tree: OrganicTree = {
       version: 1,
       title: "T",
       center: { concept: "C" },
@@ -259,7 +259,7 @@ describe("generateNodeIds - edge cases", () => {
   });
 
   it("handles an empty tree", () => {
-    const tree: AgentMindMapList = {
+    const tree: OrganicTree = {
       version: 1,
       title: "T",
       center: { concept: "C" },

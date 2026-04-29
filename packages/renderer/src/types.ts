@@ -5,12 +5,7 @@
  * Environment-neutral — no DOM or Canvas dependencies.
  */
 
-import type {
-  OmmDocument,
-  AgentMindMapList,
-  LayoutBox,
-  Point,
-} from "@omm/core";
+import type { OmmDocument, OrganicTree, LayoutBox, Point } from "@omm/core";
 
 // ─── PreviewPayload (inlined from CLI — renderer must not import from @omm/cli) ──
 
@@ -18,7 +13,7 @@ export type PreviewPayload = {
   version: 1;
   source: "organic-tree";
   paper: "a3-landscape" | "a4-landscape";
-  tree: AgentMindMapList;
+  tree: OrganicTree;
   centerVisual?: {
     inlineSvg?: string;
     svgUrl?: string;

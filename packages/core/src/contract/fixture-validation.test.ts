@@ -1,5 +1,5 @@
 /**
- * Fixture-based validation tests for agent list and OmmDocument contracts.
+ * Fixture-based validation tests for OrganicTree and OmmDocument contracts.
  *
  * Loads JSON fixtures from fixtures/organic-tree/ and fixtures/omm/ and runs
  * them through the full validation pipeline (structural, quality, capacity).
@@ -9,17 +9,17 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { describe, it, expect } from "vitest";
 import {
-  validateAgentList,
+  validateOrganicTree,
   validateCapacity,
   formatCapacityFeedback,
   DEFAULT_LIMITS,
-  type AgentMindMapList,
+  type OrganicTree,
 } from "./index";
 import { validateOmmDocument } from "../document/validation";
 
 // ─── Fixture loaders ──────────────────────────────────────────────────────
 
-function loadAgentListFixture(name: string): unknown {
+function loadOrganicTreeFixture(name: string): unknown {
   const fixturePath = join(
     __dirname,
     "..",
@@ -60,9 +60,9 @@ describe("fixture-validation — structural validity", () => {
   ];
 
   for (const name of validFixtures) {
-    it(`${name}.json passes validateAgentList`, () => {
-      const data = loadAgentListFixture(name);
-      const result = validateAgentList(data);
+    it(`${name}.json passes validateOrganicTree`, () => {
+      const data = loadOrganicTreeFixture(name);
+      const result = validateOrganicTree(data);
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
       expect(result.data).not.toBeNull();
@@ -84,8 +84,8 @@ describe("fixture-validation — concept quality", () => {
 
   for (const name of validFixtures) {
     it(`${name}.json has no sentence-like or unit-width errors`, () => {
-      const data = loadAgentListFixture(name);
-      const result = validateAgentList(data);
+      const data = loadOrganicTreeFixture(name);
+      const result = validateOrganicTree(data);
       expect(result.valid).toBe(true);
       // If valid, there are no errors at all (including quality errors)
       expect(
@@ -112,16 +112,16 @@ describe("fixture-validation — capacity", () => {
 
   for (const name of validFixtures) {
     it(`${name}.json is within DEFAULT_LIMITS capacity`, () => {
-      const data = loadAgentListFixture(name) as AgentMindMapList;
+      const data = loadOrganicTreeFixture(name) as OrganicTree;
       const errors = validateCapacity(data, DEFAULT_LIMITS);
       expect(errors).toHaveLength(0);
     });
   }
 
   it("invalid-oversized-capacity.json exceeds DEFAULT_LIMITS", () => {
-    const data = loadAgentListFixture(
+    const data = loadOrganicTreeFixture(
       "invalid-oversized-capacity",
-    ) as AgentMindMapList;
+    ) as OrganicTree;
     const errors = validateCapacity(data, DEFAULT_LIMITS);
     expect(errors.length).toBeGreaterThan(0);
   });
@@ -131,8 +131,8 @@ describe("fixture-validation — capacity", () => {
 
 describe("fixture-validation — sentence-like detection", () => {
   it("invalid-sentence-like.json fails with path-specific errors", () => {
-    const data = loadAgentListFixture("invalid-sentence-like");
-    const result = validateAgentList(data);
+    const data = loadOrganicTreeFixture("invalid-sentence-like");
+    const result = validateOrganicTree(data);
     expect(result.valid).toBe(false);
 
     const paths = result.errors.map((e) => e.path);
@@ -146,9 +146,9 @@ describe("fixture-validation — sentence-like detection", () => {
 
 describe("fixture-validation — capacity feedback", () => {
   it("invalid-oversized-capacity.json produces actionable feedback", () => {
-    const data = loadAgentListFixture(
+    const data = loadOrganicTreeFixture(
       "invalid-oversized-capacity",
-    ) as AgentMindMapList;
+    ) as OrganicTree;
     const errors = validateCapacity(data, DEFAULT_LIMITS);
     expect(errors.length).toBeGreaterThan(0);
 

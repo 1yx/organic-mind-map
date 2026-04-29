@@ -10,7 +10,7 @@
  * A4 landscape viewBox: "0 0 2970 2100"
  */
 
-import type { AgentMindMapList, LayoutBox, Point } from "@omm/core";
+import type { OrganicTree, LayoutBox, Point } from "@omm/core";
 import type {
   TextMeasurementAdapter,
   TextMetrics,
@@ -190,7 +190,7 @@ export type LayoutOptions = {
 };
 
 export function computeLayout(
-  tree: AgentMindMapList,
+  tree: OrganicTree,
   opts: LayoutOptions,
 ): LayoutResult {
   const diag: RenderDiagnostic[] = [];
@@ -212,7 +212,7 @@ export function computeLayout(
     measure: opts.measure,
     diag,
   };
-  placeMainBranches(
+  placeOrganicMainBranches(
     layoutNodes,
     {
       seed: contentHash,
@@ -258,7 +258,7 @@ function buildCenter(
   };
 }
 
-function placeMainBranches(
+function placeOrganicMainBranches(
   nodes: LayoutNode[],
   opts: { seed: number; center: Point; radius: number },
   ctx: Ctx,

@@ -40,7 +40,7 @@ interface PreviewPayload {
   version: 1;
   source: "organic-tree";
   paper: "a3-landscape" | "a4-landscape";
-  tree: AgentMindMapList;  // from @omm/core
+  tree: OrganicTree;  // from @omm/core
   centerVisual?: {
     inlineSvg?: string;
     source?: "ai-svg";

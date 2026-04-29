@@ -5,7 +5,7 @@
  * or an OmmDocument and return a complete SVG render result.
  */
 
-import type { OmmDocument, AgentMindMapList } from "@omm/core";
+import type { OmmDocument, OrganicTree } from "@omm/core";
 import type {
   PreviewPayload,
   RenderInput,
@@ -102,7 +102,7 @@ export function renderFromOmm(
   document: OmmDocument,
   options?: RenderOptions,
 ): RenderResult {
-  // Convert OmmDocument's MindMap tree to AgentMindMapList format
+  // Convert OmmDocument's MindMap tree to OrganicTree format
   const tree = convertMindMapToTree(document.rootMap);
 
   // Determine paper kind
@@ -119,10 +119,10 @@ export function renderFromOmm(
 // ─── Internal ──────────────────────────────────────────────────────────────
 
 /**
- * Core rendering function that works with an AgentMindMapList tree.
+ * Core rendering function that works with an OrganicTree tree.
  */
 function renderFromTree(
-  tree: AgentMindMapList,
+  tree: OrganicTree,
   options: {
     paperKind: "a3-landscape" | "a4-landscape";
     inlineSvg?: string;
@@ -174,14 +174,14 @@ function renderFromTree(
 }
 
 /**
- * Convert a MindMap tree (from OmmDocument) to AgentMindMapList format.
+ * Convert a MindMap tree (from OmmDocument) to OrganicTree format.
  *
  * This extracts the hierarchical structure and concepts from a MindMap
- * and produces a flat AgentMindMapList suitable for the layout engine.
+ * and produces a flat OrganicTree suitable for the layout engine.
  */
 function convertMindMapToTree(
   mindMap: import("@omm/core").MindMap,
-): AgentMindMapList {
+): OrganicTree {
   return {
     version: 1,
     title: mindMap.title,

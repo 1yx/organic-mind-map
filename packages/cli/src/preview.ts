@@ -20,7 +20,7 @@ import {
   validateCapacity,
   formatCapacityFeedback,
   DEFAULT_LIMITS,
-  type AgentMindMapList,
+  type OrganicTree,
 } from "@omm/core";
 
 import { startPreviewServerAsync } from "./preview-server.js";
@@ -88,7 +88,7 @@ function parseArgs(argv: string[]): ParsedArgs {
  * Normalise whitespace in an OrganicTree: trim and collapse repeated spaces
  * in every concept field. Never rewrites semantics — only whitespace.
  */
-function normalizeConcepts(input: AgentMindMapList): AgentMindMapList {
+function normalizeConcepts(input: OrganicTree): OrganicTree {
   const normalize = (s: string): string => s.trim().replace(/ {2,}/g, " ");
 
   return {
@@ -209,7 +209,7 @@ function runValidationPipeline(parsed: unknown): number | null {
     return cliExitCode.INPUT_ERROR;
   }
 
-  const tree = parsed as AgentMindMapList;
+  const tree = parsed as OrganicTree;
 
   const qualityErrors = validateQuality(
     tree,
@@ -233,7 +233,7 @@ function runValidationPipeline(parsed: unknown): number | null {
 
 /** Build the PreviewPayload from a validated tree. */
 function buildPayload(
-  tree: AgentMindMapList,
+  tree: OrganicTree,
   paperOverride?: "a3-landscape" | "a4-landscape",
 ): PreviewPayload {
   const normalised = normalizeConcepts(tree);
@@ -298,7 +298,7 @@ export async function previewCommand(argv: string[]): Promise<number> {
   const validationExit = runValidationPipeline(parsed);
   if (validationExit !== null) return validationExit;
 
-  const tree = parsed as AgentMindMapList;
+  const tree = parsed as OrganicTree;
   const payload = buildPayload(tree, args.paper);
 
   try {

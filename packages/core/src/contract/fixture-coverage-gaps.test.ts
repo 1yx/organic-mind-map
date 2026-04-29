@@ -13,16 +13,16 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { describe, it, expect } from "vitest";
 import {
-  validateAgentList,
+  validateOrganicTree,
   validateCapacity,
   DEFAULT_LIMITS,
-  type AgentMindMapList,
+  type OrganicTree,
 } from "./index";
 import { validateOmmDocument } from "../document/validation";
 
 // ─── Fixture loaders ──────────────────────────────────────────────────────
 
-function loadAgentListFixture(name: string): unknown {
+function loadOrganicTreeFixture(name: string): unknown {
   const fixturePath = join(
     __dirname,
     "..",
@@ -53,24 +53,24 @@ function loadOmmFixture(name: string): unknown {
 // ─── 2.1: Stress fixtures — capacity boundary behaviour ───────────────────
 
 describe("fixture-coverage-gaps — stress fixtures", () => {
-  it("stress-extreme-siblings.json passes validateAgentList (45 nodes at maxNodes boundary)", () => {
+  it("stress-extreme-siblings.json passes validateOrganicTree (45 nodes at maxNodes boundary)", () => {
     // 5 main branches × 8 sub-branches + center = 1 + 5 + 40 = 46 — but
     // the last branch has 7 children to stay within maxNodes 45.
     // This exercises the dense sibling boundary.
-    const data = loadAgentListFixture("stress-extreme-siblings");
-    const result = validateAgentList(data);
+    const data = loadOrganicTreeFixture("stress-extreme-siblings");
+    const result = validateOrganicTree(data);
     expect(result.valid).toBe(true);
   });
 
-  it("stress-unbalanced-tree.json passes validateAgentList", () => {
-    const data = loadAgentListFixture("stress-unbalanced-tree");
-    const result = validateAgentList(data);
+  it("stress-unbalanced-tree.json passes validateOrganicTree", () => {
+    const data = loadOrganicTreeFixture("stress-unbalanced-tree");
+    const result = validateOrganicTree(data);
     expect(result.valid).toBe(true);
   });
 
   it("stress fixtures are within DEFAULT_LIMITS capacity", () => {
     for (const name of ["stress-extreme-siblings", "stress-unbalanced-tree"]) {
-      const data = loadAgentListFixture(name) as AgentMindMapList;
+      const data = loadOrganicTreeFixture(name) as OrganicTree;
       const errors = validateCapacity(data, DEFAULT_LIMITS);
       expect(errors).toHaveLength(0);
     }
@@ -81,8 +81,8 @@ describe("fixture-coverage-gaps — stress fixtures", () => {
 
 describe("fixture-coverage-gaps — unsafe SVG URL protocols", () => {
   it("poison-xss-protocol.json passes structural validation but exposes unsafe URL for downstream rejection", () => {
-    const data = loadAgentListFixture("poison-xss-protocol");
-    const result = validateAgentList(data);
+    const data = loadOrganicTreeFixture("poison-xss-protocol");
+    const result = validateOrganicTree(data);
     // Structural validation passes (svgUrl is a valid string field),
     // but the unsafe javascript: URL is preserved in data for the CLI
     // allowlist boundary to reject before renderer handoff.
@@ -92,7 +92,7 @@ describe("fixture-coverage-gaps — unsafe SVG URL protocols", () => {
     // will reject it. This is the core-level contract: the URL is not
     // normalized or stripped during structural validation, but its
     // protocol is clearly non-HTTPS so downstream guards catch it.
-    const url = new URL(result.data!.center.svgUrl);
+    const url = new URL(result.data!.center.svgUrl!);
     expect(url.protocol).toBe("javascript:");
   });
 });
@@ -101,8 +101,8 @@ describe("fixture-coverage-gaps — unsafe SVG URL protocols", () => {
 
 describe("fixture-coverage-gaps — unreachable SVG URL fallback", () => {
   it("valid-unreachable-svg-url.json is a valid OrganicTree", () => {
-    const data = loadAgentListFixture("valid-unreachable-svg-url");
-    const result = validateAgentList(data);
+    const data = loadOrganicTreeFixture("valid-unreachable-svg-url");
+    const result = validateOrganicTree(data);
     expect(result.valid).toBe(true);
   });
 });
@@ -111,8 +111,8 @@ describe("fixture-coverage-gaps — unreachable SVG URL fallback", () => {
 
 describe("fixture-coverage-gaps — text injection safety", () => {
   it("poison-text-injection.json fails validation (concepts exceed unit-width)", () => {
-    const data = loadAgentListFixture("poison-text-injection");
-    const result = validateAgentList(data);
+    const data = loadOrganicTreeFixture("poison-text-injection");
+    const result = validateOrganicTree(data);
     // Concepts like "<script>alert(1)</script>" have unit-width > 25
     // and are rejected by quality validation.  The fixture is preserved
     // as-is for the renderer smoke tests to verify safe output.
@@ -131,8 +131,8 @@ describe("fixture-coverage-gaps — text injection safety", () => {
 
 describe("fixture-coverage-gaps — oversized concept rejection", () => {
   it("poison-oversized-whitespace.json fails quality validation", () => {
-    const data = loadAgentListFixture("poison-oversized-whitespace");
-    const result = validateAgentList(data);
+    const data = loadOrganicTreeFixture("poison-oversized-whitespace");
+    const result = validateOrganicTree(data);
     expect(result.valid).toBe(false);
     expect(result.errors.length).toBeGreaterThan(0);
     expect(

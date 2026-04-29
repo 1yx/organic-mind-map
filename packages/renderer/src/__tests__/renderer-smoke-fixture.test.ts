@@ -32,7 +32,7 @@ function createMockMeasure(): TextMeasurementAdapter {
   };
 }
 
-function loadAgentListFixture(name: string): unknown {
+function loadOrganicTreeFixture(name: string): unknown {
   const fixturePath = join(
     __dirname,
     "..",
@@ -76,7 +76,7 @@ function wrapAsPreviewPayload(
 
 describe("renderer-smoke-fixture — deeper hierarchy", () => {
   it("valid-deeper-hierarchy.json renders to non-empty SVG containing <svg>", () => {
-    const fixtureData = loadAgentListFixture("valid-deeper-hierarchy");
+    const fixtureData = loadOrganicTreeFixture("valid-deeper-hierarchy");
     const payload = wrapAsPreviewPayload(fixtureData, "a3-landscape");
     const result = renderFromPreview(payload, {
       measure: createMockMeasure(),
@@ -109,7 +109,7 @@ describe("renderer-smoke-fixture — OmmDocument rendering", () => {
 
 describe("renderer-smoke-fixture — paper viewBox", () => {
   it("a3-landscape payload produces viewBox 0 0 4200 2970", () => {
-    const fixtureData = loadAgentListFixture("valid-chinese");
+    const fixtureData = loadOrganicTreeFixture("valid-chinese");
     const payload = wrapAsPreviewPayload(fixtureData, "a3-landscape");
     const result = renderFromPreview(payload, {
       measure: createMockMeasure(),
@@ -119,7 +119,7 @@ describe("renderer-smoke-fixture — paper viewBox", () => {
   });
 
   it("a4-landscape payload produces viewBox 0 0 2970 2100", () => {
-    const fixtureData = loadAgentListFixture("valid-chinese");
+    const fixtureData = loadOrganicTreeFixture("valid-chinese");
     const payload = wrapAsPreviewPayload(fixtureData, "a4-landscape");
     const result = renderFromPreview(payload, {
       measure: createMockMeasure(),
@@ -133,7 +133,7 @@ describe("renderer-smoke-fixture — paper viewBox", () => {
 
 describe("renderer-smoke-fixture — structural elements", () => {
   it("SVG contains center visual marker, branches, and textPath elements", () => {
-    const fixtureData = loadAgentListFixture("valid-center-visual-hint");
+    const fixtureData = loadOrganicTreeFixture("valid-center-visual-hint");
     const payload = wrapAsPreviewPayload(fixtureData, "a4-landscape");
     const result = renderFromPreview(payload, {
       measure: createMockMeasure(),
@@ -156,7 +156,7 @@ describe("renderer-smoke-fixture — structural elements", () => {
 
 describe("renderer-smoke-fixture — unreachable SVG URL fallback", () => {
   it("valid-unreachable-svg-url.json renders without crash, usedFallback is true", () => {
-    const fixtureData = loadAgentListFixture("valid-unreachable-svg-url");
+    const fixtureData = loadOrganicTreeFixture("valid-unreachable-svg-url");
     const payload = wrapAsPreviewPayload(fixtureData, "a4-landscape");
     const result = renderFromPreview(payload, {
       measure: createMockMeasure(),

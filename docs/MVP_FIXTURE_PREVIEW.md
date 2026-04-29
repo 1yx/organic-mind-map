@@ -30,10 +30,10 @@ in the browser.
 
 ## Fixture Categories
 
-### `fixtures/organic-tree/` — OrganicTree (AgentMindMapList) JSON
+### `fixtures/organic-tree/` — OrganicTree JSON
 
 These represent the output of an **Agent CLI + skill** workflow. They follow the
-`AgentMindMapList` contract (version 1) and are the primary input to the CLI.
+`OrganicTree` contract (version 1) and are the primary input to the CLI.
 
 **Valid fixtures:**
 

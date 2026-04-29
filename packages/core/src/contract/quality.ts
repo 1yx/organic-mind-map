@@ -6,17 +6,17 @@
  * - Within unit-width threshold (max 25)
  */
 
-import type { AgentMindMapList, ValidationError } from "./types";
+import type { OrganicTree, ValidationError } from "./types";
 import { conceptUnitWidth } from "./unit-width";
 import { isSentenceLike } from "./sentence-detect";
 
 /**
- * Validate concept quality across the entire agent list.
+ * Validate concept quality across the entire OrganicTree.
  * Checks every concept for sentence-like patterns and unit-width.
  * Returns a list of quality errors. Empty list = all concepts valid.
  */
 export function validateQuality(
-  input: AgentMindMapList,
+  input: OrganicTree,
   maxUnitWidth: number = 25,
 ): ValidationError[] {
   const errors: ValidationError[] = [];
@@ -34,15 +34,17 @@ export function validateQuality(
     );
 
     if (branch.children) {
-      errors.push(...checkSubBranches(branch.children, path, maxUnitWidth));
+      errors.push(
+        ...checkOrganicSubBranches(branch.children, path, maxUnitWidth),
+      );
     }
   }
 
   return errors;
 }
 
-function checkSubBranches(
-  children: AgentMindMapList["branches"][number]["children"],
+function checkOrganicSubBranches(
+  children: OrganicTree["branches"][number]["children"],
   parentPath: string,
   maxUnitWidth: number,
 ): ValidationError[] {

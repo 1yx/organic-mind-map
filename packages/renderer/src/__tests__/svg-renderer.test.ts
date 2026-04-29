@@ -11,7 +11,7 @@ import {
   BUILTIN_CENTER_TEMPLATES,
 } from "../center-visual";
 import { computeLayout } from "../layout";
-import type { AgentMindMapList } from "@omm/core";
+import type { OrganicTree } from "@omm/core";
 import type {
   TextMeasurementAdapter,
   TextMetrics,
@@ -21,7 +21,7 @@ import type {
 
 // ─── Fixture ───────────────────────────────────────────────────────────────
 
-const SAMPLE_TREE: AgentMindMapList = {
+const SAMPLE_TREE: OrganicTree = {
   version: 1,
   title: "SVG Test Map",
   center: { concept: "Center Topic" },

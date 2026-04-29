@@ -32,7 +32,7 @@ The system SHALL require the `OrganicTree` to include a center concept and SHALL
 - **THEN** validation preserves the URL for downstream preview payload generation
 
 ### Requirement: Hierarchical branch structure
-The system SHALL represent map content as ordered hierarchical branches using explicit types named `OrganicMainBranch`, `OrganicSubBranch`, and `OrganicLeafNode`.
+The system SHALL represent map content as ordered hierarchical branches using explicit types named `OrganicOrganicMainBranch`, `OrganicOrganicSubBranch`, and `OrganicOrganicLeafNode`.
 
 #### Scenario: Ordered siblings
 - **WHEN** an input JSON provides multiple items in `branches` or `children`
@@ -43,11 +43,11 @@ The system SHALL represent map content as ordered hierarchical branches using ex
 - **THEN** validation fails with an error pointing to that branch's `children` path
 
 #### Scenario: Nesting exceeds 3 levels
-- **WHEN** an input JSON contains nesting deeper than `OrganicMainBranch -> OrganicSubBranch -> OrganicLeafNode`
+- **WHEN** an input JSON contains nesting deeper than `OrganicOrganicMainBranch -> OrganicOrganicSubBranch -> OrganicOrganicLeafNode`
 - **THEN** validation fails with a structural error indicating the maximum depth is 3
 
-#### Scenario: OrganicLeafNode keeps optional children field
-- **WHEN** TypeScript code references `OrganicLeafNode`
+#### Scenario: OrganicOrganicLeafNode keeps optional children field
+- **WHEN** TypeScript code references `OrganicOrganicLeafNode`
 - **THEN** the type includes an optional `children` field for structural consistency, while validation still rejects input that exceeds the MVP depth limit
 
 ### Requirement: Optional semantic hints

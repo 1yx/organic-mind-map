@@ -5,7 +5,7 @@
  * with deterministic built-in fallback when the external visual is unavailable.
  */
 
-import type { AgentCenter } from "@omm/core";
+import type { OrganicTreeCenter } from "@omm/core";
 import { missingAssetFallbackDiagnostic } from "./diagnostics.js";
 import { isSvgSafe } from "./svg-loader.js";
 import type { PreviewPayload, RenderDiagnostic } from "./types.js";
@@ -168,7 +168,7 @@ export type CenterVisualResult = {
  * For URL loading, use resolveCenterVisualAsync().
  */
 export function resolveCenterVisualSync(
-  center: AgentCenter,
+  center: OrganicTreeCenter,
   inlineSvg: string | undefined,
   contentHash: number,
 ): CenterVisualResult {
@@ -229,7 +229,7 @@ async function tryLoadSvgUrl(
  * Async version that attempts URL loading before falling back.
  */
 export async function resolveCenterVisualAsync(
-  center: AgentCenter,
+  center: OrganicTreeCenter,
   payload: PreviewPayload,
   options: {
     contentHash: number;

@@ -5,7 +5,7 @@
  * Environment-neutral — no DOM, Canvas, or network dependencies.
  */
 
-import type { AgentMindMapList, MainBranch } from "@omm/core";
+import type { OrganicTree, OrganicMainBranch } from "@omm/core";
 import type {
   BranchColorPalette,
   SeededGeometry,
@@ -66,11 +66,11 @@ function stableSort(obj: unknown): unknown {
 }
 
 /**
- * Deterministic serialization of an AgentMindMapList tree.
+ * Deterministic serialization of an OrganicTree tree.
  * Only includes fields that affect visual output (title, center concept, branches).
  * Keys are sorted, arrays preserve order.
  */
-export function stableSerializeTree(tree: AgentMindMapList): string {
+export function stableSerializeTree(tree: OrganicTree): string {
   const minimal: Record<string, unknown> = {
     title: tree.title,
     center: {
@@ -131,7 +131,7 @@ function pushLeafEntries(
  * Generate stable node IDs "n-index" for a flat traversal of the tree.
  * Returns an ordered array of entries with id, concept, depth.
  */
-export function generateNodeIds(tree: AgentMindMapList): Array<{
+export function generateNodeIds(tree: OrganicTree): Array<{
   id: string;
   concept: string;
   depth: number;
@@ -199,8 +199,8 @@ export function generateSeededGeometry(rng: () => number): SeededGeometry {
 /**
  * Push leaf nodes for a sub-branch onto the parent and flat result list.
  */
-function pushLeafNodes(
-  branches: MainBranch[],
+function pushOrganicLeafNodes(
+  branches: OrganicMainBranch[],
   context: {
     branchIdx: number;
     subIdx: number;
@@ -232,8 +232,8 @@ function pushLeafNodes(
 /**
  * Build sub-branch and leaf LayoutNodes for a single main branch.
  */
-function buildSubBranches(
-  mainBranches: MainBranch[],
+function buildOrganicSubBranches(
+  mainBranches: OrganicMainBranch[],
   context: {
     branchIdx: number;
     mainNode: LayoutNode;
@@ -258,7 +258,7 @@ function buildSubBranches(
     };
     mainNode.children.push(subNode);
     result.push(subNode);
-    pushLeafNodes(mainBranches, {
+    pushOrganicLeafNodes(mainBranches, {
       branchIdx,
       subIdx: j,
       subNode,
@@ -270,13 +270,10 @@ function buildSubBranches(
 }
 
 /**
- * Build a complete LayoutNode tree from an AgentMindMapList,
+ * Build a complete LayoutNode tree from an OrganicTree,
  * assigning IDs, colors, and seeded geometry deterministically.
  */
-export function buildLayoutTree(
-  tree: AgentMindMapList,
-  seed: number,
-): LayoutNode[] {
+export function buildLayoutTree(tree: OrganicTree, seed: number): LayoutNode[] {
   const rng = createSeededPRNG(seed);
   const mainColors = assignMainBranchColors(tree.branches.length, seed);
   const mainBranches = tree.branches;
@@ -293,7 +290,7 @@ export function buildLayoutTree(
       children: [],
     };
     result.push(mainNode);
-    buildSubBranches(mainBranches, {
+    buildOrganicSubBranches(mainBranches, {
       branchIdx: i,
       mainNode,
       mainColor: mainColors[i]!,
@@ -307,7 +304,10 @@ export function buildLayoutTree(
 
 // ─── Helper: Compute flat node index ───────────────────────────────────────
 
-function getNodeIndex(branches: MainBranch[], branchIdx: number): number {
+function getNodeIndex(
+  branches: OrganicMainBranch[],
+  branchIdx: number,
+): number {
   let idx = 0;
   for (let i = 0; i < branchIdx; i++) {
     idx++; // main branch itself
@@ -323,7 +323,7 @@ function getNodeIndex(branches: MainBranch[], branchIdx: number): number {
 }
 
 function getNodeIndexWithSub(
-  branches: MainBranch[],
+  branches: OrganicMainBranch[],
   branchIdx: number,
   subIdx: number,
 ): number {
@@ -341,7 +341,7 @@ function getNodeIndexWithSub(
 }
 
 function getNodeIndexWithLeaf(
-  branches: MainBranch[],
+  branches: OrganicMainBranch[],
   context: { branchIdx: number; subIdx: number; leafIdx: number },
 ): number {
   const { branchIdx, subIdx, leafIdx } = context;

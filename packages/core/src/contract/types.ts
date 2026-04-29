@@ -1,8 +1,8 @@
 /**
- * Agent list contract types for organic mind map.
+ * OrganicTree contract types for organic mind map.
  *
- * This defines the structured input format that an agent skill produces
- * and the CLI consumes. The contract is explicitly limited to 3 levels
+ * This defines the structured input format that the CLI consumes
+ * and the renderer uses. The contract is explicitly limited to 3 levels
  * to ensure stable LLM structured output.
  *
  * JSON format, version 1. No recursive types.
@@ -10,46 +10,48 @@
 
 // --- Contract Types ---
 
-export type AgentMindMapList = {
+export type OrganicTree = {
   version: 1;
   title: string;
   paper?: "a3-landscape" | "a4-landscape";
-  center: AgentCenter;
-  branches: MainBranch[];
+  center: OrganicTreeCenter;
+  branches: OrganicMainBranch[];
   meta?: {
     sourceTitle?: string;
     sourceSummary?: string;
   };
 };
 
-export type AgentCenter = {
+export type OrganicTreeCenter = {
   concept: string;
   visualHint?: string;
   /** Optional controlled SVG URL from an allowlisted HTTPS source. */
   svgUrl?: string;
 };
 
-export type MainBranch = {
+export type OrganicMainBranch = {
   concept: string;
-  children?: SubBranch[];
+  children?: OrganicSubBranch[];
   visualHint?: string;
   colorHint?: string;
 };
 
-export type SubBranch = {
+export type OrganicSubBranch = {
   concept: string;
-  children?: LeafNode[];
+  children?: OrganicLeafNode[];
   visualHint?: string;
 };
 
-export type LeafNode = {
+export type OrganicLeafNode = {
   concept: string;
   visualHint?: string;
+  /** Optional children for structural forward-compatibility. MVP validation still enforces max depth 3. */
+  children?: OrganicLeafNode[];
 };
 
 // --- Capacity Limits ---
 
-export type AgentListLimits = {
+export type OrganicTreeLimits = {
   maxNodes: number;
   maxDepth: 3;
   maxSiblingsPerNode: number;
@@ -57,7 +59,7 @@ export type AgentListLimits = {
   maxMainBranches: number;
 };
 
-export const DEFAULT_LIMITS: AgentListLimits = {
+export const DEFAULT_LIMITS: OrganicTreeLimits = {
   maxNodes: 45,
   maxDepth: 3,
   maxSiblingsPerNode: 8,
@@ -75,7 +77,7 @@ export type ValidationError = {
 export type ValidationResult = {
   valid: boolean;
   errors: ValidationError[];
-  data: AgentMindMapList | null;
+  data: OrganicTree | null;
 };
 
 export type CapacityError = {

@@ -35,7 +35,7 @@ function createMockMeasure(): TextMeasurementAdapter {
   };
 }
 
-function loadAgentListFixture(name: string): unknown {
+function loadOrganicTreeFixture(name: string): unknown {
   const fixturePath = join(
     __dirname,
     "..",
@@ -65,7 +65,7 @@ function wrapAsPreviewPayload(
 
 describe("coverage-gaps-smoke — stress-extreme-siblings", () => {
   it("renders to non-empty SVG", () => {
-    const data = loadAgentListFixture("stress-extreme-siblings");
+    const data = loadOrganicTreeFixture("stress-extreme-siblings");
     const payload = wrapAsPreviewPayload(data, "a3-landscape");
     const result = renderFromPreview(payload, {
       measure: createMockMeasure(),
@@ -79,7 +79,7 @@ describe("coverage-gaps-smoke — stress-extreme-siblings", () => {
 
 describe("coverage-gaps-smoke — stress-unbalanced-tree", () => {
   it("renders to non-empty SVG", () => {
-    const data = loadAgentListFixture("stress-unbalanced-tree");
+    const data = loadOrganicTreeFixture("stress-unbalanced-tree");
     const payload = wrapAsPreviewPayload(data, "a3-landscape");
     const result = renderFromPreview(payload, {
       measure: createMockMeasure(),
@@ -93,7 +93,7 @@ describe("coverage-gaps-smoke — stress-unbalanced-tree", () => {
 
 describe("coverage-gaps-smoke — paper bounds", () => {
   it("stress-extreme-siblings uses a3-landscape viewBox 0 0 4200 2970", () => {
-    const data = loadAgentListFixture("stress-extreme-siblings");
+    const data = loadOrganicTreeFixture("stress-extreme-siblings");
     const payload = wrapAsPreviewPayload(data, "a3-landscape");
     const result = renderFromPreview(payload, {
       measure: createMockMeasure(),
@@ -107,7 +107,7 @@ describe("coverage-gaps-smoke — paper bounds", () => {
 describe("coverage-gaps-smoke — structural elements", () => {
   it("stress fixtures include branch path elements and text content", () => {
     for (const name of ["stress-extreme-siblings", "stress-unbalanced-tree"]) {
-      const data = loadAgentListFixture(name);
+      const data = loadOrganicTreeFixture(name);
       const payload = wrapAsPreviewPayload(data, "a3-landscape");
       const result = renderFromPreview(payload, {
         measure: createMockMeasure(),
@@ -130,7 +130,7 @@ describe("coverage-gaps-smoke — testing philosophy", () => {
 
 describe("coverage-gaps-smoke — poison XSS protocol", () => {
   it("poison-xss-protocol.json renders without crash (URL is not used in renderer)", () => {
-    const data = loadAgentListFixture("poison-xss-protocol");
+    const data = loadOrganicTreeFixture("poison-xss-protocol");
     const payload = wrapAsPreviewPayload(data, "a4-landscape");
     const result = renderFromPreview(payload, {
       measure: createMockMeasure(),
@@ -144,7 +144,7 @@ describe("coverage-gaps-smoke — poison XSS protocol", () => {
 
 describe("coverage-gaps-smoke — poison text injection", () => {
   it("poison-text-injection.json renders without crash — text is safely truncated", () => {
-    const data = loadAgentListFixture("poison-text-injection");
+    const data = loadOrganicTreeFixture("poison-text-injection");
     const payload = wrapAsPreviewPayload(data, "a4-landscape");
     const result = renderFromPreview(payload, {
       measure: createMockMeasure(),

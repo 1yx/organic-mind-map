@@ -2,14 +2,14 @@
  * CLI types — PreviewPayload, options, and exit codes.
  */
 
-import type { AgentMindMapList } from "@omm/core";
+import type { OrganicTree } from "@omm/core";
 
 /** CLI-to-browser handoff type. The CLI builds this; the browser consumes it. */
 export type PreviewPayload = {
   version: 1;
   source: "organic-tree";
   paper: "a3-landscape" | "a4-landscape";
-  tree: AgentMindMapList;
+  tree: OrganicTree;
   centerVisual?: {
     inlineSvg?: string;
     svgUrl?: string;

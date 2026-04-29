@@ -1,5 +1,5 @@
 /**
- * Structural validation for AgentMindMapList.
+ * Structural validation for OrganicTree.
  *
  * Validates required fields, correct types, depth limits, and
  * preserves optional hints without semantic rewriting.
@@ -8,7 +8,7 @@
 import type { ValidationError } from "./types";
 
 /**
- * Validate the structure of an agent list input.
+ * Validate the structure of an OrganicTree input.
  * Returns a list of validation errors. Empty list = valid.
  */
 export function validateStructural(input: unknown): ValidationError[] {
@@ -106,13 +106,16 @@ function validateBranches(branches: unknown): ValidationError[] {
   }
 
   for (let i = 0; i < branches.length; i++) {
-    errors.push(...validateMainBranch(branches[i], `branches[${i}]`));
+    errors.push(...validateOrganicMainBranch(branches[i], `branches[${i}]`));
   }
 
   return errors;
 }
 
-function validateMainBranch(branch: unknown, path: string): ValidationError[] {
+function validateOrganicMainBranch(
+  branch: unknown,
+  path: string,
+): ValidationError[] {
   const errors: ValidationError[] = [];
 
   if (!branch || typeof branch !== "object") {
@@ -130,7 +133,7 @@ function validateMainBranch(branch: unknown, path: string): ValidationError[] {
   }
 
   validateHints(b, path, errors);
-  errors.push(...validateChildren(b.children, path, validateSubBranch));
+  errors.push(...validateChildren(b.children, path, validateOrganicSubBranch));
 
   return errors;
 }
@@ -170,11 +173,14 @@ function validateChildren(
   return errors;
 }
 
-function validateSubBranch(branch: unknown, path: string): ValidationError[] {
+function validateOrganicSubBranch(
+  branch: unknown,
+  path: string,
+): ValidationError[] {
   const errors: ValidationError[] = [];
 
   if (!branch || typeof branch !== "object") {
-    errors.push({ path, message: "SubBranch must be an object" });
+    errors.push({ path, message: "OrganicSubBranch must be an object" });
     return errors;
   }
 
@@ -188,16 +194,19 @@ function validateSubBranch(branch: unknown, path: string): ValidationError[] {
   }
 
   validateHints(b, path, errors);
-  errors.push(...validateChildren(b.children, path, validateLeafNode));
+  errors.push(...validateChildren(b.children, path, validateOrganicLeafNode));
 
   return errors;
 }
 
-function validateLeafNode(node: unknown, path: string): ValidationError[] {
+function validateOrganicLeafNode(
+  node: unknown,
+  path: string,
+): ValidationError[] {
   const errors: ValidationError[] = [];
 
   if (!node || typeof node !== "object") {
-    errors.push({ path, message: "LeafNode must be an object" });
+    errors.push({ path, message: "OrganicLeafNode must be an object" });
     return errors;
   }
 
@@ -221,7 +230,7 @@ function validateLeafNode(node: unknown, path: string): ValidationError[] {
     errors.push({
       path: `${path}.children`,
       message:
-        "Nesting exceeds maximum depth of 3 levels (MainBranch -> SubBranch -> LeafNode)",
+        "Nesting exceeds maximum depth of 3 levels (OrganicMainBranch -> OrganicSubBranch -> OrganicLeafNode)",
     });
   }
 

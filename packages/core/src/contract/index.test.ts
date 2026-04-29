@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest";
 import {
-  validateAgentList,
+  validateOrganicTree,
   traverseBranches,
   conceptUnitWidth,
   isSentenceLike,
   DEFAULT_LIMITS,
   validateCapacity,
   formatCapacityFeedback,
-  type AgentListLimits,
-  type AgentMindMapList,
+  type OrganicTreeLimits,
+  type OrganicTree,
 } from "./index";
 
 // Inline fixtures for test isolation (no fs dependency)
@@ -156,28 +156,28 @@ const fixtures: Record<string, unknown> = {
   },
 };
 
-describe("validateAgentList — valid inputs", () => {
+describe("validateOrganicTree — valid inputs", () => {
   it("accepts valid Chinese concept-unit fixture", () => {
-    const result = validateAgentList(fixtures["valid-chinese.json"]);
+    const result = validateOrganicTree(fixtures["valid-chinese.json"]);
     expect(result.valid).toBe(true);
     expect(result.errors).toHaveLength(0);
     expect(result.data).not.toBeNull();
   });
 
   it("accepts valid English concept-phrase fixture", () => {
-    const result = validateAgentList(fixtures["valid-english.json"]);
+    const result = validateOrganicTree(fixtures["valid-english.json"]);
     expect(result.valid).toBe(true);
     expect(result.errors).toHaveLength(0);
   });
 
   it("accepts valid mixed CJK+ASCII concept fixture", () => {
-    const result = validateAgentList(fixtures["valid-mixed-cjk-ascii.json"]);
+    const result = validateOrganicTree(fixtures["valid-mixed-cjk-ascii.json"]);
     expect(result.valid).toBe(true);
     expect(result.errors).toHaveLength(0);
   });
 
   it("accepts minimal valid input (no optional fields)", () => {
-    const result = validateAgentList({
+    const result = validateOrganicTree({
       version: 1,
       title: "Minimal",
       center: { concept: "根" },
@@ -187,22 +187,22 @@ describe("validateAgentList — valid inputs", () => {
   });
 });
 
-describe("validateAgentList — version & structure", () => {
+describe("validateOrganicTree — version & structure", () => {
   it("rejects unsupported contract version with version path error", () => {
-    const result = validateAgentList(fixtures["invalid-wrong-version.json"]);
+    const result = validateOrganicTree(fixtures["invalid-wrong-version.json"]);
     expect(result.valid).toBe(false);
     expect(result.errors[0].path).toBe("version");
     expect(result.errors[0].message).toContain("Unsupported contract version");
   });
 
   it("rejects missing center concept with center.concept path", () => {
-    const result = validateAgentList(fixtures["invalid-missing-center.json"]);
+    const result = validateOrganicTree(fixtures["invalid-missing-center.json"]);
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.path === "center.concept")).toBe(true);
   });
 
   it("rejects malformed children with correct branch path", () => {
-    const result = validateAgentList(
+    const result = validateOrganicTree(
       fixtures["invalid-malformed-children.json"],
     );
     expect(result.valid).toBe(false);
@@ -210,9 +210,9 @@ describe("validateAgentList — version & structure", () => {
   });
 });
 
-describe("validateAgentList — quality", () => {
+describe("validateOrganicTree — quality", () => {
   it("rejects Chinese sentence-like concept as Error", () => {
-    const result = validateAgentList(fixtures["invalid-sentence-like.json"]);
+    const result = validateOrganicTree(fixtures["invalid-sentence-like.json"]);
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.message.includes("sentence"))).toBe(
       true,
@@ -221,7 +221,7 @@ describe("validateAgentList — quality", () => {
   });
 
   it("rejects concept exceeding unit-width 25", () => {
-    const result = validateAgentList(
+    const result = validateOrganicTree(
       fixtures["invalid-oversized-concept.json"],
     );
     expect(result.valid).toBe(false);
@@ -232,9 +232,9 @@ describe("validateAgentList — quality", () => {
   });
 });
 
-describe("validateAgentList — depth & capacity", () => {
+describe("validateOrganicTree — depth & capacity", () => {
   it("rejects nesting deeper than 3 levels", () => {
-    const result = validateAgentList(fixtures["invalid-deep-nesting.json"]);
+    const result = validateOrganicTree(fixtures["invalid-deep-nesting.json"]);
     expect(result.valid).toBe(false);
     expect(
       result.errors.some((e) => e.message.includes("maximum depth of 3")),
@@ -242,8 +242,8 @@ describe("validateAgentList — depth & capacity", () => {
   });
 
   it("rejects oversized input with capacity feedback", () => {
-    const strictLimits: AgentListLimits = { ...DEFAULT_LIMITS, maxNodes: 10 };
-    const result = validateAgentList(
+    const strictLimits: OrganicTreeLimits = { ...DEFAULT_LIMITS, maxNodes: 10 };
+    const result = validateOrganicTree(
       fixtures["invalid-oversized-capacity.json"],
       strictLimits,
     );
@@ -252,9 +252,7 @@ describe("validateAgentList — depth & capacity", () => {
   });
 
   it("capacity feedback message is retry-friendly", () => {
-    const data = fixtures[
-      "invalid-oversized-capacity.json"
-    ] as AgentMindMapList;
+    const data = fixtures["invalid-oversized-capacity.json"] as OrganicTree;
     const capErrors = validateCapacity(data, DEFAULT_LIMITS);
     const msg = formatCapacityFeedback(capErrors);
     expect(msg).toContain("exceeds");
@@ -262,7 +260,7 @@ describe("validateAgentList — depth & capacity", () => {
   });
 });
 
-describe("validateAgentList — hints (visualHint/colorHint)", () => {
+describe("validateOrganicTree — hints (visualHint/colorHint)", () => {
   it("preserves optional visualHint and colorHint in validated output", () => {
     const input = {
       version: 1 as const,
@@ -277,7 +275,7 @@ describe("validateAgentList — hints (visualHint/colorHint)", () => {
         },
       ],
     };
-    const result = validateAgentList(input);
+    const result = validateOrganicTree(input);
     expect(result.valid).toBe(true);
     expect(result.data!.center.visualHint).toBe("太阳");
     expect(result.data!.branches[0].visualHint).toBe("箭头");
@@ -298,7 +296,7 @@ describe("validateAgentList — hints (visualHint/colorHint)", () => {
         },
       ],
     };
-    const result = validateAgentList(input);
+    const result = validateOrganicTree(input);
     expect(result.valid).toBe(false);
     const paths = result.errors.map((e) => e.path);
     expect(paths).toContain("center.visualHint");
@@ -307,7 +305,7 @@ describe("validateAgentList — hints (visualHint/colorHint)", () => {
   });
 });
 
-describe("validateAgentList — svgUrl", () => {
+describe("validateOrganicTree — svgUrl", () => {
   it("preserves optional svgUrl in validated output", () => {
     const input = {
       version: 1 as const,
@@ -318,7 +316,7 @@ describe("validateAgentList — svgUrl", () => {
       },
       branches: [{ concept: "ML MODELS" }],
     };
-    const result = validateAgentList(input);
+    const result = validateOrganicTree(input);
     expect(result.valid).toBe(true);
     expect(result.data!.center.svgUrl).toBe(
       "https://api.iconify.design/fluent-emoji-flat/brain.svg",
@@ -332,7 +330,7 @@ describe("validateAgentList — svgUrl", () => {
       center: { concept: "中心" },
       branches: [{ concept: "B1" }],
     };
-    const result = validateAgentList(input);
+    const result = validateOrganicTree(input);
     expect(result.valid).toBe(true);
     expect(result.data!.center.svgUrl).toBeUndefined();
   });
@@ -344,7 +342,7 @@ describe("validateAgentList — svgUrl", () => {
       center: { concept: "中心", svgUrl: 12345 },
       branches: [{ concept: "B1" }],
     };
-    const result = validateAgentList(input);
+    const result = validateOrganicTree(input);
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.path === "center.svgUrl")).toBe(true);
   });
@@ -386,7 +384,7 @@ describe("isSentenceLike", () => {
 
 describe("traverseBranches", () => {
   it("visits all concepts with correct paths and depths", () => {
-    const input: AgentMindMapList = {
+    const input: OrganicTree = {
       version: 1,
       title: "Traversal Test",
       center: { concept: "ROOT" },

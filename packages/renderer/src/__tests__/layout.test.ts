@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { computeLayout, createDefaultMeasurementAdapter } from "../layout";
 import { computePaperLayout, boxesOverlap, findOverlaps } from "../diagnostics";
-import type { AgentMindMapList } from "@omm/core";
+import type { OrganicTree } from "@omm/core";
 import type {
   TextMeasurementAdapter,
   TextMetrics,
@@ -14,14 +14,14 @@ import type {
 
 // ─── Fixture ───────────────────────────────────────────────────────────────
 
-const SIMPLE_TREE: AgentMindMapList = {
+const SIMPLE_TREE: OrganicTree = {
   version: 1,
   title: "Simple Map",
   center: { concept: "Center" },
   branches: [{ concept: "Branch A" }, { concept: "Branch B" }],
 };
 
-const NESTED_TREE: AgentMindMapList = {
+const NESTED_TREE: OrganicTree = {
   version: 1,
   title: "Nested Map",
   center: { concept: "Center" },
@@ -46,7 +46,7 @@ const NESTED_TREE: AgentMindMapList = {
   ],
 };
 
-const LONG_TEXT_TREE: AgentMindMapList = {
+const LONG_TEXT_TREE: OrganicTree = {
   version: 1,
   title: "Long Text Map",
   center: { concept: "Center" },
@@ -75,7 +75,7 @@ function createMockMeasure(): TextMeasurementAdapter {
 // ─── Helper ─────────────────────────────────────────────────────────────────
 
 function layout(
-  tree: AgentMindMapList = SIMPLE_TREE,
+  tree: OrganicTree = SIMPLE_TREE,
   paper: "a3-landscape" | "a4-landscape" = "a3-landscape",
   svg = "<svg></svg>",
 ) {
@@ -88,7 +88,7 @@ function layout(
 }
 
 function layoutNoFallback(
-  tree: AgentMindMapList,
+  tree: OrganicTree,
   paper: "a3-landscape" | "a4-landscape",
   svg: string,
 ) {

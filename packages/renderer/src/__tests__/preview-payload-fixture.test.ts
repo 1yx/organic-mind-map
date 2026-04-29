@@ -30,7 +30,7 @@ function createMockMeasure(): TextMeasurementAdapter {
   };
 }
 
-function loadAgentListFixture(name: string): unknown {
+function loadOrganicTreeFixture(name: string): unknown {
   const fixturePath = join(
     __dirname,
     "..",
@@ -60,7 +60,7 @@ function wrapAsPreviewPayload(
 
 describe("preview-payload-fixture — basic rendering", () => {
   it("valid-chinese.json renders to non-empty SVG", () => {
-    const fixtureData = loadAgentListFixture("valid-chinese");
+    const fixtureData = loadOrganicTreeFixture("valid-chinese");
     const payload = wrapAsPreviewPayload(fixtureData);
     const result = renderFromPreview(payload, {
       measure: createMockMeasure(),
@@ -74,7 +74,7 @@ describe("preview-payload-fixture — basic rendering", () => {
 
 describe("preview-payload-fixture — paper selection", () => {
   it("a3-landscape and a4-landscape produce different viewBoxes", () => {
-    const fixtureData = loadAgentListFixture("valid-chinese");
+    const fixtureData = loadOrganicTreeFixture("valid-chinese");
 
     const payloadA3 = wrapAsPreviewPayload(fixtureData, "a3-landscape");
     const payloadA4 = wrapAsPreviewPayload(fixtureData, "a4-landscape");
@@ -96,7 +96,7 @@ describe("preview-payload-fixture — paper selection", () => {
 
 describe("preview-payload-fixture — center visual hint", () => {
   it("valid-center-visual-hint.json preserves center visual in SVG", () => {
-    const fixtureData = loadAgentListFixture("valid-center-visual-hint");
+    const fixtureData = loadOrganicTreeFixture("valid-center-visual-hint");
     const payload = wrapAsPreviewPayload(fixtureData);
     const result = renderFromPreview(payload, {
       measure: createMockMeasure(),
@@ -114,7 +114,7 @@ describe("preview-payload-fixture — center visual hint", () => {
 
 describe("preview-payload-fixture — unreachable SVG URL fallback", () => {
   it("valid-unreachable-svg-url.json renders via sync fallback", () => {
-    const fixtureData = loadAgentListFixture("valid-unreachable-svg-url");
+    const fixtureData = loadOrganicTreeFixture("valid-unreachable-svg-url");
     const payload = wrapAsPreviewPayload(fixtureData);
     const result = renderFromPreview(payload, {
       measure: createMockMeasure(),

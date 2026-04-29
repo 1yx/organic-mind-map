@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Agent list JSON contract
-The system SHALL define a stable JSON contract named `AgentMindMapList` for agent skill output consumed by the project CLI.
+The system SHALL define a stable JSON contract named `OrganicTree` for agent skill output consumed by the project CLI.
 
 #### Scenario: Valid minimal list
 - **WHEN** an input JSON contains `version: 1`, a non-empty `title`, a `center` object with a non-empty `concept`, and a non-empty `branches` array
@@ -27,7 +27,7 @@ The system SHALL require the agent list to include a center concept and SHALL al
 - **THEN** validation preserves the URL for downstream preview payload generation
 
 ### Requirement: Hierarchical branch structure
-The system SHALL represent map content as ordered hierarchical branches using explicit 3-level types: `MainBranch`, `SubBranch`, and `LeafNode`. No recursive types are used.
+The system SHALL represent map content as ordered hierarchical branches using explicit 3-level types: `OrganicMainBranch`, `OrganicSubBranch`, and `OrganicLeafNode`. No recursive types are used.
 
 #### Scenario: Ordered siblings
 - **WHEN** an input JSON provides multiple items in `branches` or `children`
@@ -38,7 +38,7 @@ The system SHALL represent map content as ordered hierarchical branches using ex
 - **THEN** validation fails with an error pointing to that branch's `children` path
 
 #### Scenario: Nesting exceeds 3 levels
-- **WHEN** an input JSON contains nesting deeper than MainBranch -> SubBranch -> LeafNode
+- **WHEN** an input JSON contains nesting deeper than OrganicMainBranch -> OrganicSubBranch -> OrganicLeafNode
 - **THEN** validation fails with a structural error indicating the maximum depth is 3
 
 ### Requirement: Concept unit validation

@@ -139,7 +139,7 @@ Do not create boxed keyword nodes in the strict organic map. Text belongs on bra
 
 Prefer focused tests that match the change:
 
-- Contract validation tests for agent list input.
+- Contract validation tests for OrganicTree input.
 - Capacity threshold tests for oversized input.
 - Schema validation for `.omm`.
 - Deterministic seed/id tests.
