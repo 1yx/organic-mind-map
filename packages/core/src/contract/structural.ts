@@ -38,16 +38,6 @@ export function validateStructural(input: unknown): ValidationError[] {
     });
   }
 
-  // paper (optional)
-  if (doc.paper !== undefined) {
-    if (doc.paper !== "a3-landscape" && doc.paper !== "a4-landscape") {
-      errors.push({
-        path: "paper",
-        message: 'paper must be "a3-landscape" or "a4-landscape" if specified',
-      });
-    }
-  }
-
   // center
   errors.push(...validateCenter(doc.center));
 

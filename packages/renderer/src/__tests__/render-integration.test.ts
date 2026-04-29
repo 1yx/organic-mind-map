@@ -3,85 +3,57 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { renderFromPreview, renderFromOmm, render } from "../render";
+import { render, renderFromOmm, renderFromTree } from "../render.js";
 import type {
-  PreviewPayload,
   TextMeasurementAdapter,
   TextMetrics,
   BranchGeometry,
-} from "../types";
-import type { OmmDocument } from "@omm/core";
-import { buildLayoutSnapshot } from "../diagnostics";
+} from "../types.js";
+import type { OrganicTree, OmmDocument } from "@omm/core";
+import { buildLayoutSnapshot } from "../diagnostics.js";
 
 // ─── Fixtures ───────────────────────────────────────────────────────────────
 
-const MINIMAL_PAYLOAD: PreviewPayload = {
+const MINIMAL_TREE: OrganicTree = {
   version: 1,
-  source: "organic-tree",
-  paper: "a3-landscape",
-  tree: {
-    version: 1,
-    title: "Minimal Map",
-    center: { concept: "Center" },
-    branches: [{ concept: "Only Branch" }],
-  },
+  title: "Minimal Map",
+  center: { concept: "Center" },
+  branches: [{ concept: "Only Branch" }],
 };
 
-const FULL_PAYLOAD: PreviewPayload = {
+const FULL_TREE: OrganicTree = {
   version: 1,
-  source: "organic-tree",
-  paper: "a3-landscape",
-  tree: {
-    version: 1,
-    title: "Full Map",
-    center: { concept: "Main Topic" },
-    branches: [
-      {
-        concept: "Strategy",
-        children: [
-          { concept: "Vision", children: [{ concept: "Long Term" }] },
-          { concept: "Goals" },
-        ],
-      },
-      {
-        concept: "Operations",
-        children: [
-          { concept: "Processes" },
-          {
-            concept: "Tools",
-            children: [{ concept: "Software" }, { concept: "Hardware" }],
-          },
-        ],
-      },
-      {
-        concept: "People",
-      },
-      {
-        concept: "Finance",
-        children: [{ concept: "Budget" }],
-      },
-    ],
-  },
-  centerVisual: {
-    inlineSvg:
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><circle cx="100" cy="100" r="90" fill="#F39C12"/><circle cx="100" cy="100" r="50" fill="#E74C3C"/><circle cx="100" cy="100" r="20" fill="#3498DB"/></svg>',
-    source: "ai-svg",
-  },
+  title: "Full Map",
+  center: { concept: "Main Topic" },
+  branches: [
+    {
+      concept: "Strategy",
+      children: [
+        { concept: "Vision", children: [{ concept: "Long Term" }] },
+        { concept: "Goals" },
+      ],
+    },
+    {
+      concept: "Operations",
+      children: [
+        { concept: "Processes" },
+        {
+          concept: "Tools",
+          children: [{ concept: "Software" }, { concept: "Hardware" }],
+        },
+      ],
+    },
+    {
+      concept: "People",
+    },
+    {
+      concept: "Finance",
+      children: [{ concept: "Budget" }],
+    },
+  ],
   meta: {
     sourceTitle: "Business Plan",
     sourceSummary: "A comprehensive business strategy mind map",
-  },
-};
-
-const A4_PAYLOAD: PreviewPayload = {
-  version: 1,
-  source: "organic-tree",
-  paper: "a4-landscape",
-  tree: {
-    version: 1,
-    title: "A4 Map",
-    center: { concept: "Topic" },
-    branches: [{ concept: "A" }, { concept: "B" }],
   },
 };
 
@@ -139,10 +111,10 @@ function createMockMeasure(): TextMeasurementAdapter {
 
 // ─── Integration Tests ─────────────────────────────────────────────────────
 
-describe("renderFromPreview - basic output", () => {
+describe("renderFromTree - basic output", () => {
   it("7.1: returns a valid RenderResult with SVG, viewBox, diagnostics, and layout", () => {
-    const result = renderFromPreview(MINIMAL_PAYLOAD, {
-      measure: createMockMeasure(),
+    const result = renderFromTree(MINIMAL_TREE, {
+      renderOptions: { measure: createMockMeasure() },
     });
 
     expect(result.svg).toBeTruthy();
@@ -152,8 +124,8 @@ describe("renderFromPreview - basic output", () => {
   });
 
   it("7.1: SVG is non-empty and well-formed", () => {
-    const result = renderFromPreview(MINIMAL_PAYLOAD, {
-      measure: createMockMeasure(),
+    const result = renderFromTree(MINIMAL_TREE, {
+      renderOptions: { measure: createMockMeasure() },
     });
 
     expect(result.svg.length).toBeGreaterThan(100);
@@ -162,44 +134,36 @@ describe("renderFromPreview - basic output", () => {
   });
 
   it("7.2: viewBox matches A3 landscape spec", () => {
-    const result = renderFromPreview(MINIMAL_PAYLOAD, {
-      measure: createMockMeasure(),
+    const result = renderFromTree(MINIMAL_TREE, {
+      renderOptions: { measure: createMockMeasure() },
     });
 
     expect(result.viewBox).toBe("0 0 4200 2970");
     expect(result.svg).toContain('viewBox="0 0 4200 2970"');
   });
 
-  it("7.2: A4 payload produces A4 viewBox", () => {
-    const result = renderFromPreview(A4_PAYLOAD, {
-      measure: createMockMeasure(),
+  it("7.2: A4 paperKind produces A4 viewBox", () => {
+    const result = renderFromTree(MINIMAL_TREE, {
+      paperKind: "a4-landscape",
+      renderOptions: { measure: createMockMeasure() },
     });
 
     expect(result.viewBox).toBe("0 0 2970 2100");
   });
 });
 
-describe("renderFromPreview - center visual", () => {
+describe("renderFromTree - center visual", () => {
   it("7.3: contains center visual in SVG output", () => {
-    const result = renderFromPreview(MINIMAL_PAYLOAD, {
-      measure: createMockMeasure(),
+    const result = renderFromTree(MINIMAL_TREE, {
+      renderOptions: { measure: createMockMeasure() },
     });
 
     expect(result.svg).toContain("<!-- Center visual");
   });
 
-  it("7.3: uses inline SVG when provided", () => {
-    const result = renderFromPreview(FULL_PAYLOAD, {
-      measure: createMockMeasure(),
-    });
-
-    expect(result.svg).toContain("#F39C12");
-    expect(result.layout.center.usedFallback).toBe(false);
-  });
-
   it("7.3: uses fallback when no center visual provided", () => {
-    const result = renderFromPreview(MINIMAL_PAYLOAD, {
-      measure: createMockMeasure(),
+    const result = renderFromTree(MINIMAL_TREE, {
+      renderOptions: { measure: createMockMeasure() },
     });
 
     expect(result.layout.center.usedFallback).toBe(true);
@@ -209,10 +173,10 @@ describe("renderFromPreview - center visual", () => {
   });
 });
 
-describe("renderFromPreview - branches", () => {
+describe("renderFromTree - branches", () => {
   it("7.4: renders all branch concepts as text on path", () => {
-    const result = renderFromPreview(FULL_PAYLOAD, {
-      measure: createMockMeasure(),
+    const result = renderFromTree(FULL_TREE, {
+      renderOptions: { measure: createMockMeasure() },
     });
 
     expect(result.svg).toContain("Strategy");
@@ -230,8 +194,8 @@ describe("renderFromPreview - branches", () => {
   });
 
   it("7.4: no boxed node labels (no rect containers around text)", () => {
-    const result = renderFromPreview(FULL_PAYLOAD, {
-      measure: createMockMeasure(),
+    const result = renderFromTree(FULL_TREE, {
+      renderOptions: { measure: createMockMeasure() },
     });
 
     const rectCount = (result.svg.match(/<rect/g) || []).length;
@@ -239,8 +203,8 @@ describe("renderFromPreview - branches", () => {
   });
 
   it("7.5: main branches have distinct colors from palette", () => {
-    const result = renderFromPreview(FULL_PAYLOAD, {
-      measure: createMockMeasure(),
+    const result = renderFromTree(FULL_TREE, {
+      renderOptions: { measure: createMockMeasure() },
     });
 
     const branches = Object.values(result.layout.branches) as BranchGeometry[];
@@ -251,8 +215,8 @@ describe("renderFromPreview - branches", () => {
   });
 
   it("7.5: branch SVG contains path data with stroke colors", () => {
-    const result = renderFromPreview(FULL_PAYLOAD, {
-      measure: createMockMeasure(),
+    const result = renderFromTree(FULL_TREE, {
+      renderOptions: { measure: createMockMeasure() },
     });
 
     const branches = Object.values(result.layout.branches) as BranchGeometry[];
@@ -263,10 +227,10 @@ describe("renderFromPreview - branches", () => {
   });
 });
 
-describe("renderFromPreview - layout geometry", () => {
+describe("renderFromTree - layout geometry", () => {
   it("7.6: layout geometry has all required fields", () => {
-    const result = renderFromPreview(FULL_PAYLOAD, {
-      measure: createMockMeasure(),
+    const result = renderFromTree(FULL_TREE, {
+      renderOptions: { measure: createMockMeasure() },
     });
 
     const geo = result.layout;
@@ -281,8 +245,8 @@ describe("renderFromPreview - layout geometry", () => {
   });
 
   it("7.6: branch geometries have valid structure", () => {
-    const result = renderFromPreview(FULL_PAYLOAD, {
-      measure: createMockMeasure(),
+    const result = renderFromTree(FULL_TREE, {
+      renderOptions: { measure: createMockMeasure() },
     });
 
     const branches = Object.values(result.layout.branches) as BranchGeometry[];
@@ -304,8 +268,8 @@ describe("renderFromPreview - layout geometry", () => {
   });
 
   it("7.7: children inherit main branch color", () => {
-    const result = renderFromPreview(FULL_PAYLOAD, {
-      measure: createMockMeasure(),
+    const result = renderFromTree(FULL_TREE, {
+      renderOptions: { measure: createMockMeasure() },
     });
 
     const branches = Object.values(result.layout.branches) as BranchGeometry[];
@@ -319,11 +283,11 @@ describe("renderFromPreview - layout geometry", () => {
   });
 });
 
-describe("renderFromPreview - determinism", () => {
+describe("renderFromTree - determinism", () => {
   it("7.8: deterministic rendering produces identical output", () => {
     const measure = createMockMeasure();
-    const a = renderFromPreview(FULL_PAYLOAD, { measure });
-    const b = renderFromPreview(FULL_PAYLOAD, { measure });
+    const a = renderFromTree(FULL_TREE, { renderOptions: { measure } });
+    const b = renderFromTree(FULL_TREE, { renderOptions: { measure } });
 
     expect(a.svg).toBe(b.svg);
     expect(a.viewBox).toBe(b.viewBox);
@@ -332,8 +296,8 @@ describe("renderFromPreview - determinism", () => {
 
   it("7.8: different trees produce different SVGs", () => {
     const measure = createMockMeasure();
-    const a = renderFromPreview(MINIMAL_PAYLOAD, { measure });
-    const b = renderFromPreview(FULL_PAYLOAD, { measure });
+    const a = renderFromTree(MINIMAL_TREE, { renderOptions: { measure } });
+    const b = renderFromTree(FULL_TREE, { renderOptions: { measure } });
 
     expect(a.svg).not.toBe(b.svg);
   });
@@ -362,9 +326,9 @@ describe("renderFromOmm integration", () => {
 });
 
 describe("render unified entry point", () => {
-  it("renders from preview-payload input", () => {
+  it("renders from organic-tree input", () => {
     const result = render(
-      { kind: "preview-payload", payload: MINIMAL_PAYLOAD },
+      { kind: "organic-tree", tree: MINIMAL_TREE },
       { measure: createMockMeasure() },
     );
     expect(result.svg).toContain("<svg");
@@ -381,15 +345,15 @@ describe("render unified entry point", () => {
 
 describe("diagnostics in integration", () => {
   it("includes diagnostics array even when empty", () => {
-    const result = renderFromPreview(MINIMAL_PAYLOAD, {
-      measure: createMockMeasure(),
+    const result = renderFromTree(MINIMAL_TREE, {
+      renderOptions: { measure: createMockMeasure() },
     });
     expect(Array.isArray(result.diagnostics)).toBe(true);
   });
 
   it("each diagnostic has required fields", () => {
-    const result = renderFromPreview(FULL_PAYLOAD, {
-      measure: createMockMeasure(),
+    const result = renderFromTree(FULL_TREE, {
+      renderOptions: { measure: createMockMeasure() },
     });
     for (const diag of result.diagnostics) {
       expect(diag.kind).toBeDefined();
@@ -403,8 +367,8 @@ describe("diagnostics in integration", () => {
 
 describe("layout snapshot export", () => {
   it("buildLayoutSnapshot produces a valid LayoutSnapshot", () => {
-    const result = renderFromPreview(MINIMAL_PAYLOAD, {
-      measure: createMockMeasure(),
+    const result = renderFromTree(MINIMAL_TREE, {
+      renderOptions: { measure: createMockMeasure() },
     });
     const snapshot = buildLayoutSnapshot(result.layout);
 
@@ -418,8 +382,9 @@ describe("layout snapshot export", () => {
   });
 
   it("snapshot contains correct paper dimensions", () => {
-    const result = renderFromPreview(A4_PAYLOAD, {
-      measure: createMockMeasure(),
+    const result = renderFromTree(MINIMAL_TREE, {
+      paperKind: "a4-landscape",
+      renderOptions: { measure: createMockMeasure() },
     });
     const snapshot = buildLayoutSnapshot(result.layout);
 
@@ -431,34 +396,28 @@ describe("layout snapshot export", () => {
 
 describe("edge cases - simple trees", () => {
   it("handles tree with only one branch", () => {
-    const payload: PreviewPayload = {
+    const tree: OrganicTree = {
       version: 1,
-      source: "organic-tree",
-      paper: "a3-landscape",
-      tree: {
-        version: 1,
-        title: "Single",
-        center: { concept: "C" },
-        branches: [{ concept: "Only" }],
-      },
+      title: "Single",
+      center: { concept: "C" },
+      branches: [{ concept: "Only" }],
     };
-    const result = renderFromPreview(payload, { measure: createMockMeasure() });
+    const result = renderFromTree(tree, {
+      renderOptions: { measure: createMockMeasure() },
+    });
     expect(result.svg).toContain("Only");
   });
 
   it("handles tree with no branches", () => {
-    const payload: PreviewPayload = {
+    const tree: OrganicTree = {
       version: 1,
-      source: "organic-tree",
-      paper: "a3-landscape",
-      tree: {
-        version: 1,
-        title: "Empty",
-        center: { concept: "C" },
-        branches: [],
-      },
+      title: "Empty",
+      center: { concept: "C" },
+      branches: [],
     };
-    const result = renderFromPreview(payload, { measure: createMockMeasure() });
+    const result = renderFromTree(tree, {
+      renderOptions: { measure: createMockMeasure() },
+    });
     expect(result.svg).toContain("<svg");
     expect(result.svg).toContain("Center visual");
   });
@@ -466,32 +425,29 @@ describe("edge cases - simple trees", () => {
 
 describe("edge cases - text handling", () => {
   it("handles deeply nested text gracefully", () => {
-    const payload: PreviewPayload = {
+    const tree: OrganicTree = {
       version: 1,
-      source: "organic-tree",
-      paper: "a3-landscape",
-      tree: {
-        version: 1,
-        title: "Deep",
-        center: { concept: "C" },
-        branches: [
-          {
-            concept: "A Very Long Concept Label That Might Need Clipping",
-            children: [
-              {
-                concept: "Another Extremely Long Sub-Branch Label For Testing",
-                children: [
-                  {
-                    concept: "A Leaf Node With Even More Text Content To Test",
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
+      title: "Deep",
+      center: { concept: "C" },
+      branches: [
+        {
+          concept: "A Very Long Concept Label That Might Need Clipping",
+          children: [
+            {
+              concept: "Another Extremely Long Sub-Branch Label For Testing",
+              children: [
+                {
+                  concept: "A Leaf Node With Even More Text Content To Test",
+                },
+              ],
+            },
+          ],
+        },
+      ],
     };
-    const result = renderFromPreview(payload, { measure: createMockMeasure() });
+    const result = renderFromTree(tree, {
+      renderOptions: { measure: createMockMeasure() },
+    });
     expect(result.svg).toContain("<svg");
     const clippedDiags = result.diagnostics.filter(
       (d: { kind: string }) => d.kind === "clipped-text",

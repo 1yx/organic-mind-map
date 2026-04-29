@@ -2,8 +2,8 @@
  * Main preview command implementation.
  *
  * Flow: parse args → read input → parse JSON → validate structural →
- * validate quality → validate capacity → build PreviewPayload →
- * hand off to local preview server.
+ * validate quality → validate capacity → normalize whitespace →
+ * hand off validated OrganicTree to local preview server.
  *
  * Exit codes:
  *   0 — success
@@ -24,12 +24,7 @@ import {
 } from "@omm/core";
 
 import { startPreviewServerAsync } from "./preview-server.js";
-import { isAllowedSvgUrl } from "./svg-allowlist.js";
-import {
-  cliExitCode,
-  type PreviewPayload,
-  type PreviewOptions,
-} from "./types.js";
+import { cliExitCode } from "./types.js";
 
 // ---------------------------------------------------------------------------
 // Arg parsing
@@ -37,20 +32,9 @@ import {
 
 type ParsedArgs = {
   positional: string[];
-  paper: "a3-landscape" | "a4-landscape" | undefined;
   port: number | undefined;
   host: string | undefined;
 };
-
-const VALID_PAPERS = new Set(["a3-landscape", "a4-landscape"]);
-
-function parsePaper(
-  val: string | undefined,
-): "a3-landscape" | "a4-landscape" | undefined {
-  if (val && VALID_PAPERS.has(val))
-    return val as "a3-landscape" | "a4-landscape";
-  return undefined;
-}
 
 function parsePort(val: string | undefined): number | undefined {
   if (!val) return undefined;
@@ -60,15 +44,12 @@ function parsePort(val: string | undefined): number | undefined {
 
 function parseArgs(argv: string[]): ParsedArgs {
   const positional: string[] = [];
-  let paper: "a3-landscape" | "a4-landscape" | undefined;
   let port: number | undefined;
   let host: string | undefined;
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
-    if (arg === "--paper") {
-      paper = parsePaper(argv[++i]);
-    } else if (arg === "--port") {
+    if (arg === "--port") {
       port = parsePort(argv[++i]);
     } else if (arg === "--host") {
       host = argv[++i];
@@ -77,7 +58,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     }
   }
 
-  return { positional, paper, port, host };
+  return { positional, port, host };
 }
 
 // ---------------------------------------------------------------------------
@@ -160,9 +141,6 @@ function printUsage(): void {
   console.error("Usage: omm preview <input.json>");
   console.error("");
   console.error("Options:");
-  console.error(
-    "  --paper <paper>   Paper size: a3-landscape | a4-landscape (default: a3-landscape)",
-  );
   console.error("  --port <port>     Port for the local preview server");
   console.error("  --host <host>     Host to bind to (default: 127.0.0.1)");
 }
@@ -231,46 +209,11 @@ function runValidationPipeline(parsed: unknown): number | null {
   return null;
 }
 
-/** Build the PreviewPayload from a validated tree. */
-function buildPayload(
-  tree: OrganicTree,
-  paperOverride?: "a3-landscape" | "a4-landscape",
-): PreviewPayload {
-  const normalised = normalizeConcepts(tree);
-  const paper = paperOverride ?? normalised.paper ?? "a3-landscape";
-
-  // Check center svgUrl against allowlist (tasks 2.1-2.3, 4.2)
-  const allowedUrl = isAllowedSvgUrl(normalised.center.svgUrl);
-
-  const payload: PreviewPayload = {
-    version: 1,
-    source: "organic-tree",
-    paper,
-    tree: normalised,
-    meta: normalised.meta
-      ? {
-          sourceTitle: normalised.meta.sourceTitle,
-          sourceSummary: normalised.meta.sourceSummary,
-        }
-      : undefined,
-  };
-
-  // Only populate centerVisual when svgUrl is allowlisted (task 4.2)
-  if (allowedUrl) {
-    payload.centerVisual = {
-      svgUrl: allowedUrl,
-      source: "ai-svg",
-    };
-  }
-
-  return payload;
-}
-
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
-export type { PreviewPayload, PreviewOptions };
+export type { PreviewOptions } from "./types.js";
 export type {
   PreviewServerOptions,
   PreviewServerResult,
@@ -299,10 +242,10 @@ export async function previewCommand(argv: string[]): Promise<number> {
   if (validationExit !== null) return validationExit;
 
   const tree = parsed as OrganicTree;
-  const payload = buildPayload(tree, args.paper);
+  const normalizedTree = normalizeConcepts(tree);
 
   try {
-    await startPreviewServerAsync(payload, {
+    await startPreviewServerAsync(normalizedTree, {
       host: args.host,
       port: args.port,
     });

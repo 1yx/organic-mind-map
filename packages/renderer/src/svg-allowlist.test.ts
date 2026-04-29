@@ -1,5 +1,5 @@
 /**
- * Tests for SVG URL allowlist (CLI URL boundary).
+ * Tests for SVG URL allowlist (renderer-owned).
  *
  * Covers:
  * - Allowed HTTPS URLs pass through

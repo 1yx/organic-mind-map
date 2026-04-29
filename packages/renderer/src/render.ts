@@ -1,70 +1,68 @@
 /**
- * Main renderer entry points: renderFromPreview() and renderFromOmm().
+ * Main renderer entry points: renderFromTree() and renderFromOmm().
  *
- * These are the public API functions that accept either a PreviewPayload
+ * These are the public API functions that accept either an OrganicTree
  * or an OmmDocument and return a complete SVG render result.
  */
 
 import type { OmmDocument, OrganicTree } from "@omm/core";
-import type {
-  PreviewPayload,
-  RenderInput,
-  RenderResult,
-  RenderOptions,
-} from "./types.js";
+import type { RenderInput, RenderResult, RenderOptions } from "./types.js";
 import { stableSerializeTree, deriveOrganicSeed } from "./seed.js";
 import { computeLayout, createDefaultMeasurementAdapter } from "./layout.js";
 import { renderSvg } from "./svg-renderer.js";
-import {
-  resolveCenterVisualSync,
-  resolveCenterVisualAsync,
-} from "./center-visual.js";
+import { resolveCenterVisualSync } from "./center-visual.js";
 
-/**
- * Render a mind map from a PreviewPayload (CLI handoff format).
- *
- * This is the primary entry point for the Phase 1 flow:
- * Agent CLI -\> PreviewPayload -\> browser renderer -\> SVG preview.
- *
- * @param payload - Validated PreviewPayload from the CLI
- * @param options - Optional rendering configuration
- * @returns RenderResult with SVG string, viewBox, diagnostics, and layout
- */
-export function renderFromPreview(
-  payload: PreviewPayload,
-  options?: RenderOptions,
+/** Build the final RenderResult from center and layout results. */
+function buildRenderResult(
+  centerResult: ReturnType<typeof resolveCenterVisualSync>,
+  layoutResult: ReturnType<typeof computeLayout>,
+  paperBackground: string | undefined,
 ): RenderResult {
-  return renderFromTree(payload.tree, {
-    paperKind: payload.paper,
-    inlineSvg: payload.centerVisual?.inlineSvg,
-    renderOptions: options,
-  });
+  return {
+    svg: renderSvg(layoutResult.geometry, paperBackground),
+    viewBox: layoutResult.geometry.viewBox,
+    diagnostics: [...centerResult.diagnostics, ...layoutResult.diagnostics],
+    layout: layoutResult.geometry,
+  };
+}
+
+/** Resolve render options with defaults for measurement and margin. */
+function resolveMeasureAndMargin(renderOptions?: RenderOptions) {
+  return {
+    measure: renderOptions?.measure ?? createDefaultMeasurementAdapter(),
+    marginRatio: renderOptions?.marginRatio ?? 0.05,
+  };
 }
 
 /**
- * Render a mind map from a PreviewPayload with async center visual loading.
+ * Core rendering function that works with an OrganicTree directly.
  *
- * Attempts to load SVG from URL before falling back to built-in templates.
+ * @param tree - OrganicTree to render
+ * @param options - Optional paper kind and rendering configuration
+ * @returns RenderResult with SVG string, viewBox, diagnostics, and layout
  */
-export async function renderFromPreviewAsync(
-  payload: PreviewPayload,
-  loadSvg: (url: string) => Promise<string | null>,
-  options?: RenderOptions,
-): Promise<RenderResult> {
-  const tree = payload.tree;
-  const paperKind = payload.paper;
-  const measure = options?.measure ?? createDefaultMeasurementAdapter();
-  const marginRatio = options?.marginRatio ?? 0.05;
+export function renderFromTree(
+  tree: OrganicTree,
+  options?: {
+    paperKind?: "a3-landscape" | "a4-landscape";
+    renderOptions?: RenderOptions;
+  },
+): RenderResult {
+  const paperKind = options?.paperKind ?? "a3-landscape";
+  const { measure, marginRatio } = resolveMeasureAndMargin(
+    options?.renderOptions,
+  );
 
   // Derive seed
   const serialized = stableSerializeTree(tree);
   const contentHash = deriveOrganicSeed(serialized);
 
-  // Resolve center visual (async)
-  const centerResult = await resolveCenterVisualAsync(tree.center, payload, {
+  // Resolve center visual (sync)
+  const centerResult = resolveCenterVisualSync(
+    tree.center,
+    undefined,
     contentHash,
-    loadSvg,
-  });
+  );
 
   // Compute layout
   const layoutResult = computeLayout(tree, {
@@ -75,21 +73,11 @@ export async function renderFromPreviewAsync(
     marginRatio,
   });
 
-  // Merge diagnostics
-  const allDiagnostics = [
-    ...centerResult.diagnostics,
-    ...layoutResult.diagnostics,
-  ];
-
-  // Render SVG
-  const svg = renderSvg(layoutResult.geometry, options?.paperBackground);
-
-  return {
-    svg,
-    viewBox: layoutResult.geometry.viewBox,
-    diagnostics: allDiagnostics,
-    layout: layoutResult.geometry,
-  };
+  return buildRenderResult(
+    centerResult,
+    layoutResult,
+    options?.renderOptions?.paperBackground,
+  );
 }
 
 /**
@@ -108,69 +96,7 @@ export function renderFromOmm(
   // Determine paper kind
   const paperKind = document.paper.kind as "a3-landscape" | "a4-landscape";
 
-  // Use center visual from document if available
-  // In .omm format, center visuals are referenced by asset ID
-  // For now, no inline SVG is extracted from OmmDocument
-  const inlineSvg = undefined;
-
-  return renderFromTree(tree, { paperKind, inlineSvg, renderOptions: options });
-}
-
-// ─── Internal ──────────────────────────────────────────────────────────────
-
-/**
- * Core rendering function that works with an OrganicTree tree.
- */
-function renderFromTree(
-  tree: OrganicTree,
-  options: {
-    paperKind: "a3-landscape" | "a4-landscape";
-    inlineSvg?: string;
-    renderOptions?: RenderOptions;
-  },
-): RenderResult {
-  const measure =
-    options.renderOptions?.measure ?? createDefaultMeasurementAdapter();
-  const marginRatio = options.renderOptions?.marginRatio ?? 0.05;
-
-  // Derive seed
-  const serialized = stableSerializeTree(tree);
-  const contentHash = deriveOrganicSeed(serialized);
-
-  // Resolve center visual (sync)
-  const centerResult = resolveCenterVisualSync(
-    tree.center,
-    options.inlineSvg,
-    contentHash,
-  );
-
-  // Compute layout
-  const layoutResult = computeLayout(tree, {
-    paperKind: options.paperKind,
-    centerVisualSvg: centerResult.svgContent,
-    centerUsedFallback: centerResult.usedFallback,
-    measure,
-    marginRatio,
-  });
-
-  // Merge diagnostics
-  const allDiagnostics = [
-    ...centerResult.diagnostics,
-    ...layoutResult.diagnostics,
-  ];
-
-  // Render SVG
-  const svg = renderSvg(
-    layoutResult.geometry,
-    options.renderOptions?.paperBackground,
-  );
-
-  return {
-    svg,
-    viewBox: layoutResult.geometry.viewBox,
-    diagnostics: allDiagnostics,
-    layout: layoutResult.geometry,
-  };
+  return renderFromTree(tree, { paperKind, renderOptions: options });
 }
 
 /**
@@ -185,7 +111,6 @@ function convertMindMapToTree(
   return {
     version: 1,
     title: mindMap.title,
-    paper: undefined,
     center: {
       concept: mindMap.center.titleText,
       visualHint: mindMap.center.visualHint,
@@ -213,8 +138,8 @@ export function render(
   options?: RenderOptions,
 ): RenderResult {
   switch (input.kind) {
-    case "preview-payload":
-      return renderFromPreview(input.payload, options);
+    case "organic-tree":
+      return renderFromTree(input.tree, { renderOptions: options });
     case "omm-document":
       return renderFromOmm(input.document, options);
   }

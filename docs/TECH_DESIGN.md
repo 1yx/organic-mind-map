@@ -85,7 +85,7 @@ MVP 不包含：
 `local-preview-server` 的生产职责必须保持极简：
 
 * 使用 Node.js 原生 `http` 或极轻量 HTTP 框架托管预构建静态资源。
-* 只暴露只读 `GET /api/document`，数据来自当前进程内存中的 `PreviewPayload` 或 `.omm`。
+* 只暴露只读 `GET /api/document`，数据来自当前进程内存中的 `OrganicTree` 或 `.omm`。
 * 不启动 Vite Dev Server，不在生产路径中携带前端构建工具链。
 * 不引入文件监听、WebSocket、SSE 或 live reload；需要重新加载时由用户手动刷新浏览器或重新运行命令。
 * `omm preview` 进程保持前台阻塞，不 detached fork。HTTP listener 成功后必须输出：

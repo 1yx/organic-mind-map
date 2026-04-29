@@ -31,7 +31,6 @@ export type { SvgLoadOptions } from "./svg-loader.js";
 
 // --- Types ---
 export type {
-  PreviewPayload,
   RenderInput,
   RenderResult,
   RenderOptions,
@@ -82,6 +81,9 @@ export {
 } from "./center-visual.js";
 export type { CenterVisualResult } from "./center-visual.js";
 
+// --- SVG Allowlist ---
+export { isAllowedSvgUrl, getAllowedHosts } from "./svg-allowlist.js";
+
 // --- Diagnostics ---
 export {
   createDiagnostic,
@@ -98,9 +100,4 @@ export {
 } from "./diagnostics.js";
 
 // --- Main Entry Points ---
-export {
-  renderFromPreview,
-  renderFromPreviewAsync,
-  renderFromOmm,
-  render,
-} from "./render.js";
+export { renderFromTree, renderFromOmm, render } from "./render.js";

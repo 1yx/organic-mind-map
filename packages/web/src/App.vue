@@ -3,17 +3,15 @@ import { ref, onMounted, computed, watch } from "vue";
 import { useCenterVisual } from "./composables/center-visual.js";
 import { usePngExport } from "./composables/png-export.js";
 import {
-  renderFromPreview,
-  renderFromOmm,
+  render,
   createCanvasMeasurementAdapter,
-  type PreviewPayload,
   type RenderResult,
 } from "@omm/renderer";
-import type { OmmDocument } from "@omm/core";
+import type { OmmDocument, OrganicTree } from "@omm/core";
 
 // ─── State ──────────────────────────────────────────────────────────────
 
-const documentData = ref<PreviewPayload | OmmDocument | null>(null);
+const documentData = ref<OrganicTree | OmmDocument | null>(null);
 const error = ref<string | null>(null);
 const loading = ref(true);
 const renderResult = ref<RenderResult | null>(null);
@@ -22,8 +20,8 @@ const paperSurfaceRef = ref<HTMLElement | null>(null);
 
 // ─── Format Detection ──────────────────────────────────────────────────
 
-function isPreviewPayload(data: Record<string, unknown>): data is PreviewPayload {
-  return data.version === 1 && data.source === "organic-tree" && "tree" in data;
+function isOrganicTree(data: Record<string, unknown>): data is OrganicTree {
+  return data.version === 1 && "center" in data && "branches" in data;
 }
 
 function isOmmDocument(data: Record<string, unknown>): data is OmmDocument {
@@ -35,23 +33,26 @@ function isOmmDocument(data: Record<string, unknown>): data is OmmDocument {
 const centerSvgUrl = computed(
   () => {
     const d = documentData.value;
-    return d && "tree" in d ? d.centerVisual?.svgUrl ?? null : null;
+    if (!d) return null;
+    if (isOrganicTree(d)) return d.center?.svgUrl ?? null;
+    return null;
   },
 );
 const { inlineSvg, loading: svgLoading, fellBack } = useCenterVisual(centerSvgUrl);
 
 // ─── Paper aspect ratio ─────────────────────────────────────────────────
 
-const PAPER_ASPECT: Record<string, number> = {
-  "a3-landscape": 420 / 297,
-  "a4-landscape": 297 / 210,
-};
+const A3_LANDSCAPE_ASPECT = 420 / 297;
 
 const paperAspect = computed(() => {
   const d = documentData.value;
-  if (!d) return 420 / 297;
-  const paper = "tree" in d ? d.paper : (d.paper as { kind: string }).kind;
-  return PAPER_ASPECT[paper] ?? 420 / 297;
+  if (!d) return A3_LANDSCAPE_ASPECT;
+  // OrganicTree no longer has a paper field; use A3 landscape default
+  if (isOrganicTree(d)) return A3_LANDSCAPE_ASPECT;
+  // OmmDocument has paper spec
+  const paper = (d as OmmDocument).paper;
+  if (paper.kind === "a4-landscape") return 297 / 210;
+  return A3_LANDSCAPE_ASPECT;
 });
 
 // ─── PNG Export ─────────────────────────────────────────────────────────
@@ -71,7 +72,7 @@ function handleExportPng() {
   if (!el) return;
 
   const rect = el.getBoundingClientRect();
-  const paperKind = documentData.value?.paper;
+  const paperKind = "a3-landscape";
 
   doExport({
     container: el.querySelector(".svg-container") ?? el,
@@ -95,8 +96,8 @@ onMounted(async () => {
     if (!data || data.version !== 1) {
       throw new Error("Invalid document format: missing or unsupported version");
     }
-    if (!isPreviewPayload(data) && !isOmmDocument(data)) {
-      throw new Error("Invalid document format: expected PreviewPayload or OmmDocument");
+    if (!isOrganicTree(data) && !isOmmDocument(data)) {
+      throw new Error("Invalid document format: expected OrganicTree or OmmDocument");
     }
 
     documentData.value = data;
@@ -117,7 +118,7 @@ watch(
 );
 
 function tryRender(
-  doc: PreviewPayload | OmmDocument,
+  doc: OrganicTree | OmmDocument,
   svg: string | null,
   usedFallback: boolean,
 ): void {
@@ -129,18 +130,10 @@ function tryRender(
 
     let result: RenderResult;
 
-    if (isPreviewPayload(doc)) {
-      // Inject loaded SVG as inlineSvg so the renderer uses it
-      const payload: PreviewPayload = {
-        ...doc,
-        centerVisual: {
-          ...doc.centerVisual,
-          inlineSvg: svg ?? doc.centerVisual?.inlineSvg ?? undefined,
-        },
-      };
-      result = renderFromPreview(payload, { measure });
+    if (isOrganicTree(doc)) {
+      result = render({ kind: "organic-tree", tree: doc }, { measure });
     } else {
-      result = renderFromOmm(doc, { measure });
+      result = render({ kind: "omm-document", document: doc }, { measure });
     }
 
     renderResult.value = result;

@@ -169,7 +169,7 @@ Keep docs consistent on these terms:
 - Use "Agent CLI + agent skill" for orchestration.
 - Use "`OrganicTree`" for the Agent/LLM-produced semantic tree and CLI preview input.
 - Use "`OmmDocument`" for the final `.omm` export with layout snapshot.
-- Use "CLI validation and local preview startup", not "CLI transforms input", "CLI generates final layout", or "CLI builds PreviewPayload".
+- Use "CLI validation and local preview startup", not "CLI transforms input", "CLI generates final layout", or "CLI wraps data in an intermediate payload".
 - Use "browser-side layout and export" for final `.omm` and PNG output.
 
 ## Editing Guidelines

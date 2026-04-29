@@ -1,30 +1,9 @@
 /**
- * CLI types — PreviewPayload, options, and exit codes.
+ * CLI types — options and exit codes.
  */
-
-import type { OrganicTree } from "@omm/core";
-
-/** CLI-to-browser handoff type. The CLI builds this; the browser consumes it. */
-export type PreviewPayload = {
-  version: 1;
-  source: "organic-tree";
-  paper: "a3-landscape" | "a4-landscape";
-  tree: OrganicTree;
-  centerVisual?: {
-    inlineSvg?: string;
-    svgUrl?: string;
-    source?: "ai-svg";
-  };
-  meta?: {
-    sourceTitle?: string;
-    sourceSummary?: string;
-  };
-};
 
 /** Options accepted by the preview command. */
 export type PreviewOptions = {
-  /** Paper size, defaults to "a3-landscape". CLI flag \> input contract \> default. */
-  paper?: "a3-landscape" | "a4-landscape";
   /** Host forwarded to the local preview server. Default: "127.0.0.1". */
   host?: string;
   /** Port forwarded to the local preview server. */

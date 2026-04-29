@@ -16,7 +16,6 @@ const fixtures: Record<string, unknown> = {
   "valid-chinese.json": {
     version: 1,
     title: "商业模式分析",
-    paper: "a4-landscape",
     center: { concept: "商业模式", visualHint: "商业中心" },
     branches: [
       {

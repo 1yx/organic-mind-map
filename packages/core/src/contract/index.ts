@@ -11,7 +11,6 @@
  * {
  *   "version": 1,
  *   "title": "...",
- *   "paper": "a3-landscape" | "a4-landscape",
  *   "center": { "concept": "...", "visualHint?": "..." },
  *   "branches": [
  *     {

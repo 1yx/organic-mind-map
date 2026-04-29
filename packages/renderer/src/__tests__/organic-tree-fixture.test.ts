@@ -1,19 +1,16 @@
 /**
- * Preview payload fixture tests for the renderer.
+ * Organic tree fixture tests for the renderer.
  *
- * Loads organic-tree fixtures, wraps them in PreviewPayload, and verifies
- * that the renderer produces valid SVG output with correct paper/center properties.
+ * Loads organic-tree fixtures and verifies that the renderer produces
+ * valid SVG output with correct paper/center properties.
  */
 
 import { readFileSync } from "fs";
 import { join } from "path";
 import { describe, it, expect } from "vitest";
-import { renderFromPreview } from "../render";
-import type {
-  PreviewPayload,
-  TextMeasurementAdapter,
-  TextMetrics,
-} from "../types";
+import { render, renderFromTree } from "../render.js";
+import type { OrganicTree } from "@omm/core";
+import type { TextMeasurementAdapter, TextMetrics } from "../types.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -30,7 +27,7 @@ function createMockMeasure(): TextMeasurementAdapter {
   };
 }
 
-function loadOrganicTreeFixture(name: string): unknown {
+function loadOrganicTreeFixture(name: string): OrganicTree {
   const fixturePath = join(
     __dirname,
     "..",
@@ -44,27 +41,17 @@ function loadOrganicTreeFixture(name: string): unknown {
   return JSON.parse(readFileSync(fixturePath, "utf-8"));
 }
 
-function wrapAsPreviewPayload(
-  treeData: unknown,
-  paper: "a3-landscape" | "a4-landscape" = "a4-landscape",
-): PreviewPayload {
-  return {
-    version: 1,
-    source: "organic-tree",
-    paper,
-    tree: treeData as PreviewPayload["tree"],
-  };
-}
-
 // ─── 3.1: Valid Chinese fixture renders to non-empty SVG ───────────────────
 
-describe("preview-payload-fixture — basic rendering", () => {
+describe("organic-tree-fixture — basic rendering", () => {
   it("valid-chinese.json renders to non-empty SVG", () => {
-    const fixtureData = loadOrganicTreeFixture("valid-chinese");
-    const payload = wrapAsPreviewPayload(fixtureData);
-    const result = renderFromPreview(payload, {
-      measure: createMockMeasure(),
-    });
+    const tree = loadOrganicTreeFixture("valid-chinese");
+    const result = render(
+      { kind: "organic-tree", tree },
+      {
+        measure: createMockMeasure(),
+      },
+    );
     expect(result.svg.length).toBeGreaterThan(0);
     expect(result.svg).toContain("<svg");
   });
@@ -72,18 +59,16 @@ describe("preview-payload-fixture — basic rendering", () => {
 
 // ─── 3.2: Paper selection is preserved ────────────────────────────────────
 
-describe("preview-payload-fixture — paper selection", () => {
+describe("organic-tree-fixture — paper selection", () => {
   it("a3-landscape and a4-landscape produce different viewBoxes", () => {
-    const fixtureData = loadOrganicTreeFixture("valid-chinese");
+    const tree = loadOrganicTreeFixture("valid-chinese");
 
-    const payloadA3 = wrapAsPreviewPayload(fixtureData, "a3-landscape");
-    const payloadA4 = wrapAsPreviewPayload(fixtureData, "a4-landscape");
-
-    const resultA3 = renderFromPreview(payloadA3, {
-      measure: createMockMeasure(),
+    const resultA3 = renderFromTree(tree, {
+      renderOptions: { measure: createMockMeasure() },
     });
-    const resultA4 = renderFromPreview(payloadA4, {
-      measure: createMockMeasure(),
+    const resultA4 = renderFromTree(tree, {
+      paperKind: "a4-landscape",
+      renderOptions: { measure: createMockMeasure() },
     });
 
     expect(resultA3.viewBox).not.toBe(resultA4.viewBox);
@@ -94,13 +79,15 @@ describe("preview-payload-fixture — paper selection", () => {
 
 // ─── 3.3: Center visual hint is preserved in SVG ──────────────────────────
 
-describe("preview-payload-fixture — center visual hint", () => {
+describe("organic-tree-fixture — center visual hint", () => {
   it("valid-center-visual-hint.json preserves center visual in SVG", () => {
-    const fixtureData = loadOrganicTreeFixture("valid-center-visual-hint");
-    const payload = wrapAsPreviewPayload(fixtureData);
-    const result = renderFromPreview(payload, {
-      measure: createMockMeasure(),
-    });
+    const tree = loadOrganicTreeFixture("valid-center-visual-hint");
+    const result = render(
+      { kind: "organic-tree", tree },
+      {
+        measure: createMockMeasure(),
+      },
+    );
 
     expect(result.svg.length).toBeGreaterThan(0);
     // SVG should contain a center visual marker comment
@@ -112,13 +99,15 @@ describe("preview-payload-fixture — center visual hint", () => {
 
 // ─── 3.4: Unreachable SVG URL renders via sync fallback ───────────────────
 
-describe("preview-payload-fixture — unreachable SVG URL fallback", () => {
+describe("organic-tree-fixture — unreachable SVG URL fallback", () => {
   it("valid-unreachable-svg-url.json renders via sync fallback", () => {
-    const fixtureData = loadOrganicTreeFixture("valid-unreachable-svg-url");
-    const payload = wrapAsPreviewPayload(fixtureData);
-    const result = renderFromPreview(payload, {
-      measure: createMockMeasure(),
-    });
+    const tree = loadOrganicTreeFixture("valid-unreachable-svg-url");
+    const result = render(
+      { kind: "organic-tree", tree },
+      {
+        measure: createMockMeasure(),
+      },
+    );
 
     // Should not crash
     expect(result.svg.length).toBeGreaterThan(0);

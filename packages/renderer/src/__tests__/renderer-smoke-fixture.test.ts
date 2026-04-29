@@ -9,13 +9,9 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import { describe, it, expect } from "vitest";
-import { renderFromPreview, renderFromOmm } from "../render";
-import type {
-  PreviewPayload,
-  TextMeasurementAdapter,
-  TextMetrics,
-} from "../types";
-import type { OmmDocument } from "@omm/core";
+import { renderFromOmm, renderFromTree } from "../render.js";
+import type { OmmDocument, OrganicTree } from "@omm/core";
+import type { TextMeasurementAdapter, TextMetrics } from "../types.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -32,7 +28,7 @@ function createMockMeasure(): TextMeasurementAdapter {
   };
 }
 
-function loadOrganicTreeFixture(name: string): unknown {
+function loadOrganicTreeFixture(name: string): OrganicTree {
   const fixturePath = join(
     __dirname,
     "..",
@@ -60,26 +56,13 @@ function loadOmmFixture(name: string): unknown {
   return JSON.parse(readFileSync(fixturePath, "utf-8"));
 }
 
-function wrapAsPreviewPayload(
-  treeData: unknown,
-  paper: "a3-landscape" | "a4-landscape" = "a3-landscape",
-): PreviewPayload {
-  return {
-    version: 1,
-    source: "organic-tree",
-    paper,
-    tree: treeData as PreviewPayload["tree"],
-  };
-}
-
 // ─── 4.1: Deeper hierarchy fixture renders to non-empty SVG ───────────────
 
 describe("renderer-smoke-fixture — deeper hierarchy", () => {
   it("valid-deeper-hierarchy.json renders to non-empty SVG containing <svg>", () => {
-    const fixtureData = loadOrganicTreeFixture("valid-deeper-hierarchy");
-    const payload = wrapAsPreviewPayload(fixtureData, "a3-landscape");
-    const result = renderFromPreview(payload, {
-      measure: createMockMeasure(),
+    const tree = loadOrganicTreeFixture("valid-deeper-hierarchy");
+    const result = renderFromTree(tree, {
+      renderOptions: { measure: createMockMeasure() },
     });
 
     expect(result.svg.length).toBeGreaterThan(0);
@@ -108,21 +91,20 @@ describe("renderer-smoke-fixture — OmmDocument rendering", () => {
 // ─── 4.3: Paper viewBox is correct ────────────────────────────────────────
 
 describe("renderer-smoke-fixture — paper viewBox", () => {
-  it("a3-landscape payload produces viewBox 0 0 4200 2970", () => {
-    const fixtureData = loadOrganicTreeFixture("valid-chinese");
-    const payload = wrapAsPreviewPayload(fixtureData, "a3-landscape");
-    const result = renderFromPreview(payload, {
-      measure: createMockMeasure(),
+  it("a3-landscape tree produces viewBox 0 0 4200 2970", () => {
+    const tree = loadOrganicTreeFixture("valid-chinese");
+    const result = renderFromTree(tree, {
+      renderOptions: { measure: createMockMeasure() },
     });
 
     expect(result.viewBox).toBe("0 0 4200 2970");
   });
 
-  it("a4-landscape payload produces viewBox 0 0 2970 2100", () => {
-    const fixtureData = loadOrganicTreeFixture("valid-chinese");
-    const payload = wrapAsPreviewPayload(fixtureData, "a4-landscape");
-    const result = renderFromPreview(payload, {
-      measure: createMockMeasure(),
+  it("a4-landscape tree produces viewBox 0 0 2970 2100", () => {
+    const tree = loadOrganicTreeFixture("valid-chinese");
+    const result = renderFromTree(tree, {
+      paperKind: "a4-landscape",
+      renderOptions: { measure: createMockMeasure() },
     });
 
     expect(result.viewBox).toBe("0 0 2970 2100");
@@ -133,10 +115,10 @@ describe("renderer-smoke-fixture — paper viewBox", () => {
 
 describe("renderer-smoke-fixture — structural elements", () => {
   it("SVG contains center visual marker, branches, and textPath elements", () => {
-    const fixtureData = loadOrganicTreeFixture("valid-center-visual-hint");
-    const payload = wrapAsPreviewPayload(fixtureData, "a4-landscape");
-    const result = renderFromPreview(payload, {
-      measure: createMockMeasure(),
+    const tree = loadOrganicTreeFixture("valid-center-visual-hint");
+    const result = renderFromTree(tree, {
+      paperKind: "a4-landscape",
+      renderOptions: { measure: createMockMeasure() },
     });
 
     expect(result.svg.length).toBeGreaterThan(0);
@@ -156,10 +138,10 @@ describe("renderer-smoke-fixture — structural elements", () => {
 
 describe("renderer-smoke-fixture — unreachable SVG URL fallback", () => {
   it("valid-unreachable-svg-url.json renders without crash, usedFallback is true", () => {
-    const fixtureData = loadOrganicTreeFixture("valid-unreachable-svg-url");
-    const payload = wrapAsPreviewPayload(fixtureData, "a4-landscape");
-    const result = renderFromPreview(payload, {
-      measure: createMockMeasure(),
+    const tree = loadOrganicTreeFixture("valid-unreachable-svg-url");
+    const result = renderFromTree(tree, {
+      paperKind: "a4-landscape",
+      renderOptions: { measure: createMockMeasure() },
     });
 
     expect(result.svg.length).toBeGreaterThan(0);

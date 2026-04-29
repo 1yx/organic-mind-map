@@ -8,7 +8,7 @@
 import type { OrganicTreeCenter } from "@omm/core";
 import { missingAssetFallbackDiagnostic } from "./diagnostics.js";
 import { isSvgSafe } from "./svg-loader.js";
-import type { PreviewPayload, RenderDiagnostic } from "./types.js";
+import type { RenderDiagnostic } from "./types.js";
 
 // ─── Built-in Center Visual Templates ──────────────────────────────────────
 
@@ -230,7 +230,6 @@ async function tryLoadSvgUrl(
  */
 export async function resolveCenterVisualAsync(
   center: OrganicTreeCenter,
-  payload: PreviewPayload,
   options: {
     contentHash: number;
     loadSvg: (url: string) => Promise<string | null>;
@@ -238,34 +237,16 @@ export async function resolveCenterVisualAsync(
 ): Promise<CenterVisualResult> {
   const diagnostics: RenderDiagnostic[] = [];
 
-  // 1. Try inline SVG
-  if (payload.centerVisual?.inlineSvg) {
-    const trimmed = payload.centerVisual.inlineSvg.trimStart();
-    if (trimmed.startsWith("<svg") && isSvgSafe(trimmed)) {
-      return {
-        svgContent: payload.centerVisual.inlineSvg,
-        usedFallback: false,
-        diagnostics: [],
-      };
-    }
-    diagnostics.push(
-      missingAssetFallbackDiagnostic("inline SVG failed safety check"),
-    );
-  }
-
-  // 2. Try URL loading (payload first, then center fallback)
-  const url = payload.centerVisual?.svgUrl ?? center.svgUrl;
-  const failureMsg = payload.centerVisual?.svgUrl
-    ? "SVG URL load failed or rejected"
-    : "center SVG URL load failed or rejected";
+  // Try URL loading from center.svgUrl
+  const url = center.svgUrl;
   const loaded = await tryLoadSvgUrl(url, options.loadSvg, {
     diagnostics,
-    failureMsg,
+    failureMsg: url ? "SVG URL load failed or rejected" : "",
   });
   if (loaded)
     return { svgContent: loaded, usedFallback: false, diagnostics: [] };
 
-  // 3. Built-in fallback
+  // Built-in fallback
   const svgContent = generateBuiltinCenterSvg(
     selectBuiltinTemplate(options.contentHash),
   );

@@ -13,12 +13,9 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import { describe, it, expect } from "vitest";
-import { renderFromPreview } from "../render";
-import type {
-  PreviewPayload,
-  TextMeasurementAdapter,
-  TextMetrics,
-} from "../types";
+import { renderFromTree } from "../render.js";
+import type { OrganicTree } from "@omm/core";
+import type { TextMeasurementAdapter, TextMetrics } from "../types.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -35,7 +32,7 @@ function createMockMeasure(): TextMeasurementAdapter {
   };
 }
 
-function loadOrganicTreeFixture(name: string): unknown {
+function loadOrganicTreeFixture(name: string): OrganicTree {
   const fixturePath = join(
     __dirname,
     "..",
@@ -49,26 +46,13 @@ function loadOrganicTreeFixture(name: string): unknown {
   return JSON.parse(readFileSync(fixturePath, "utf-8"));
 }
 
-function wrapAsPreviewPayload(
-  treeData: unknown,
-  paper: "a3-landscape" | "a4-landscape" = "a3-landscape",
-): PreviewPayload {
-  return {
-    version: 1,
-    source: "organic-tree",
-    paper,
-    tree: treeData as PreviewPayload["tree"],
-  };
-}
-
 // ─── 3.1: Render stress-extreme-siblings ───────────────────────────────────
 
 describe("coverage-gaps-smoke — stress-extreme-siblings", () => {
   it("renders to non-empty SVG", () => {
-    const data = loadOrganicTreeFixture("stress-extreme-siblings");
-    const payload = wrapAsPreviewPayload(data, "a3-landscape");
-    const result = renderFromPreview(payload, {
-      measure: createMockMeasure(),
+    const tree = loadOrganicTreeFixture("stress-extreme-siblings");
+    const result = renderFromTree(tree, {
+      renderOptions: { measure: createMockMeasure() },
     });
     expect(result.svg.length).toBeGreaterThan(0);
     expect(result.svg).toContain("<svg");
@@ -79,10 +63,9 @@ describe("coverage-gaps-smoke — stress-extreme-siblings", () => {
 
 describe("coverage-gaps-smoke — stress-unbalanced-tree", () => {
   it("renders to non-empty SVG", () => {
-    const data = loadOrganicTreeFixture("stress-unbalanced-tree");
-    const payload = wrapAsPreviewPayload(data, "a3-landscape");
-    const result = renderFromPreview(payload, {
-      measure: createMockMeasure(),
+    const tree = loadOrganicTreeFixture("stress-unbalanced-tree");
+    const result = renderFromTree(tree, {
+      renderOptions: { measure: createMockMeasure() },
     });
     expect(result.svg.length).toBeGreaterThan(0);
     expect(result.svg).toContain("<svg");
@@ -93,10 +76,9 @@ describe("coverage-gaps-smoke — stress-unbalanced-tree", () => {
 
 describe("coverage-gaps-smoke — paper bounds", () => {
   it("stress-extreme-siblings uses a3-landscape viewBox 0 0 4200 2970", () => {
-    const data = loadOrganicTreeFixture("stress-extreme-siblings");
-    const payload = wrapAsPreviewPayload(data, "a3-landscape");
-    const result = renderFromPreview(payload, {
-      measure: createMockMeasure(),
+    const tree = loadOrganicTreeFixture("stress-extreme-siblings");
+    const result = renderFromTree(tree, {
+      renderOptions: { measure: createMockMeasure() },
     });
     expect(result.viewBox).toBe("0 0 4200 2970");
   });
@@ -107,10 +89,9 @@ describe("coverage-gaps-smoke — paper bounds", () => {
 describe("coverage-gaps-smoke — structural elements", () => {
   it("stress fixtures include branch path elements and text content", () => {
     for (const name of ["stress-extreme-siblings", "stress-unbalanced-tree"]) {
-      const data = loadOrganicTreeFixture(name);
-      const payload = wrapAsPreviewPayload(data, "a3-landscape");
-      const result = renderFromPreview(payload, {
-        measure: createMockMeasure(),
+      const tree = loadOrganicTreeFixture(name);
+      const result = renderFromTree(tree, {
+        renderOptions: { measure: createMockMeasure() },
       });
       expect(result.svg).toMatch(/<path\b/);
       expect(result.svg).toMatch(/textPath|<textPath/);
@@ -130,10 +111,10 @@ describe("coverage-gaps-smoke — testing philosophy", () => {
 
 describe("coverage-gaps-smoke — poison XSS protocol", () => {
   it("poison-xss-protocol.json renders without crash (URL is not used in renderer)", () => {
-    const data = loadOrganicTreeFixture("poison-xss-protocol");
-    const payload = wrapAsPreviewPayload(data, "a4-landscape");
-    const result = renderFromPreview(payload, {
-      measure: createMockMeasure(),
+    const tree = loadOrganicTreeFixture("poison-xss-protocol");
+    const result = renderFromTree(tree, {
+      paperKind: "a4-landscape",
+      renderOptions: { measure: createMockMeasure() },
     });
     expect(result.svg.length).toBeGreaterThan(0);
     expect(result.svg).toContain("<svg");
@@ -144,10 +125,10 @@ describe("coverage-gaps-smoke — poison XSS protocol", () => {
 
 describe("coverage-gaps-smoke — poison text injection", () => {
   it("poison-text-injection.json renders without crash — text is safely truncated", () => {
-    const data = loadOrganicTreeFixture("poison-text-injection");
-    const payload = wrapAsPreviewPayload(data, "a4-landscape");
-    const result = renderFromPreview(payload, {
-      measure: createMockMeasure(),
+    const tree = loadOrganicTreeFixture("poison-text-injection");
+    const result = renderFromTree(tree, {
+      paperKind: "a4-landscape",
+      renderOptions: { measure: createMockMeasure() },
     });
     expect(result.svg.length).toBeGreaterThan(0);
     expect(result.svg).toContain("<svg");

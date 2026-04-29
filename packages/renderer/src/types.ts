@@ -7,29 +7,11 @@
 
 import type { OmmDocument, OrganicTree, LayoutBox, Point } from "@omm/core";
 
-// ─── PreviewPayload (inlined from CLI — renderer must not import from @omm/cli) ──
-
-export type PreviewPayload = {
-  version: 1;
-  source: "organic-tree";
-  paper: "a3-landscape" | "a4-landscape";
-  tree: OrganicTree;
-  centerVisual?: {
-    inlineSvg?: string;
-    svgUrl?: string;
-    source?: "ai-svg";
-  };
-  meta?: {
-    sourceTitle?: string;
-    sourceSummary?: string;
-  };
-};
-
 // ─── Render Input ──────────────────────────────────────────────────────────
 
 export type RenderInput =
   | { kind: "omm-document"; document: OmmDocument }
-  | { kind: "preview-payload"; payload: PreviewPayload };
+  | { kind: "organic-tree"; tree: OrganicTree };
 
 // ─── Render Result ─────────────────────────────────────────────────────────
 

@@ -3,12 +3,12 @@
 ### Requirement: Read-only SVG render output
 The renderer SHALL render a valid `OrganicTree` or `.omm` document into a non-empty SVG scene on fixed A3 or A4 landscape paper proportions.
 
-#### Scenario: Valid OrganicTree renders
-- **WHEN** the renderer receives a valid `OrganicTree`
+#### Scenario: Valid OrganicTree renders via unified render() entry point
+- **WHEN** the renderer receives `render({ kind: "organic-tree", tree })` with a valid `OrganicTree`
 - **THEN** it returns a non-empty SVG result with the expected paper viewBox
 
-#### Scenario: Valid OMM document renders
-- **WHEN** the renderer receives a valid `.omm` document
+#### Scenario: Valid OMM document renders via unified render() entry point
+- **WHEN** the renderer receives `render({ kind: "omm-document", document })` with a valid `.omm` document
 - **THEN** it returns a non-empty SVG result using the document paper specification
 
 ### Requirement: Canvas text measurement

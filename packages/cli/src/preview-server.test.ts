@@ -21,22 +21,17 @@ import {
 
 const TMP_DIR = resolve(import.meta.dirname, "../../.tmp-server-test");
 
-/** Minimal valid PreviewPayload for testing. */
+/** Minimal valid OrganicTree for testing (served directly via /api/document). */
 const FIXTURE_PAYLOAD = {
   version: 1,
-  source: "organic-tree" as const,
-  paper: "a3-landscape" as const,
-  tree: {
-    version: 1,
-    title: "Test Map",
-    center: { concept: "Center" },
-    branches: [
-      {
-        concept: "Branch 1",
-        children: [{ concept: "Sub 1.1" }],
-      },
-    ],
-  },
+  title: "Test Map",
+  center: { concept: "Center" },
+  branches: [
+    {
+      concept: "Branch 1",
+      children: [{ concept: "Sub 1.1" }],
+    },
+  ],
 };
 
 function httpGet(
@@ -109,8 +104,8 @@ function afterEachCleanup(): void {
 describe("preview-server — startup & binding", () => {
   afterEachCleanup();
 
-  // 6.1: Server startup with valid PreviewPayload
-  it("starts server with valid PreviewPayload (6.1)", async () => {
+  // 6.1: Server startup with valid OrganicTree
+  it("starts server with valid OrganicTree (6.1)", async () => {
     const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, {
       port: 0, // random available port
       host: DEFAULT_HOST,
@@ -196,8 +191,8 @@ describe("preview-server — port conflicts", () => {
 describe("preview-server — /api/document endpoint", () => {
   afterEachCleanup();
 
-  // 6.2: /api/document response test
-  it("returns PreviewPayload JSON from GET /api/document (6.2)", async () => {
+  // 6.2: /api/document response test — serves OrganicTree directly
+  it("returns OrganicTree JSON from GET /api/document (6.2)", async () => {
     const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, { port: 0 });
 
     const res = await httpGet(`${result.url}/api/document`);
@@ -206,21 +201,18 @@ describe("preview-server — /api/document endpoint", () => {
 
     const data = JSON.parse(res.body) as {
       version: number;
-      source: string;
-      paper: string;
-      tree: {
-        title: string;
-        center: { concept: string };
-        branches: { concept: string }[];
-      };
+      title: string;
+      center: { concept: string };
+      branches: { concept: string }[];
     };
     expect(data.version).toBe(1);
-    expect(data.source).toBe("organic-tree");
-    expect(data.paper).toBe("a3-landscape");
-    expect(data.tree.title).toBe("Test Map");
-    expect(data.tree.center.concept).toBe("Center");
-    expect(data.tree.branches).toHaveLength(1);
-    expect(data.tree.branches[0].concept).toBe("Branch 1");
+    expect(data.title).toBe("Test Map");
+    expect(data.center.concept).toBe("Center");
+    expect(data.branches).toHaveLength(1);
+    expect(data.branches[0].concept).toBe("Branch 1");
+    // Top-level OrganicTree — no wrapper fields
+    expect((data as Record<string, unknown>).source).toBeUndefined();
+    expect((data as Record<string, unknown>).paper).toBeUndefined();
 
     await closeServer(result.server);
   });
@@ -229,32 +221,25 @@ describe("preview-server — /api/document endpoint", () => {
 describe("preview-server — payload shape validation", () => {
   afterEachCleanup();
 
-  // 6.6: Renderer integration smoke test using fixture payload
-  it("serves payload that can be consumed by the renderer (6.6)", async () => {
+  // 6.6: Renderer integration smoke test using fixture OrganicTree
+  it("serves OrganicTree that can be consumed by the renderer (6.6)", async () => {
     const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, { port: 0 });
 
     const res = await httpGet(`${result.url}/api/document`);
-    const data = JSON.parse(res.body) as {
-      version: number;
-      source: string;
-      paper: string;
-      tree: {
-        title: string;
-        center: { concept: string };
-        branches: { concept: string }[];
-      };
-    };
+    const data = JSON.parse(res.body) as Record<string, unknown>;
 
-    // Verify the payload has all fields needed by renderFromPreview
+    // Verify OrganicTree fields
     expect(data).toHaveProperty("version", 1);
-    expect(data).toHaveProperty("source", "organic-tree");
-    expect(data).toHaveProperty("paper");
-    expect(data).toHaveProperty("tree");
-    expect(data.tree).toHaveProperty("center");
-    expect(data.tree).toHaveProperty("branches");
-    expect(data.tree).toHaveProperty("title");
+    expect(data).toHaveProperty("title", "Test Map");
+    expect(data).toHaveProperty("center");
+    expect(data).toHaveProperty("branches");
+    const center = data.center as Record<string, unknown>;
+    expect(center).toHaveProperty("concept", "Center");
+    const branches = data.branches as Record<string, unknown>[];
+    expect(branches).toHaveLength(1);
+    expect(branches[0]).toHaveProperty("concept", "Branch 1");
 
-    // Verify no renderer-related fields are in the payload (those belong in RenderResult)
+    // Verify no renderer-related fields (those belong in RenderResult)
     expect(data).not.toHaveProperty("svg");
     expect(data).not.toHaveProperty("viewBox");
     expect(data).not.toHaveProperty("diagnostics");
@@ -282,7 +267,7 @@ describe("preview-server — payload shape validation", () => {
 describe("preview-server — static assets & negative tests", () => {
   afterEachCleanup();
 
-  // 6.5: Web preview smoke test for document fetch and paper ratio
+  // 6.5: Web preview smoke test for document fetch
   it("serves index.html for / and /api/document for data (6.5)", async () => {
     const webDist = await createFakeWebDist();
     const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, {
@@ -295,16 +280,13 @@ describe("preview-server — static assets & negative tests", () => {
     expect(indexRes.status).toBe(200);
     expect(indexRes.body).toContain("Test Preview");
 
-    // Check /api/document returns JSON with paper
+    // Check /api/document returns OrganicTree JSON
     const docRes = await httpGet(`${result.url}/api/document`);
     expect(docRes.status).toBe(200);
-    const doc = JSON.parse(docRes.body) as {
-      version: number;
-      source: string;
-      paper: string;
-      tree: { title: string };
-    };
-    expect(doc.paper).toBe("a3-landscape"); // A3 landscape aspect: 420/297 ≈ 1.414
+    const doc = JSON.parse(docRes.body) as Record<string, unknown>;
+    expect(doc.title).toBe("Test Map");
+    expect(doc.center).toBeDefined();
+    expect(doc.branches).toBeDefined();
 
     await closeServer(result.server);
   });

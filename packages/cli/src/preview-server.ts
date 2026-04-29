@@ -24,7 +24,7 @@ import {
 import { readFile } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join, resolve, extname, dirname } from "node:path";
-import type { PreviewPayload } from "./types.js";
+import type { OrganicTree } from "@omm/core";
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const __filename = fileURLToPath(import.meta.url);
@@ -133,7 +133,7 @@ function serveStaticFile(
  * Create (but do not start) an HTTP server with the preview routes.
  */
 function createPreviewServer(
-  documentData: PreviewPayload | Record<string, unknown>,
+  documentData: OrganicTree | Record<string, unknown>,
   webDist: string,
 ): Server {
   const server = createServer((req: IncomingMessage, res: ServerResponse) => {
@@ -169,16 +169,16 @@ function createPreviewServer(
 /**
  * Start the local preview server.
  *
- * Accepts a validated PreviewPayload or .omm document, starts an HTTP server,
+ * Accepts a validated OrganicTree or .omm document, starts an HTTP server,
  * and prints the ready marker to stdout. The process remains attached to
  * the terminal until interrupted (Ctrl+C / SIGTERM / SIGKILL).
  *
- * @param payloadOrDocument - Validated PreviewPayload or .omm document
+ * @param payloadOrDocument - Validated OrganicTree or .omm document
  * @param options - Server configuration options
  * @returns Server result with host, port, URL, PID, and server instance
  */
 export function startPreviewServer(
-  payloadOrDocument: PreviewPayload | Record<string, unknown>,
+  payloadOrDocument: OrganicTree | Record<string, unknown>,
   options?: PreviewServerOptions,
 ): PreviewServerResult {
   const host = options?.host ?? DEFAULT_HOST;
@@ -224,7 +224,7 @@ export function startPreviewServer(
  * @returns The created (not listening) server instance
  */
 export function createTestServer(
-  documentData: PreviewPayload | Record<string, unknown>,
+  documentData: OrganicTree | Record<string, unknown>,
   webDist: string,
 ): Server {
   return createPreviewServer(documentData, webDist);
@@ -235,7 +235,7 @@ export function createTestServer(
  * server is listening. Useful for programmatic usage.
  */
 export function startPreviewServerAsync(
-  payloadOrDocument: PreviewPayload | Record<string, unknown>,
+  payloadOrDocument: OrganicTree | Record<string, unknown>,
   options?: PreviewServerOptions,
 ): Promise<PreviewServerResult> {
   const host = options?.host ?? DEFAULT_HOST;

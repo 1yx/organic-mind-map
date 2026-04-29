@@ -13,7 +13,6 @@
 export type OrganicTree = {
   version: 1;
   title: string;
-  paper?: "a3-landscape" | "a4-landscape";
   center: OrganicTreeCenter;
   branches: OrganicMainBranch[];
   meta?: {

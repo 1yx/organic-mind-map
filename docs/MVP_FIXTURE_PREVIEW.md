@@ -8,7 +8,6 @@ This document describes how to use fixtures to validate the full Phase 1 MVP pip
 Agent CLI + skill
   -> OrganicTree (JSON)
   -> CLI validation and capacity checks
-  -> PreviewPayload
   -> Browser-side layout and rendering
   -> Read-only SVG preview (OMM)
   -> .omm and PNG export from browser
@@ -24,8 +23,8 @@ pnpm dev:web
 omm preview fixtures/organic-tree/valid-chinese.json
 ```
 
-The CLI validates the OrganicTree, wraps it in a `PreviewPayload`, and starts a local HTTP
-server. The Web preview app fetches the payload from `GET /api/document` and renders it
+The CLI validates the OrganicTree and starts a local HTTP
+server. The Web preview app fetches the OrganicTree from `GET /api/document` and renders it
 in the browser.
 
 ## Fixture Categories
@@ -69,7 +68,7 @@ These represent saved `.omm` files with layout snapshots.
 
 ### `fixtures/cli-preview/` — CLI Preview Handoff
 
-These represent the CLI-to-browser handoff format (`PreviewPayload`).
+These represent the CLI-to-browser handoff format (OrganicTree).
 
 | File | Description |
 |------|-------------|
@@ -177,7 +176,7 @@ pnpm --filter @omm/renderer test
 
 ### Section 3: Preview Payload Tests (`preview-payload-fixture.test.ts`)
 
-- Valid OrganicTree produces a renderable PreviewPayload
+- Valid OrganicTree renders to valid SVG
 - Paper selection preserved in render output (different viewBoxes)
 - Center visual hint propagated to renderer
 - Unreachable SVG URL degrades to built-in fallback
