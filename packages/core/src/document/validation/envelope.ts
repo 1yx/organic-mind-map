@@ -1,6 +1,6 @@
 import type { OmmValidationIssue } from "./types";
 
-const REQUIRED_STRINGS = ["id", "title", "organicSeed"] as const;
+const REQUIRED_STRINGS = ["id", "title"] as const;
 
 export function validateEnvelope(doc: unknown): OmmValidationIssue[] {
   const issues: OmmValidationIssue[] = [];
@@ -17,6 +17,7 @@ export function validateEnvelope(doc: unknown): OmmValidationIssue[] {
   const d = doc as Record<string, unknown>;
 
   issues.push(...validateRequiredStrings(d));
+  issues.push(...validateOrganicSeed(d));
   issues.push(...validateVersion(d));
   issues.push(...validateRequiredObject(d, "paper", "envelope.missing_paper"));
   issues.push(...validateRootMap(d));
@@ -45,6 +46,50 @@ function validateRequiredStrings(
     }
   }
   return issues;
+}
+
+/**
+ * Validate organicSeed: if missing/empty AND layout snapshot is present,
+ * silently backfill via cyrb53 content hash. Only fail when there is no
+ * usable layout snapshot to rely on.
+ */
+function validateOrganicSeed(d: Record<string, unknown>): OmmValidationIssue[] {
+  const seed = d.organicSeed;
+  const hasSeed = typeof seed === "string" && seed.length > 0;
+  if (hasSeed) return [];
+
+  // Layout snapshot present → silent repair (no error)
+  if (d.layout && typeof d.layout === "object" && !Array.isArray(d.layout)) {
+    const backfilled = cyrb53(JSON.stringify(d.rootMap));
+    (d as Record<string, unknown>).organicSeed = String(backfilled);
+    return [];
+  }
+
+  // No layout snapshot → must fail
+  return [
+    {
+      path: "organicSeed",
+      message:
+        '"organicSeed" must be a non-empty string when no layout snapshot is available',
+      code: "envelope.missing_organicSeed",
+    },
+  ];
+}
+
+/** cyrb53 — fast 53-bit non-cryptographic hash (same algorithm as renderer). */
+function cyrb53(str: string, seed = 0): number {
+  let h1 = 0xdeadbeef ^ seed;
+  let h2 = 0x41c6ce57 ^ seed;
+  for (let i = 0; i < str.length; i++) {
+    const ch = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+  h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+  h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return 4294967296 * (2097151 & h2) + (h1 >>> 0);
 }
 
 function validateVersion(d: Record<string, unknown>): OmmValidationIssue[] {

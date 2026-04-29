@@ -61,9 +61,10 @@ describe("validateOmmDocument — envelope", () => {
     ).toBe(true);
   });
 
-  it("rejects missing organicSeed", () => {
+  it("rejects missing organicSeed when no layout snapshot exists", () => {
     const doc = loadFixture("valid-minimal-a3") as Record<string, unknown>;
-    const result = validate({ ...doc, organicSeed: "" });
+    const { layout: _layout, ...withoutLayout } = doc;
+    const result = validate({ ...withoutLayout, organicSeed: "" });
     expect(result.valid).toBe(false);
     expect(
       result.errors.some((e) => e.code === "envelope.missing_organicSeed"),

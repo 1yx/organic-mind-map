@@ -77,17 +77,23 @@ describe("fixture-coverage-gaps — stress fixtures", () => {
   });
 });
 
-// ─── 2.2: Unsafe center visual protocols — structural pass, URL preserved ─
+// ─── 2.2: Unsafe center visual protocols — structural pass, URL flagged ─────
 
 describe("fixture-coverage-gaps — unsafe SVG URL protocols", () => {
-  it("poison-xss-protocol.json passes structural validation (URL is a string)", () => {
+  it("poison-xss-protocol.json passes structural validation but exposes unsafe URL for downstream rejection", () => {
     const data = loadAgentListFixture("poison-xss-protocol");
     const result = validateAgentList(data);
-    // The javascript: URL should be caught at validation — but structural
-    // validation only checks it's a string. The critical test is that it
-    // doesn't crash and the URL is available for downstream rejection.
-    expect(result.data).not.toBeNull();
-    expect(result.data?.center.svgUrl).toContain("javascript:");
+    // Structural validation passes (svgUrl is a valid string field),
+    // but the unsafe javascript: URL is preserved in data for the CLI
+    // allowlist boundary to reject before renderer handoff.
+    expect(result.valid).toBe(true);
+    expect(result.data?.center?.svgUrl).toContain("javascript:");
+    // The unsafe URL must NOT be a valid HTTPS URL — proves allowlist
+    // will reject it. This is the core-level contract: the URL is not
+    // normalized or stripped during structural validation, but its
+    // protocol is clearly non-HTTPS so downstream guards catch it.
+    const url = new URL(result.data!.center.svgUrl);
+    expect(url.protocol).toBe("javascript:");
   });
 });
 
@@ -153,26 +159,31 @@ describe("fixture-coverage-gaps — .omm web font declarations", () => {
   });
 });
 
-// ─── 2.7: .omm missing seed with layout (repair case) ─────────────────────
+// ─── 2.7: .omm missing seed with layout (silent repair) ────────────────────
 
 describe("fixture-coverage-gaps — .omm seed repair with layout", () => {
-  it("repair-missing-seed-with-layout.json fails validation (missing organicSeed)", () => {
+  it("repair-missing-seed-with-layout.json passes validation (seed silently backfilled)", () => {
     const data = loadOmmFixture("repair-missing-seed-with-layout");
     const result = validateOmmDocument(data);
-    // Currently the document fails because organicSeed is empty
-    expect(result.valid).toBe(false);
-    expect(
-      result.errors.some((e) => e.code === "envelope.missing_organicSeed"),
-    ).toBe(true);
+    // Design decision: missing organicSeed with complete layout snapshot
+    // is silently repaired via cyrb53 content hash — no relayout triggered.
+    expect(result.valid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+    // Verify the seed was actually backfilled (non-empty string)
+    const doc = result.data as Record<string, unknown>;
+    expect(typeof doc.organicSeed).toBe("string");
+    expect((doc.organicSeed as string).length).toBeGreaterThan(0);
   });
 });
 
-// ─── 2.8: .omm missing seed without layout ────────────────────────────────
+// ─── 2.8: .omm missing seed without layout — must fail (no repair) ─────────
 
 describe("fixture-coverage-gaps — .omm missing seed without layout", () => {
-  it("invalid-missing-seed-without-layout.json fails validation", () => {
+  it("invalid-missing-seed-without-layout.json fails validation (no layout to preserve, seed cannot be silently repaired)", () => {
     const data = loadOmmFixture("invalid-missing-seed-without-layout");
     const result = validateOmmDocument(data);
+    // Without a layout snapshot, missing organicSeed cannot be silently
+    // repaired — the full layout pipeline must run, so validation fails.
     expect(result.valid).toBe(false);
     expect(
       result.errors.some((e) => e.code === "envelope.missing_organicSeed"),
