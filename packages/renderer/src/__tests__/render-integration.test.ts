@@ -333,6 +333,18 @@ describe("render unified entry point", () => {
     expect(result.svg).toContain("<svg");
   });
 
+  it("uses caller-provided center SVG for organic-tree input", () => {
+    const centerVisualSvg =
+      '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#123456"/></svg>';
+    const result = render(
+      { kind: "organic-tree", tree: MINIMAL_TREE },
+      { measure: createMockMeasure(), centerVisualSvg },
+    );
+
+    expect(result.layout.center.usedFallback).toBe(false);
+    expect(result.layout.center.svgContent).toBe(centerVisualSvg);
+  });
+
   it("renders from omm-document input", () => {
     const result = render(
       { kind: "omm-document", document: MINIMAL_OMM },

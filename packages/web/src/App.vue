@@ -5,6 +5,7 @@ import { usePngExport } from "./composables/png-export.js";
 import {
   render,
   createCanvasMeasurementAdapter,
+  isAllowedSvgUrl,
   type RenderResult,
 } from "@omm/renderer";
 import type { OmmDocument, OrganicTree } from "@omm/core";
@@ -34,7 +35,7 @@ const centerSvgUrl = computed(
   () => {
     const d = documentData.value;
     if (!d) return null;
-    if (isOrganicTree(d)) return d.center?.svgUrl ?? null;
+    if (isOrganicTree(d)) return isAllowedSvgUrl(d.center?.svgUrl) ?? null;
     return null;
   },
 );
@@ -128,7 +129,10 @@ function tryRender(
     let result: RenderResult;
 
     if (isOrganicTree(doc)) {
-      result = render({ kind: "organic-tree", tree: doc }, { measure });
+      result = render(
+        { kind: "organic-tree", tree: doc },
+        { measure, centerVisualSvg: svg ?? undefined },
+      );
     } else {
       result = render({ kind: "omm-document", document: doc }, { measure });
     }

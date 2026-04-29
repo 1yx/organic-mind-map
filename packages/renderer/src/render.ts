@@ -60,7 +60,7 @@ export function renderFromTree(
   // Resolve center visual (sync)
   const centerResult = resolveCenterVisualSync(
     tree.center,
-    undefined,
+    options?.renderOptions?.centerVisualSvg,
     contentHash,
   );
 
