@@ -71,6 +71,8 @@ export default [
     ignores: [
       // Node dependencies.
       "node_modules/**",
+      // Local scratch/reference checkouts.
+      ".tmp/**",
       // Common build output directories.
       "**/dist/**",
       // Test coverage output.

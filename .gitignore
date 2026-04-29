@@ -15,6 +15,7 @@ Thumbs.db
 .codex/
 .gemini/
 .pi/
+.tmp/
 
 # Python
 __pycache__/
