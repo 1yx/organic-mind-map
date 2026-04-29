@@ -40,6 +40,8 @@ export type PreviewServerOptions = {
   port?: number;
   /** Path to the prebuilt \@omm/web dist directory. */
   webDistPath?: string;
+  /** When true, suppress the [OMM_SERVER_READY] stdout marker. Used by --json mode. */
+  silent?: boolean;
 };
 
 export type PreviewServerResult = {
@@ -241,6 +243,7 @@ export function startPreviewServerAsync(
   const host = options?.host ?? DEFAULT_HOST;
   const port = options?.port ?? DEFAULT_PORT;
   const webDist = resolveWebDist(options?.webDistPath);
+  const silent = options?.silent ?? false;
 
   return new Promise((resolveP, reject) => {
     const server = createPreviewServer(payloadOrDocument, webDist);
@@ -258,7 +261,9 @@ export function startPreviewServerAsync(
       const addr = server.address();
       const actualPort = typeof addr === "object" && addr ? addr.port : port;
       const url = `http://${host}:${actualPort}`;
-      console.log(`${READY_MARKER_PREFIX} PID:${process.pid} ${url}`);
+      if (!silent) {
+        console.log(`${READY_MARKER_PREFIX} PID:${process.pid} ${url}`);
+      }
       resolveP({
         host,
         port: actualPort,

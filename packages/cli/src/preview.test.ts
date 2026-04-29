@@ -300,7 +300,7 @@ describe("previewCommand — port flag", () => {
 
     await previewCommand(["--port", "5173", fixture("valid-handoff.json")]);
 
-    expect(capturedOptions).toEqual({ port: 5173 });
+    expect(capturedOptions).toMatchObject({ port: 5173 });
 
     spy.mockRestore();
   });

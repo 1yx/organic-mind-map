@@ -10,7 +10,20 @@ export type PreviewOptions = {
   port?: number;
   /** Path to the input JSON file. When absent, stdin is checked. */
   input?: string;
+  /** Emit machine-readable JSON result envelope to stdout. */
+  json?: boolean;
 };
+
+// Re-export JSON result types for convenience
+export type {
+  CliJsonResult,
+  CliFinding,
+  FindingSeverity,
+  AgentAction,
+  ResultKind,
+  ResultBuilderOptions,
+} from "./json-result.js";
+export { toJsonPointer, buildJsonResult } from "./json-result.js";
 
 /** CLI exit codes for the preview command. */
 export const cliExitCode = {

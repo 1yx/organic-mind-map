@@ -21,10 +21,19 @@ import {
   formatCapacityFeedback,
   DEFAULT_LIMITS,
   type OrganicTree,
+  type ValidationError,
 } from "@omm/core";
 
 import { startPreviewServerAsync } from "./preview-server.js";
 import { cliExitCode } from "./types.js";
+import {
+  toJsonPointer,
+  buildJsonResult,
+  type CliJsonResult,
+  type CliFinding,
+  type AgentAction,
+  type ResultKind,
+} from "./json-result.js";
 
 // ---------------------------------------------------------------------------
 // Arg parsing
@@ -34,6 +43,7 @@ type ParsedArgs = {
   positional: string[];
   port: number | undefined;
   host: string | undefined;
+  json: boolean;
 };
 
 function parsePort(val: string | undefined): number | undefined {
@@ -46,6 +56,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   const positional: string[] = [];
   let port: number | undefined;
   let host: string | undefined;
+  let json = false;
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -53,12 +64,14 @@ function parseArgs(argv: string[]): ParsedArgs {
       port = parsePort(argv[++i]);
     } else if (arg === "--host") {
       host = argv[++i];
+    } else if (arg === "--json") {
+      json = true;
     } else if (!arg.startsWith("-") || arg === "--") {
       positional.push(arg);
     }
   }
 
-  return { positional, port, host };
+  return { positional, port, host, json };
 }
 
 // ---------------------------------------------------------------------------
@@ -120,7 +133,7 @@ async function readStdin(): Promise<string | null> {
 }
 
 // ---------------------------------------------------------------------------
-// Error formatting
+// Error formatting (human mode)
 // ---------------------------------------------------------------------------
 
 function formatValidationErrors(
@@ -134,6 +147,67 @@ function formatValidationErrors(
 }
 
 // ---------------------------------------------------------------------------
+// JSON result builders
+// ---------------------------------------------------------------------------
+
+/**
+ * Convert validation errors (structural/quality) into CLI findings with
+ * JSON Pointer paths.
+ */
+function validationErrorsToFindings(
+  errors: ReadonlyArray<ValidationError>,
+  kind: "contract" | "quality",
+): CliFinding[] {
+  return errors.map((e) => ({
+    severity: "error" as const,
+    code: kind === "contract" ? "CONTRACT_ERROR" : "QUALITY_ERROR",
+    path: toJsonPointer(e.path),
+    message: e.message,
+  }));
+}
+
+/**
+ * Convert capacity errors into CLI findings with limits/actuals.
+ */
+function capacityErrorsToFindings(
+  errors: ReadonlyArray<{
+    path: string;
+    message: string;
+    limit: number;
+    actual: number;
+  }>,
+): CliFinding[] {
+  return errors.map((e) => ({
+    severity: "error" as const,
+    code: "CAPACITY_EXCEEDED",
+    path: toJsonPointer(e.path),
+    message: e.message,
+    repair:
+      "Regenerate a shorter concept list that stays within capacity limits.",
+    limit: e.limit,
+    actual: e.actual,
+  }));
+}
+
+/**
+ * Emit a JSON result to stdout and return the exit code.
+ */
+function emitJsonResult(opts: {
+  ok: boolean;
+  exitCode: 0 | 1 | 2 | 3;
+  agentAction: AgentAction;
+  kind: ResultKind;
+  findings?: CliFinding[];
+  ready?: { pid: number; url: string };
+}): number {
+  const result: CliJsonResult = buildJsonResult(opts);
+  // Single-line JSON to stdout
+  console.log(JSON.stringify(result));
+  process.exitCode = opts.exitCode;
+  return opts.exitCode;
+}
+
+// ---------------------------------------------------------------------------
 // Command helpers (split from previewCommand to keep complexity/lines low)
 // ---------------------------------------------------------------------------
 
@@ -143,48 +217,69 @@ function printUsage(): void {
   console.error("Options:");
   console.error("  --port <port>     Port for the local preview server");
   console.error("  --host <host>     Host to bind to (default: 127.0.0.1)");
+  console.error(
+    "  --json            Emit machine-readable JSON result to stdout",
+  );
 }
 
 /** Resolve raw JSON input from positional file arg or stdin. Returns null on error. */
-async function resolveInput(args: ParsedArgs): Promise<string | null> {
+async function resolveInput(
+  args: ParsedArgs,
+): Promise<{ raw: string; error?: { kind: ResultKind; message: string } }> {
   if (args.positional.length > 0) {
     try {
-      return readInput(args.positional[0]!);
+      return { raw: readInput(args.positional[0]!) };
     } catch (err: unknown) {
-      console.error(
-        `Error reading file: ${err instanceof Error ? err.message : String(err)}`,
-      );
-      process.exitCode = cliExitCode.INPUT_ERROR;
-      return null;
+      const message = err instanceof Error ? err.message : String(err);
+      return {
+        raw: "",
+        error: {
+          kind: "file-read",
+          message: `Error reading file: ${message}`,
+        },
+      };
     }
   }
   const stdin = await readStdin();
   if (stdin === null) {
-    printUsage();
-    process.exitCode = cliExitCode.INPUT_ERROR;
-    return null;
+    return {
+      raw: "",
+      error: {
+        kind: "usage",
+        message: "No input file provided and stdin is a TTY.",
+      },
+    };
   }
-  return stdin;
+  return { raw: stdin };
 }
 
-/** Parse raw JSON string. Returns null on error. */
-function parseJsonInput(raw: string): unknown | null {
+/** Parse raw JSON string. Returns the parsed value or a json-parse error. */
+function parseJsonInput(
+  raw: string,
+): { data: unknown } | { error: { message: string } } {
   try {
-    return JSON.parse(raw);
+    return { data: JSON.parse(raw) };
   } catch {
-    console.error("Error: malformed JSON input.");
-    process.exitCode = cliExitCode.INPUT_ERROR;
-    return null;
+    return {
+      error: { message: "Error: malformed JSON input." },
+    };
   }
 }
 
-/** Run the 3-layer validation pipeline. Returns exit code on failure, null on success. */
-function runValidationPipeline(parsed: unknown): number | null {
+/**
+ * Run the 3-layer validation pipeline.
+ * Returns exit code + findings on failure, null on success.
+ */
+function runValidationPipeline(
+  parsed: unknown,
+): { exitCode: number; kind: ResultKind; findings: CliFinding[] } | null {
   const structuralErrors = validateStructural(parsed);
   if (structuralErrors.length > 0) {
-    console.error(formatValidationErrors(structuralErrors));
-    process.exitCode = cliExitCode.INPUT_ERROR;
-    return cliExitCode.INPUT_ERROR;
+    return {
+      exitCode: cliExitCode.INPUT_ERROR,
+      kind: "contract",
+      findings: validationErrorsToFindings(structuralErrors, "contract"),
+    };
   }
 
   const tree = parsed as OrganicTree;
@@ -194,16 +289,20 @@ function runValidationPipeline(parsed: unknown): number | null {
     DEFAULT_LIMITS.maxConceptUnitWidth,
   );
   if (qualityErrors.length > 0) {
-    console.error(formatValidationErrors(qualityErrors));
-    process.exitCode = cliExitCode.INPUT_ERROR;
-    return cliExitCode.INPUT_ERROR;
+    return {
+      exitCode: cliExitCode.INPUT_ERROR,
+      kind: "quality",
+      findings: validationErrorsToFindings(qualityErrors, "quality"),
+    };
   }
 
   const capacityErrors = validateCapacity(tree, DEFAULT_LIMITS);
   if (capacityErrors.length > 0) {
-    console.error(formatCapacityFeedback(capacityErrors));
-    process.exitCode = cliExitCode.CAPACITY_EXCEEDED;
-    return cliExitCode.CAPACITY_EXCEEDED;
+    return {
+      exitCode: cliExitCode.CAPACITY_EXCEEDED,
+      kind: "capacity",
+      findings: capacityErrorsToFindings(capacityErrors),
+    };
   }
 
   return null;
@@ -223,6 +322,159 @@ export {
   startPreviewServerAsync,
 } from "./preview-server.js";
 
+// ---------------------------------------------------------------------------
+// Dual-mode output helpers
+// ---------------------------------------------------------------------------
+
+type InputError = {
+  kind: ResultKind;
+  message: string;
+  code: string;
+  repair: string;
+};
+
+/** Handle input resolution error in the appropriate mode. Returns exit code. */
+function handleInputError(error: InputError, isJsonMode: boolean): number {
+  if (isJsonMode) {
+    return emitJsonResult({
+      ok: false,
+      exitCode: 1,
+      agentAction: "fix-command",
+      kind: error.kind,
+      findings: [
+        {
+          severity: "error",
+          code: error.code,
+          path: "",
+          message: error.message,
+          repair: error.repair,
+        },
+      ],
+    });
+  }
+  if (error.kind === "usage") {
+    printUsage();
+  } else {
+    console.error(error.message);
+  }
+  process.exitCode = cliExitCode.INPUT_ERROR;
+  return cliExitCode.INPUT_ERROR;
+}
+
+/** Handle JSON parse error in the appropriate mode. Returns exit code. */
+function handleJsonParseError(message: string, isJsonMode: boolean): number {
+  if (isJsonMode) {
+    return emitJsonResult({
+      ok: false,
+      exitCode: 1,
+      agentAction: "fix-json-syntax",
+      kind: "json-parse",
+      findings: [
+        {
+          severity: "error",
+          code: "JSON_PARSE_ERROR",
+          path: "",
+          message,
+          repair: "Fix the JSON syntax in the input file.",
+        },
+      ],
+    });
+  }
+  console.error(message);
+  process.exitCode = cliExitCode.INPUT_ERROR;
+  return cliExitCode.INPUT_ERROR;
+}
+
+/** Handle validation failure in the appropriate mode. Returns exit code. */
+function handleValidationFailure(
+  failure: { exitCode: number; kind: ResultKind; findings: CliFinding[] },
+  isJsonMode: boolean,
+): number {
+  const { exitCode, kind, findings } = failure;
+  if (isJsonMode) {
+    return emitJsonResult({
+      ok: false,
+      exitCode: exitCode as 1 | 2,
+      agentAction: "regenerate-organic-tree",
+      kind,
+      findings,
+    });
+  }
+  if (kind === "capacity") {
+    console.error(
+      formatCapacityFeedback(
+        findings.map((f) => ({
+          path: f.path,
+          message: f.message,
+          limit: f.limit ?? 0,
+          actual: f.actual ?? 0,
+        })),
+      ),
+    );
+  } else {
+    console.error(
+      formatValidationErrors(
+        findings.map((f) => ({ path: f.path, message: f.message })),
+      ),
+    );
+  }
+  process.exitCode = exitCode;
+  return exitCode;
+}
+
+/** Handle server startup error in the appropriate mode. Returns exit code. */
+function handleServerError(message: string, isJsonMode: boolean): number {
+  if (isJsonMode) {
+    return emitJsonResult({
+      ok: false,
+      exitCode: 3,
+      agentAction: "retry-later-or-change-port",
+      kind: "server-startup",
+      findings: [
+        {
+          severity: "error",
+          code: "SERVER_STARTUP_ERROR",
+          path: "",
+          message: `Preview server error: ${message}`,
+          repair: "Retry later or specify a different port with --port.",
+        },
+      ],
+    });
+  }
+  console.error(`Preview server error: ${message}`);
+  process.exitCode = cliExitCode.SERVER_HANDOFF_ERROR;
+  return cliExitCode.SERVER_HANDOFF_ERROR;
+}
+
+/** Start the preview server and handle success/error in the appropriate mode. */
+async function startServer(
+  tree: OrganicTree,
+  options: { host?: string; port?: number; silent?: boolean },
+  isJsonMode: boolean,
+): Promise<number> {
+  try {
+    const normalizedTree = normalizeConcepts(tree);
+    const result = await startPreviewServerAsync(normalizedTree, options);
+
+    if (isJsonMode) {
+      return emitJsonResult({
+        ok: true,
+        exitCode: 0,
+        agentAction: "open-preview",
+        kind: "success",
+        ready: { pid: result.pid, url: result.url },
+      });
+    }
+
+    // Human mode: success marker already printed by startPreviewServerAsync
+    process.exitCode = cliExitCode.OK;
+    return cliExitCode.OK;
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return handleServerError(message, isJsonMode);
+  }
+}
+
 /**
  * Run the preview command.
  *
@@ -231,32 +483,35 @@ export {
  */
 export async function previewCommand(argv: string[]): Promise<number> {
   const args = parseArgs(argv);
+  const isJsonMode = args.json;
 
-  const rawJson = await resolveInput(args);
-  if (rawJson === null) return cliExitCode.INPUT_ERROR;
-
-  const parsed = parseJsonInput(rawJson);
-  if (parsed === null) return cliExitCode.INPUT_ERROR;
-
-  const validationExit = runValidationPipeline(parsed);
-  if (validationExit !== null) return validationExit;
-
-  const tree = parsed as OrganicTree;
-  const normalizedTree = normalizeConcepts(tree);
-
-  try {
-    await startPreviewServerAsync(normalizedTree, {
-      host: args.host,
-      port: args.port,
-    });
-  } catch (err: unknown) {
-    console.error(
-      `Preview server error: ${err instanceof Error ? err.message : String(err)}`,
-    );
-    process.exitCode = cliExitCode.SERVER_HANDOFF_ERROR;
-    return cliExitCode.SERVER_HANDOFF_ERROR;
+  // --- Resolve input ---
+  const inputResult = await resolveInput(args);
+  if (inputResult.error) {
+    const isUsage = inputResult.error.kind === "usage";
+    const err: InputError = {
+      kind: inputResult.error.kind,
+      message: inputResult.error.message,
+      code: isUsage ? "MISSING_INPUT" : "FILE_READ_ERROR",
+      repair: isUsage
+        ? "Provide an input JSON file: omm preview <input.json>"
+        : "Check the file path and permissions.",
+    };
+    return handleInputError(err, isJsonMode);
   }
 
-  process.exitCode = cliExitCode.OK;
-  return cliExitCode.OK;
+  // --- Parse JSON ---
+  const parseResult = parseJsonInput(inputResult.raw);
+  if ("error" in parseResult) {
+    return handleJsonParseError(parseResult.error.message, isJsonMode);
+  }
+
+  // --- Validation pipeline ---
+  const validationFailure = runValidationPipeline(parseResult.data);
+  if (validationFailure !== null) {
+    return handleValidationFailure(validationFailure, isJsonMode);
+  }
+
+  // --- Start preview server ---
+  return startServer(parseResult.data as OrganicTree, args, isJsonMode);
 }

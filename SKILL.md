@@ -11,8 +11,9 @@
 长文本
   → Agent CLI 读取本 SKILL.md
   → Agent 输出 OrganicTree JSON
-  → omm preview <OrganicTree>
+  → omm preview --json <OrganicTree>     ← 推荐：机器可读模式
   → CLI 结构验证 + 质量验证 + 容量检查
+  → CLI 输出 JSON 结果信封（stdout 单行 JSON）
   → 本地预览服务器 /api/document
   → 浏览器端布局与渲染（只读 SVG）
 ```
@@ -167,17 +168,82 @@ Agent 输出中**不得包含**以下内容：
 
 当 CLI 验证失败时，Agent 应根据错误信息修正 `OrganicTree` 并重新生成。
 
-### 错误反馈格式
+### 机器可读模式（推荐）
 
-CLI 验证失败时，输出 JSON 格式的错误信息，每个错误包含：
+使用 `omm preview --json <file>` 获取结构化的 JSON 结果信封。CLI 输出**单行 JSON 对象**到 stdout，包含完整的验证结果和修复建议。
+
+**JSON 模式行为：**
+- 成功/错误/警告均输出**一个 JSON 对象**到 stdout
+- 预期的错误**不写 stderr**（stderr 保留给未捕获的程序异常）
+- 退出码语义不变：`0` 成功或纯警告，`1` 输入/合约/质量错误，`2` 容量超限，`3` 服务器启动错误
+
+**JSON 结果信封结构：**
 
 ```json
 {
-  "path": "branches[2].children[1].concept",
-  "message": "Concept exceeds 25 unit-width; current: 28, limit: 25",
-  "suggestion": "Truncate to: '数据分析与可视化'"
+  "schema": "omm.cli.result",
+  "version": 1,
+  "command": "preview",
+  "ok": false,
+  "exitCode": 1,
+  "agentAction": "regenerate-organic-tree",
+  "content": [{ "type": "text", "text": "- /branches/0/concept Concept exceeds 25 unit-width" }],
+  "structuredContent": {
+    "kind": "contract",
+    "findings": [
+      {
+        "severity": "error",
+        "code": "CONTRACT_ERROR",
+        "path": "/branches/0/concept",
+        "message": "...",
+        "repair": "..."
+      }
+    ]
+  }
 }
 ```
+
+**关键字段说明：**
+
+| 字段 | 说明 |
+|------|------|
+| `ok` | 是否成功（`true` = 成功或仅警告） |
+| `exitCode` | 退出码（0-3） |
+| `agentAction` | Agent 应采取的下一步操作 |
+| `structuredContent.kind` | 结果类型 |
+| `structuredContent.findings` | 详细发现列表 |
+| `structuredContent.ready` | 成功时的 `{ pid, url }` |
+
+**agentAction 枚举值：**
+
+| agentAction | 含义 |
+|-------------|------|
+| `open-preview` | 服务器已就绪，打开 `ready.url` |
+| `fix-command` | CLI 用法错误或文件读取失败，修正命令参数 |
+| `fix-json-syntax` | JSON 语法错误，修正输入文件 |
+| `regenerate-organic-tree` | 结构/质量/容量验证失败，重新生成 OrganicTree |
+| `retry-later-or-change-port` | 服务器启动失败，稍后重试或使用 `--port` |
+| `none` | 无需操作（仅警告） |
+
+**structuredContent.kind 枚举值：**
+
+| kind | 含义 | exitCode |
+|------|------|----------|
+| `success` | 预览服务器启动成功 | 0 |
+| `usage` | 用法错误（缺少输入） | 1 |
+| `file-read` | 文件读取失败 | 1 |
+| `json-parse` | JSON 解析失败 | 1 |
+| `contract` | 结构验证失败 | 1 |
+| `quality` | 质量验证失败 | 1 |
+| `capacity` | 容量超限 | 2 |
+| `server-startup` | 预览服务器启动失败 | 3 |
+
+### 人工可读模式（默认）
+
+不带 `--json` 时，CLI 保持原有的人工可读输出：
+- 成功：stdout 打印 `[OMM_SERVER_READY] PID:<pid> <URL>`
+- 错误：stderr 打印可读的错误信息
+- 退出码语义不变
 
 ### 退出码含义
 
