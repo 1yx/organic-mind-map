@@ -3,6 +3,13 @@
  *
  * Handles loading SVG center visuals from URLs or inline content,
  * with deterministic built-in fallback when the external visual is unavailable.
+ *
+ * NOTE: center.svgUrl is treated as an UNTRUSTED optional visual hint.
+ * The URL gate (isAllowedSvgUrl) and SVG content safety check (isSvgSafe)
+ * must be applied BEFORE passing loaded content here. The sync resolver
+ * only validates inline SVG via isSvgSafe; URL loading requires the async
+ * path with an external loadSvg callback that has already applied the
+ * URL gate and content safety checks.
  */
 
 import type { OrganicTreeCenter } from "@omm/core";

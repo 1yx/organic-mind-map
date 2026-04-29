@@ -1,12 +1,14 @@
 /**
  * Center visual loading composable.
  *
- * Manages the lifecycle of loading a controlled SVG URL for the center visual:
- * 1. If svgUrl is present, asynchronously fetch and safety-check it
- * 2. If safe, render it inline as the center visual
- * 3. If absent, failed, rejected, or timed out, fall back to built-in visuals
+ * Manages the lifecycle of loading an SVG URL for the center visual:
+ * 1. URL gate: check svgUrl against HTTPS + host + path allowlist
+ * 2. If allowed, asynchronously fetch and safety-check it
+ * 3. If safe, render it inline as the center visual
+ * 4. If absent, gate-rejected, fetch-failed, or content-rejected, fall back
  *
- * Phase 1 accepts single-color SVGs from controlled sources.
+ * center.svgUrl is an untrusted optional visual hint from Agent output.
+ * The URL gate and content safety check happen entirely in the browser.
  */
 
 import {
@@ -17,7 +19,7 @@ import {
   type MaybeRefOrGetter,
   type Ref,
 } from "vue";
-import { loadControlledSvg } from "@omm/renderer";
+import { loadControlledSvg, isAllowedSvgUrl } from "@omm/renderer";
 
 export type CenterVisualState = {
   /** The loaded and safety-checked inline SVG string, or null. */
@@ -54,9 +56,16 @@ export function useCenterVisual(
         return;
       }
 
+      // URL gate: reject before any network request
+      const allowedUrl = isAllowedSvgUrl(url);
+      if (!allowedUrl) {
+        fellBack.value = true;
+        return;
+      }
+
       loading.value = true;
 
-      loadControlledSvg(url, {
+      loadControlledSvg(allowedUrl, {
         timeoutMs: options?.timeoutMs,
         maxSizeBytes: options?.maxSizeBytes,
       })

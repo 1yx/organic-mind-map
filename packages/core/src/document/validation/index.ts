@@ -3,7 +3,7 @@
  *
  * Runs all validation passes in order:
  *   1. envelope   — required top-level fields, version check, organicSeed
- *   2. paper      — supported kind, canonical dimensions
+ *   2. surface    — supported preset, canonical ratio
  *   3. tree       — node IDs, concepts, no stale topology fields
  *   4. center visual — mode, titleText, compliance rules
  *   5. assets     — built-in only, no embedded data, cross-references
@@ -16,7 +16,7 @@
 
 import type { OmmValidationResult } from "./types";
 import { validateEnvelope } from "./envelope";
-import { validatePaper } from "./paper";
+import { validateSurface } from "./surface";
 import { validateTree } from "./tree";
 import { validateLayout } from "./layout";
 import { validateCenterVisual, collectCenterAssetIds } from "./center-visual";
@@ -57,9 +57,9 @@ export function validateOmmDocument(data: unknown): OmmValidationResult {
 
   const doc = data as Record<string, unknown>;
 
-  // 2. Paper validation
-  const paperErrors = validatePaper(doc.paper, "paper");
-  allErrors.push(...paperErrors);
+  // 2. Surface validation
+  const surfaceErrors = validateSurface(doc.surface, "surface");
+  allErrors.push(...surfaceErrors);
 
   // 3. Tree validation (also collects node IDs for layout checking)
   const { issues: treeErrors, nodeIds } = validateTree(doc.rootMap);

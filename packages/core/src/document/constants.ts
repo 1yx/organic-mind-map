@@ -1,15 +1,17 @@
-import type { PaperKind, PaperSpec } from "./types";
+import type { SurfacePreset, SurfaceSpec } from "./types";
 
 /**
- * Canonical paper specifications for supported formats.
- * All dimensions are in millimeters.
+ * MVP bounded surface presets.
+ *
+ * Each preset defines a landscape surface ratio for the preview viewport.
+ * The sqrt2-landscape ratio (~1.414:1) matches the familiar A-series paper proportion
+ * without implying physical print dimensions.
  */
-export const PAPER_SPECS: Record<
-  PaperKind,
-  { widthMm: number; heightMm: number }
+export const SURFACE_PRESETS: Record<
+  SurfacePreset,
+  { width: number; height: number }
 > = {
-  "a3-landscape": { widthMm: 420, heightMm: 297 },
-  "a4-landscape": { widthMm: 297, heightMm: 210 },
+  "sqrt2-landscape": { width: 4200, height: 2970 },
 };
 
 /**
@@ -27,11 +29,11 @@ export const BUILTIN_ASSET_ID_SET: ReadonlySet<string> = new Set(
 );
 
 /**
- * Returns the canonical PaperSpec for a given paper kind.
- * @throws Error if the paper kind is not supported.
+ * Returns the canonical SurfaceSpec for a given surface preset.
+ * @throws Error if the surface preset is not supported.
  */
-export function getPaperSpec(kind: PaperKind): PaperSpec {
-  const spec = PAPER_SPECS[kind];
-  if (!spec) throw new Error(`Unknown paper kind: ${kind}`);
-  return { kind, ...spec };
+export function getSurfaceSpec(preset: SurfacePreset): SurfaceSpec {
+  const spec = SURFACE_PRESETS[preset];
+  if (!spec) throw new Error(`Unknown surface preset: ${preset}`);
+  return { preset, aspectRatio: spec.width / spec.height };
 }

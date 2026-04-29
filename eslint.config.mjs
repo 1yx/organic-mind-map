@@ -81,6 +81,7 @@ export default [
       "eslint.config.mjs",
       // Config files not included in any tsconfig.
       "vitest.config.ts",
+      "**/vitest.config.ts",
       "**/vite.config.ts",
     ],
   },

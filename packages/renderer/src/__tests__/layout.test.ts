@@ -4,7 +4,11 @@
 
 import { describe, it, expect } from "vitest";
 import { computeLayout, createDefaultMeasurementAdapter } from "../layout";
-import { computePaperLayout, boxesOverlap, findOverlaps } from "../diagnostics";
+import {
+  computeSurfaceLayout,
+  boxesOverlap,
+  findOverlaps,
+} from "../diagnostics";
 import type { OrganicTree } from "@omm/core";
 import type {
   TextMeasurementAdapter,
@@ -76,24 +80,20 @@ function createMockMeasure(): TextMeasurementAdapter {
 
 function layout(
   tree: OrganicTree = SIMPLE_TREE,
-  paper: "a3-landscape" | "a4-landscape" = "a3-landscape",
+  surface: string = "sqrt2-landscape",
   svg = "<svg></svg>",
 ) {
   return computeLayout(tree, {
-    paperKind: paper,
+    surfacePreset: surface,
     centerVisualSvg: svg,
     centerUsedFallback: true,
     measure: createMockMeasure(),
   });
 }
 
-function layoutNoFallback(
-  tree: OrganicTree,
-  paper: "a3-landscape" | "a4-landscape",
-  svg: string,
-) {
+function layoutNoFallback(tree: OrganicTree, surface: string, svg: string) {
   return computeLayout(tree, {
-    paperKind: paper,
+    surfacePreset: surface,
     centerVisualSvg: svg,
     centerUsedFallback: false,
     measure: createMockMeasure(),
@@ -102,38 +102,31 @@ function layoutNoFallback(
 
 // ─── Paper Layout Tests ────────────────────────────────────────────────────
 
-describe("computePaperLayout", () => {
-  it("A3 landscape has correct viewBox", () => {
-    const result = computePaperLayout("a3-landscape");
+describe("computeSurfaceLayout", () => {
+  it("sqrt2-landscape has correct viewBox", () => {
+    const result = computeSurfaceLayout("sqrt2-landscape");
     expect(result.viewBox).toBe("0 0 4200 2970");
-    expect(result.paperBounds.width).toBe(4200);
-    expect(result.paperBounds.height).toBe(2970);
+    expect(result.surfaceBounds.width).toBe(4200);
+    expect(result.surfaceBounds.height).toBe(2970);
   });
 
-  it("A4 landscape has correct viewBox", () => {
-    const result = computePaperLayout("a4-landscape");
-    expect(result.viewBox).toBe("0 0 2970 2100");
-    expect(result.paperBounds.width).toBe(2970);
-    expect(result.paperBounds.height).toBe(2100);
-  });
-
-  it("center point is at paper center", () => {
-    const result = computePaperLayout("a3-landscape");
+  it("center point is at surface center", () => {
+    const result = computeSurfaceLayout("sqrt2-landscape");
     expect(result.centerPoint.x).toBe(2100);
     expect(result.centerPoint.y).toBe(1485);
   });
 
-  it("safe area is smaller than paper bounds", () => {
-    const result = computePaperLayout("a3-landscape", 0.05);
+  it("safe area is smaller than surface bounds", () => {
+    const result = computeSurfaceLayout("sqrt2-landscape", 0.05);
     expect(result.safeArea.x).toBeGreaterThan(0);
     expect(result.safeArea.y).toBeGreaterThan(0);
-    expect(result.safeArea.width).toBeLessThan(result.paperBounds.width);
-    expect(result.safeArea.height).toBeLessThan(result.paperBounds.height);
+    expect(result.safeArea.width).toBeLessThan(result.surfaceBounds.width);
+    expect(result.safeArea.height).toBeLessThan(result.surfaceBounds.height);
   });
 
   it("default margin is 5%", () => {
-    const result = computePaperLayout("a3-landscape", 0.05);
-    const mx = result.paperBounds.width * 0.05;
+    const result = computeSurfaceLayout("sqrt2-landscape", 0.05);
+    const mx = result.surfaceBounds.width * 0.05;
     expect(result.safeArea.x).toBe(mx);
   });
 });
@@ -168,7 +161,7 @@ describe("computeLayout - basic structure", () => {
     const result = layout();
     expect(result.geometry).toBeDefined();
     expect(result.geometry.viewBox).toBe("0 0 4200 2970");
-    expect(result.geometry.paperKind).toBe("a3-landscape");
+    expect(result.geometry.surfacePreset).toBe("sqrt2-landscape");
     expect(result.geometry.center).toBeDefined();
     expect(result.geometry.branches).toBeDefined();
     expect(result.geometry.nodeOrder).toBeDefined();
@@ -265,9 +258,9 @@ describe("computeLayout - determinism and paper", () => {
     expect(a.contentHash).toBe(b.contentHash);
   });
 
-  it("uses correct viewBox for A4", () => {
-    const result = layout(SIMPLE_TREE, "a4-landscape");
-    expect(result.geometry.viewBox).toBe("0 0 2970 2100");
+  it("uses correct viewBox for default surface preset", () => {
+    const result = layout(SIMPLE_TREE);
+    expect(result.geometry.viewBox).toBe("0 0 4200 2970");
   });
 });
 
@@ -275,7 +268,7 @@ describe("computeLayout - center and text clipping", () => {
   it("center visual SVG content is stored", () => {
     const testSvg =
       '<svg viewBox="0 0 200 200"><circle cx="100" cy="100" r="50" fill="blue"/></svg>';
-    const result = layoutNoFallback(SIMPLE_TREE, "a3-landscape", testSvg);
+    const result = layoutNoFallback(SIMPLE_TREE, "sqrt2-landscape", testSvg);
     expect(result.geometry.center.svgContent).toBe(testSvg);
     expect(result.geometry.center.usedFallback).toBe(false);
   });
@@ -342,7 +335,7 @@ describe("layout diagnostics", () => {
   it("emits clipped-text diagnostics for long text", () => {
     const measure = createMockMeasure();
     const result = computeLayout(LONG_TEXT_TREE, {
-      paperKind: "a3-landscape",
+      surfacePreset: "sqrt2-landscape",
       centerVisualSvg: "<svg></svg>",
       centerUsedFallback: true,
       measure,

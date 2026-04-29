@@ -25,7 +25,7 @@ function isOrganicTree(data: Record<string, unknown>): data is OrganicTree {
 }
 
 function isOmmDocument(data: Record<string, unknown>): data is OmmDocument {
-  return data.version === 1 && "rootMap" in data && "paper" in data;
+  return data.version === 1 && "rootMap" in data && "surface" in data;
 }
 
 // ─── Center Visual ──────────────────────────────────────────────────────
@@ -40,19 +40,18 @@ const centerSvgUrl = computed(
 );
 const { inlineSvg, loading: svgLoading, fellBack } = useCenterVisual(centerSvgUrl);
 
-// ─── Paper aspect ratio ─────────────────────────────────────────────────
+// ─── Surface aspect ratio ───────────────────────────────────────────────
 
-const A3_LANDSCAPE_ASPECT = 420 / 297;
+const MVP_SURFACE_ASPECT = Math.SQRT2; // sqrt2-landscape ≈ 1.414
 
-const paperAspect = computed(() => {
+const surfaceAspect = computed(() => {
   const d = documentData.value;
-  if (!d) return A3_LANDSCAPE_ASPECT;
-  // OrganicTree no longer has a paper field; use A3 landscape default
-  if (isOrganicTree(d)) return A3_LANDSCAPE_ASPECT;
-  // OmmDocument has paper spec
-  const paper = (d as OmmDocument).paper;
-  if (paper.kind === "a4-landscape") return 297 / 210;
-  return A3_LANDSCAPE_ASPECT;
+  if (!d) return MVP_SURFACE_ASPECT;
+  // OrganicTree has no surface field; use MVP default
+  if (isOrganicTree(d)) return MVP_SURFACE_ASPECT;
+  // OmmDocument has surface spec
+  const surface = (d as OmmDocument).surface;
+  return surface?.aspectRatio ?? MVP_SURFACE_ASPECT;
 });
 
 // ─── PNG Export ─────────────────────────────────────────────────────────
@@ -72,13 +71,11 @@ function handleExportPng() {
   if (!el) return;
 
   const rect = el.getBoundingClientRect();
-  const paperKind = "a3-landscape";
 
   doExport({
     container: el.querySelector(".svg-container") ?? el,
     containerWidth: rect.width,
     containerHeight: rect.height,
-    paperKind,
   });
 }
 
@@ -186,7 +183,7 @@ function tryRender(
       <div
         ref="paperSurfaceRef"
         class="paper-surface"
-        :style="{ aspectRatio: String(paperAspect) }"
+        :style="{ aspectRatio: String(surfaceAspect) }"
       >
         <!-- eslint-disable-next-line vue/no-v-html -->
         <div class="svg-container" v-html="renderResult.svg" />

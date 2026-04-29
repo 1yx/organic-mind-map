@@ -81,13 +81,13 @@ describe("validateOmmDocument — envelope", () => {
   });
 });
 
-describe("validateOmmDocument — paper", () => {
-  it("rejects unsupported paper kind", () => {
+describe("validateOmmDocument — surface", () => {
+  it("rejects unsupported surface preset", () => {
     const result = validate(loadFixture("invalid-unsupported-paper"));
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.code === "paper.unsupported_kind")).toBe(
-      true,
-    );
+    expect(
+      result.errors.some((e) => e.code === "surface.unsupported_preset"),
+    ).toBe(true);
   });
 });
 

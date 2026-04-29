@@ -24,8 +24,21 @@ export function renderOmmToSvgModel(_doc: OmmDocument): SvgRenderModel {
 }
 
 // --- SVG Loading & Safety Guard ---
-export { loadControlledSvg, isSvgSafe, getUnsafeTags } from "./svg-loader.js";
+export {
+  loadControlledSvg,
+  isSvgSafe,
+  getUnsafeTags,
+  getAllowedElements,
+  getAllowedAttributes,
+} from "./svg-loader.js";
 export type { SvgLoadOptions } from "./svg-loader.js";
+
+// --- SVG Allowlist ---
+export {
+  isAllowedSvgUrl,
+  getAllowedHosts,
+  getAllowedSources,
+} from "./svg-allowlist.js";
 
 // ─── New Renderer API ─────────────────────────────────────────────────────
 
@@ -81,9 +94,6 @@ export {
 } from "./center-visual.js";
 export type { CenterVisualResult } from "./center-visual.js";
 
-// --- SVG Allowlist ---
-export { isAllowedSvgUrl, getAllowedHosts } from "./svg-allowlist.js";
-
 // --- Diagnostics ---
 export {
   createDiagnostic,
@@ -96,7 +106,7 @@ export {
   boxesOverlap,
   findOverlaps,
   buildLayoutSnapshot,
-  computePaperLayout,
+  computeSurfaceLayout,
 } from "./diagnostics.js";
 
 // --- Main Entry Points ---

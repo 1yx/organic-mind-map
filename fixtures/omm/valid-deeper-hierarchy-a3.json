@@ -2,10 +2,9 @@
   "id": "omm-deeper-hierarchy-a3-001",
   "version": 1,
   "title": "Deeper Hierarchy A3 Mind Map",
-  "paper": {
-    "kind": "a3-landscape",
-    "widthMm": 420,
-    "heightMm": 297
+  "surface": {
+    "preset": "sqrt2-landscape",
+    "aspectRatio": 1.4142
   },
   "organicSeed": "deep123",
   "rootMap": {

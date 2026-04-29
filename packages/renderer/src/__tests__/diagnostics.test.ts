@@ -14,7 +14,7 @@ import {
   boxesOverlap,
   findOverlaps,
   buildLayoutSnapshot,
-  computePaperLayout,
+  computeSurfaceLayout,
 } from "../diagnostics";
 import type { LayoutBox } from "@omm/core";
 
@@ -177,11 +177,11 @@ describe("findOverlaps", () => {
 
 describe("buildLayoutSnapshot", () => {
   it("creates a LayoutSnapshot from layout geometry", () => {
-    const { safeArea, viewBox } = computePaperLayout("a3-landscape");
+    const { safeArea, viewBox } = computeSurfaceLayout("sqrt2-landscape");
     const geometry = {
-      paperKind: "a3-landscape" as const,
+      surfacePreset: "sqrt2-landscape" as const,
       viewBox,
-      paperBounds: { x: 0, y: 0, width: 4200, height: 2970 },
+      surfaceBounds: { x: 0, y: 0, width: 4200, height: 2970 },
       safeArea,
       center: {
         boundingBox: { x: 2050, y: 1435, width: 100, height: 100 },
@@ -221,12 +221,12 @@ describe("buildLayoutSnapshot", () => {
   });
 });
 
-// ─── Compute Paper Layout ──────────────────────────────────────────────────
+// ─── Compute Surface Layout ───────────────────────────────────────────────
 
-describe("computePaperLayout", () => {
-  it("A3 has correct dimensions", () => {
-    const result = computePaperLayout("a3-landscape", 0.05);
-    expect(result.paperBounds).toEqual({
+describe("computeSurfaceLayout", () => {
+  it("sqrt2-landscape has correct dimensions", () => {
+    const result = computeSurfaceLayout("sqrt2-landscape", 0.05);
+    expect(result.surfaceBounds).toEqual({
       x: 0,
       y: 0,
       width: 4200,
@@ -235,19 +235,8 @@ describe("computePaperLayout", () => {
     expect(result.viewBox).toBe("0 0 4200 2970");
   });
 
-  it("A4 has correct dimensions", () => {
-    const result = computePaperLayout("a4-landscape", 0.05);
-    expect(result.paperBounds).toEqual({
-      x: 0,
-      y: 0,
-      width: 2970,
-      height: 2100,
-    });
-    expect(result.viewBox).toBe("0 0 2970 2100");
-  });
-
   it("safe area has correct margins", () => {
-    const result = computePaperLayout("a3-landscape", 0.1);
+    const result = computeSurfaceLayout("sqrt2-landscape", 0.1);
     expect(result.safeArea.x).toBe(420);
     expect(result.safeArea.y).toBe(297);
     expect(result.safeArea.width).toBe(4200 - 840);
@@ -255,8 +244,8 @@ describe("computePaperLayout", () => {
   });
 
   it("center point is at exact center", () => {
-    const result = computePaperLayout("a4-landscape");
-    expect(result.centerPoint.x).toBe(1485);
-    expect(result.centerPoint.y).toBe(1050);
+    const result = computeSurfaceLayout("sqrt2-landscape");
+    expect(result.centerPoint.x).toBe(2100);
+    expect(result.centerPoint.y).toBe(1485);
   });
 });

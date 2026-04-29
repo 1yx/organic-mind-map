@@ -53,7 +53,7 @@ function createMockMeasure(): TextMeasurementAdapter {
 function getSampleLayout(): LayoutGeometry {
   const measure = createMockMeasure();
   const result = computeLayout(SAMPLE_TREE, {
-    paperKind: "a3-landscape",
+    surfacePreset: "sqrt2-landscape",
     centerVisualSvg: "<svg></svg>",
     centerUsedFallback: true,
     measure,
@@ -99,7 +99,7 @@ describe("renderSvg - structure", () => {
   it("includes paper boundary", () => {
     const layout = getSampleLayout();
     const svg = renderSvg(layout);
-    expect(svg).toContain("Paper boundary");
+    expect(svg).toContain("Surface boundary");
     expect(svg).toContain('stroke="#CCCCCC"');
   });
 });

@@ -18,25 +18,25 @@ import type { LayoutGeometry } from "./types.js";
  * Render a complete SVG mind map from layout geometry.
  *
  * @param layout - Computed layout geometry from computeLayout()
- * @param paperBackground - CSS color string for paper background
+ * @param surfaceBackground - CSS color string for surface background
  * @returns Complete SVG string
  */
 export function renderSvg(
   layout: LayoutGeometry,
-  paperBackground: string = "#FFFFFF",
+  surfaceBackground: string = "#FFFFFF",
 ): string {
   const parts: string[] = [];
 
   // SVG header
   parts.push(
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${layout.viewBox}" width="${layout.paperBounds.width}" height="${layout.paperBounds.height}">`,
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${layout.viewBox}" width="${layout.surfaceBounds.width}" height="${layout.surfaceBounds.height}">`,
   );
 
-  // Paper background
-  parts.push(renderPaperBackground(layout, paperBackground));
+  // Surface background
+  parts.push(renderSurfaceBackground(layout, surfaceBackground));
 
-  // Paper boundary (subtle border)
-  parts.push(renderPaperBoundary(layout));
+  // Surface boundary (subtle border)
+  parts.push(renderSurfaceBoundary(layout));
 
   // Branches (render depth-first, so deeper branches are behind main branches)
   parts.push(renderBranches(layout));
@@ -50,21 +50,21 @@ export function renderSvg(
   return parts.join("\n");
 }
 
-// ─── Paper Background ──────────────────────────────────────────────────────
+// ─── Surface Background ────────────────────────────────────────────────────
 
-function renderPaperBackground(
+function renderSurfaceBackground(
   layout: LayoutGeometry,
   background: string,
 ): string {
-  return `  <!-- Paper background -->
-  <rect x="0" y="0" width="${layout.paperBounds.width}" height="${layout.paperBounds.height}" fill="${escapeAttr(background)}"/>`;
+  return `  <!-- Surface background -->
+  <rect x="0" y="0" width="${layout.surfaceBounds.width}" height="${layout.surfaceBounds.height}" fill="${escapeAttr(background)}"/>`;
 }
 
-// ─── Paper Boundary ────────────────────────────────────────────────────────
+// ─── Surface Boundary ─────────────────────────────────────────────────────
 
-function renderPaperBoundary(layout: LayoutGeometry): string {
-  return `  <!-- Paper boundary -->
-  <rect x="0.5" y="0.5" width="${layout.paperBounds.width - 1}" height="${layout.paperBounds.height - 1}" fill="none" stroke="#CCCCCC" stroke-width="1"/>`;
+function renderSurfaceBoundary(layout: LayoutGeometry): string {
+  return `  <!-- Surface boundary -->
+  <rect x="0.5" y="0.5" width="${layout.surfaceBounds.width - 1}" height="${layout.surfaceBounds.height - 1}" fill="none" stroke="#CCCCCC" stroke-width="1"/>`;
 }
 
 // ─── Branches ──────────────────────────────────────────────────────────────

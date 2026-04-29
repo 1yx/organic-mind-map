@@ -88,26 +88,17 @@ describe("renderer-smoke-fixture — OmmDocument rendering", () => {
   });
 });
 
-// ─── 4.3: Paper viewBox is correct ────────────────────────────────────────
+// ─── 4.3: Surface viewBox is correct ──────────────────────────────────────
 
-describe("renderer-smoke-fixture — paper viewBox", () => {
-  it("a3-landscape tree produces viewBox 0 0 4200 2970", () => {
+describe("renderer-smoke-fixture — surface viewBox", () => {
+  it("default surface produces viewBox 0 0 4200 2970", () => {
     const tree = loadOrganicTreeFixture("valid-chinese");
     const result = renderFromTree(tree, {
       renderOptions: { measure: createMockMeasure() },
     });
 
     expect(result.viewBox).toBe("0 0 4200 2970");
-  });
-
-  it("a4-landscape tree produces viewBox 0 0 2970 2100", () => {
-    const tree = loadOrganicTreeFixture("valid-chinese");
-    const result = renderFromTree(tree, {
-      paperKind: "a4-landscape",
-      renderOptions: { measure: createMockMeasure() },
-    });
-
-    expect(result.viewBox).toBe("0 0 2970 2100");
+    expect(result.layout.surfacePreset).toBe("sqrt2-landscape");
   });
 });
 
@@ -117,7 +108,6 @@ describe("renderer-smoke-fixture — structural elements", () => {
   it("SVG contains center visual marker, branches, and textPath elements", () => {
     const tree = loadOrganicTreeFixture("valid-center-visual-hint");
     const result = renderFromTree(tree, {
-      paperKind: "a4-landscape",
       renderOptions: { measure: createMockMeasure() },
     });
 
@@ -140,7 +130,6 @@ describe("renderer-smoke-fixture — unreachable SVG URL fallback", () => {
   it("valid-unreachable-svg-url.json renders without crash, usedFallback is true", () => {
     const tree = loadOrganicTreeFixture("valid-unreachable-svg-url");
     const result = renderFromTree(tree, {
-      paperKind: "a4-landscape",
       renderOptions: { measure: createMockMeasure() },
     });
 
@@ -155,7 +144,7 @@ describe("renderer-smoke-fixture — unreachable SVG URL fallback", () => {
 describe("renderer-smoke-fixture — testing philosophy", () => {
   // These smoke tests verify structural properties of the renderer output:
   // - Non-empty SVG string
-  // - Correct paper viewBox dimensions
+  // - Correct surface viewBox dimensions
   // - Presence of expected structural elements (center visual, branches, textPath)
   //
   // We intentionally do NOT test pixel-perfect image matching because:

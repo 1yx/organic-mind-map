@@ -2,20 +2,23 @@
  * Phase 1 .omm Document Model Types
  *
  * Defines the complete type system for the .omm document format:
- * paper specifications, mind map tree, layout snapshots, asset manifests,
+ * surface specifications, mind map tree, layout snapshots, asset manifests,
  * and the root OmmDocument envelope.
  *
  * All types are environment-neutral with no runtime dependencies.
  */
 
-// ─── Paper ───────────────────────────────────────────────────────────────────
+// ─── Surface ──────────────────────────────────────────────────────────────────
 
-export type PaperKind = "a3-landscape" | "a4-landscape";
+/**
+ * MVP bounded surface preset.
+ * Future presets (e.g. "16-9") may be added in later phases.
+ */
+export type SurfacePreset = "sqrt2-landscape";
 
-export type PaperSpec = {
-  kind: PaperKind;
-  widthMm: number;
-  heightMm: number;
+export type SurfaceSpec = {
+  preset: SurfacePreset;
+  aspectRatio: number;
 };
 
 // ─── IDs and references ──────────────────────────────────────────────────────
@@ -182,7 +185,7 @@ export type OmmDocument = {
   id: string;
   version: 1;
   title: string;
-  paper: PaperSpec;
+  surface: SurfaceSpec;
   organicSeed: string;
   rootMap: MindMap;
   layout: LayoutSnapshot;

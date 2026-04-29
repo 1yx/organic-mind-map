@@ -61,7 +61,7 @@ const MINIMAL_OMM: OmmDocument = {
   id: "test-omm-1",
   version: 1,
   title: "Minimal OMM",
-  paper: { kind: "a3-landscape", widthMm: 420, heightMm: 297 },
+  surface: { preset: "sqrt2-landscape" as const, aspectRatio: Math.SQRT2 },
   organicSeed: "12345",
   rootMap: {
     id: "map-1",
@@ -133,7 +133,7 @@ describe("renderFromTree - basic output", () => {
     expect(result.svg).toContain("</svg>");
   });
 
-  it("7.2: viewBox matches A3 landscape spec", () => {
+  it("7.2: viewBox matches sqrt2-landscape surface spec", () => {
     const result = renderFromTree(MINIMAL_TREE, {
       renderOptions: { measure: createMockMeasure() },
     });
@@ -142,13 +142,12 @@ describe("renderFromTree - basic output", () => {
     expect(result.svg).toContain('viewBox="0 0 4200 2970"');
   });
 
-  it("7.2: A4 paperKind produces A4 viewBox", () => {
+  it("7.2: surface preset is sqrt2-landscape by default", () => {
     const result = renderFromTree(MINIMAL_TREE, {
-      paperKind: "a4-landscape",
       renderOptions: { measure: createMockMeasure() },
     });
 
-    expect(result.viewBox).toBe("0 0 2970 2100");
+    expect(result.layout.surfacePreset).toBe("sqrt2-landscape");
   });
 });
 
@@ -234,9 +233,9 @@ describe("renderFromTree - layout geometry", () => {
     });
 
     const geo = result.layout;
-    expect(geo.paperKind).toBe("a3-landscape");
+    expect(geo.surfacePreset).toBe("sqrt2-landscape");
     expect(geo.viewBox).toBe("0 0 4200 2970");
-    expect(geo.paperBounds).toBeDefined();
+    expect(geo.surfaceBounds).toBeDefined();
     expect(geo.safeArea).toBeDefined();
     expect(geo.center).toBeDefined();
     expect(geo.branches).toBeDefined();
@@ -381,16 +380,15 @@ describe("layout snapshot export", () => {
     expect(Object.keys(snapshot.branches).length).toBeGreaterThan(0);
   });
 
-  it("snapshot contains correct paper dimensions", () => {
+  it("snapshot contains correct surface dimensions", () => {
     const result = renderFromTree(MINIMAL_TREE, {
-      paperKind: "a4-landscape",
       renderOptions: { measure: createMockMeasure() },
     });
     const snapshot = buildLayoutSnapshot(result.layout);
 
-    expect(snapshot.viewport.viewBox).toBe("0 0 2970 2100");
-    expect(snapshot.viewport.widthPx).toBe(2970);
-    expect(snapshot.viewport.heightPx).toBe(2100);
+    expect(snapshot.viewport.viewBox).toBe("0 0 4200 2970");
+    expect(snapshot.viewport.widthPx).toBe(4200);
+    expect(snapshot.viewport.heightPx).toBe(2970);
   });
 });
 

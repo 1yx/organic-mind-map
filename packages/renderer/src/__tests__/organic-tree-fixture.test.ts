@@ -57,23 +57,17 @@ describe("organic-tree-fixture — basic rendering", () => {
   });
 });
 
-// ─── 3.2: Paper selection is preserved ────────────────────────────────────
+// ─── 3.2: Surface preset produces consistent viewBox ───────────────────
 
-describe("organic-tree-fixture — paper selection", () => {
-  it("a3-landscape and a4-landscape produce different viewBoxes", () => {
+describe("organic-tree-fixture — surface preset", () => {
+  it("default surface preset produces sqrt2-landscape viewBox", () => {
     const tree = loadOrganicTreeFixture("valid-chinese");
 
-    const resultA3 = renderFromTree(tree, {
-      renderOptions: { measure: createMockMeasure() },
-    });
-    const resultA4 = renderFromTree(tree, {
-      paperKind: "a4-landscape",
+    const result = renderFromTree(tree, {
       renderOptions: { measure: createMockMeasure() },
     });
 
-    expect(resultA3.viewBox).not.toBe(resultA4.viewBox);
-    expect(resultA3.viewBox).toContain("4200");
-    expect(resultA4.viewBox).toContain("2970");
+    expect(result.viewBox).toBe("0 0 4200 2970");
   });
 });
 

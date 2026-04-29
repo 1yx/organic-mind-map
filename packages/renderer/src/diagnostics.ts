@@ -76,7 +76,7 @@ export function missingAssetFallbackDiagnostic(
 export function layoutOverflowDiagnostic(nodeId?: string): RenderDiagnostic {
   return createDiagnostic(
     "layout-overflow",
-    `Branch ${nodeId ?? "(unknown)"} extends beyond paper safe area.`,
+    `Branch ${nodeId ?? "(unknown)"} extends beyond surface safe area.`,
     { nodeId, severity: "warning" },
   );
 }
@@ -212,25 +212,28 @@ export function buildLayoutSnapshot(
 // ─── Paper Bounds Computation ──────────────────────────────────────────────
 
 /**
- * Compute paper bounds and safe area in SVG units.
- * 10 SVG units = 1mm, so 420mm = 4200 SVG units for A3 landscape.
+ * Compute surface bounds and safe area in SVG units.
+ *
+ * MVP bounded surface: sqrt2-landscape (4200 x 2970 SVG units).
  */
-export function computePaperLayout(
-  paperKind: "a3-landscape" | "a4-landscape",
+export function computeSurfaceLayout(
+  surfacePreset: string = "sqrt2-landscape",
   marginRatio: number = 0.05,
 ): {
-  paperBounds: LayoutBox;
+  surfaceBounds: LayoutBox;
   safeArea: LayoutBox;
   viewBox: string;
   centerPoint: Point;
 } {
   const specs: Record<string, { width: number; height: number }> = {
-    "a3-landscape": { width: 4200, height: 2970 },
-    "a4-landscape": { width: 2970, height: 2100 },
+    "sqrt2-landscape": { width: 4200, height: 2970 },
   };
 
-  const spec = specs[paperKind]!;
-  const paperBounds: LayoutBox = {
+  const spec = specs[surfacePreset];
+  if (!spec) {
+    throw new Error(`Unknown surface preset: ${surfacePreset}`);
+  }
+  const surfaceBounds: LayoutBox = {
     x: 0,
     y: 0,
     width: spec.width,
@@ -253,5 +256,5 @@ export function computePaperLayout(
 
   const viewBox = `0 0 ${spec.width} ${spec.height}`;
 
-  return { paperBounds, safeArea, viewBox, centerPoint };
+  return { surfaceBounds, safeArea, viewBox, centerPoint };
 }

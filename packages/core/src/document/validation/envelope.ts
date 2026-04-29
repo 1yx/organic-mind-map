@@ -19,7 +19,9 @@ export function validateEnvelope(doc: unknown): OmmValidationIssue[] {
   issues.push(...validateRequiredStrings(d));
   issues.push(...validateOrganicSeed(d));
   issues.push(...validateVersion(d));
-  issues.push(...validateRequiredObject(d, "paper", "envelope.missing_paper"));
+  issues.push(
+    ...validateRequiredObject(d, "surface", "envelope.missing_surface"),
+  );
   issues.push(...validateRootMap(d));
   issues.push(
     ...validateRequiredObject(d, "layout", "envelope.missing_layout"),

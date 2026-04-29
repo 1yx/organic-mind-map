@@ -2,10 +2,9 @@
   "id": "omm-repair-seed-001",
   "version": 1,
   "title": "Minimal A3 Mind Map",
-  "paper": {
-    "kind": "a3-landscape",
-    "widthMm": 420,
-    "heightMm": 297
+  "surface": {
+    "preset": "sqrt2-landscape",
+    "aspectRatio": 1.4142
   },
   "organicSeed": "",
   "rootMap": {

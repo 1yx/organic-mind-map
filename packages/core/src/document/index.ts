@@ -1,7 +1,7 @@
 /**
  * Phase 1 .omm Document Model — public barrel export.
  *
- * Re-exports all document types, paper constants, and the paper helper.
+ * Re-exports all document types, surface constants, and the surface helper.
  */
 
 export * from "./types";

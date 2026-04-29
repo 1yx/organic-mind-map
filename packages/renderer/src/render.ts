@@ -16,10 +16,10 @@ import { resolveCenterVisualSync } from "./center-visual.js";
 function buildRenderResult(
   centerResult: ReturnType<typeof resolveCenterVisualSync>,
   layoutResult: ReturnType<typeof computeLayout>,
-  paperBackground: string | undefined,
+  surfaceBackground: string | undefined,
 ): RenderResult {
   return {
-    svg: renderSvg(layoutResult.geometry, paperBackground),
+    svg: renderSvg(layoutResult.geometry, surfaceBackground),
     viewBox: layoutResult.geometry.viewBox,
     diagnostics: [...centerResult.diagnostics, ...layoutResult.diagnostics],
     layout: layoutResult.geometry,
@@ -38,17 +38,17 @@ function resolveMeasureAndMargin(renderOptions?: RenderOptions) {
  * Core rendering function that works with an OrganicTree directly.
  *
  * @param tree - OrganicTree to render
- * @param options - Optional paper kind and rendering configuration
+ * @param options - Optional surface preset and rendering configuration
  * @returns RenderResult with SVG string, viewBox, diagnostics, and layout
  */
 export function renderFromTree(
   tree: OrganicTree,
   options?: {
-    paperKind?: "a3-landscape" | "a4-landscape";
+    surfacePreset?: string;
     renderOptions?: RenderOptions;
   },
 ): RenderResult {
-  const paperKind = options?.paperKind ?? "a3-landscape";
+  const surfacePreset = options?.surfacePreset ?? "sqrt2-landscape";
   const { measure, marginRatio } = resolveMeasureAndMargin(
     options?.renderOptions,
   );
@@ -66,7 +66,7 @@ export function renderFromTree(
 
   // Compute layout
   const layoutResult = computeLayout(tree, {
-    paperKind,
+    surfacePreset,
     centerVisualSvg: centerResult.svgContent,
     centerUsedFallback: centerResult.usedFallback,
     measure,
@@ -76,14 +76,14 @@ export function renderFromTree(
   return buildRenderResult(
     centerResult,
     layoutResult,
-    options?.renderOptions?.paperBackground,
+    options?.renderOptions?.surfaceBackground,
   );
 }
 
 /**
  * Render a mind map from an OmmDocument (.omm file format).
  *
- * Extracts the tree structure and paper spec from the document
+ * Extracts the tree structure and surface spec from the document
  * and delegates to the layout engine.
  */
 export function renderFromOmm(
@@ -93,10 +93,10 @@ export function renderFromOmm(
   // Convert OmmDocument's MindMap tree to OrganicTree format
   const tree = convertMindMapToTree(document.rootMap);
 
-  // Determine paper kind
-  const paperKind = document.paper.kind as "a3-landscape" | "a4-landscape";
+  // Use surface preset from the document
+  const surfacePreset = document.surface.preset;
 
-  return renderFromTree(tree, { paperKind, renderOptions: options });
+  return renderFromTree(tree, { surfacePreset, renderOptions: options });
 }
 
 /**

@@ -113,7 +113,7 @@ describe("coverage-gaps-smoke — poison XSS protocol", () => {
   it("poison-xss-protocol.json renders without crash (URL is not used in renderer)", () => {
     const tree = loadOrganicTreeFixture("poison-xss-protocol");
     const result = renderFromTree(tree, {
-      paperKind: "a4-landscape",
+      surfacePreset: "sqrt2-landscape",
       renderOptions: { measure: createMockMeasure() },
     });
     expect(result.svg.length).toBeGreaterThan(0);
@@ -127,7 +127,7 @@ describe("coverage-gaps-smoke — poison text injection", () => {
   it("poison-text-injection.json renders without crash — text is safely truncated", () => {
     const tree = loadOrganicTreeFixture("poison-text-injection");
     const result = renderFromTree(tree, {
-      paperKind: "a4-landscape",
+      surfacePreset: "sqrt2-landscape",
       renderOptions: { measure: createMockMeasure() },
     });
     expect(result.svg.length).toBeGreaterThan(0);

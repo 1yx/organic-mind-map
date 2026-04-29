@@ -1,18 +1,27 @@
 /**
- * Browser-side SVG loading and lightweight safety guard.
+ * Browser-side SVG loading and content safety guard.
  *
- * This module fetches controlled SVG URLs (already validated and allowlisted
- * by the CLI), applies lightweight safety checks, and returns the sanitized
- * SVG string or null on failure.
+ * This module fetches SVG URLs (treated as UNTRUSTED content — the CLI
+ * does NOT validate, allowlist, or sanitize SVG URLs), applies DOMParser-
+ * based safety checks, and returns the SVG string or null on failure.
  *
- * The guard rejects:
- * - <script>, <foreignObject>, and unknown executable content
- * - Event handler attributes (onclick, onload, etc.)
- * - External href / xlink:href references
- * - CSS url(...) references
- * - Embedded raster or data URL images
+ * The URL gate (isAllowedSvgUrl in svg-allowlist.ts) should be called by
+ * Web BEFORE calling loadControlledSvg(). This module handles content safety
+ * after fetch.
  *
- * If uncertain, the guard rejects and falls back to built-in visuals.
+ * Safety algorithm (DOMParser-based, primary):
+ * 1. Parse SVG text with DOMParser as image/svg+xml
+ * 2. Verify the root element is <svg>
+ * 3. Traverse the parsed tree against an explicit allowlist of SVG elements
+ *    and attributes
+ * 4. Reject: script, foreignObject, event attributes (on*), external
+ *    href/xlink:href (non-fragment), CSS url(...), raster/data image
+ *    references, non-SVG content, oversized responses, any non-allowlisted
+ *    elements or attributes
+ *
+ * Coarse preflight (regex, supplemental):
+ * - Quick reject for obviously dangerous patterns before DOMParser parsing
+ * - NOT the primary safety mechanism — DOMParser traversal is authoritative
  */
 
 /** Configuration for SVG loading. */
@@ -26,7 +35,283 @@ export type SvgLoadOptions = {
 const DEFAULT_TIMEOUT_MS = 10_000;
 const DEFAULT_MAX_SIZE_BYTES = 65_536;
 
-// --- Unsafe patterns ---
+// --- Explicit allowlists for DOMParser traversal ---
+
+/**
+ * Elements allowed in a controlled center SVG.
+ * Anything not in this list is rejected.
+ */
+const ALLOWED_ELEMENTS = new Set([
+  "svg",
+  "g",
+  "path",
+  "circle",
+  "ellipse",
+  "rect",
+  "line",
+  "polyline",
+  "polygon",
+  "text",
+  "tspan",
+  "title",
+  "desc",
+  "metadata",
+  "defs",
+  "use",
+  "clippath",
+  "mask",
+  "lineargradient",
+  "radialgradient",
+  "stop",
+  "pattern",
+  "symbol",
+  // Animation elements
+  "animate",
+  "animatetransform",
+  "animatemotion",
+  "set",
+] as const);
+
+/**
+ * Attributes allowed in a controlled center SVG.
+ * Anything not in this list is rejected.
+ *
+ * Standard SVG presentation attributes, geometry attributes, and
+ * structural attributes are included. Event attributes (on*) are
+ * explicitly excluded.
+ */
+const ALLOWED_ATTRIBUTES = new Set([
+  // Core SVG attributes
+  "xmlns",
+  "viewbox",
+  "width",
+  "height",
+  "x",
+  "y",
+  "cx",
+  "cy",
+  "r",
+  "rx",
+  "ry",
+  "d",
+  "points",
+  "x1",
+  "y1",
+  "x2",
+  "y2",
+  "dx",
+  "dy",
+  "rotate",
+  "textlength",
+  "lengthadjust",
+  "startoffset",
+  "method",
+  "spacing",
+  "preserveaspectratio",
+  "transform",
+  // Gradient / pattern attributes
+  "id",
+  "gradientunits",
+  "gradienttransform",
+  "patternunits",
+  "patterntransform",
+  "patterncontentunits",
+  "spreadmethod",
+  // Stop attributes
+  "offset",
+  "stop-color",
+  "stop-opacity",
+  // Clip-path / mask attributes
+  "clippathunits",
+  "maskcontentunits",
+  "maskunits",
+  // Presentation attributes
+  "fill",
+  "fill-rule",
+  "fill-opacity",
+  "stroke",
+  "stroke-width",
+  "stroke-linecap",
+  "stroke-linejoin",
+  "stroke-dasharray",
+  "stroke-dashoffset",
+  "stroke-miterlimit",
+  "stroke-opacity",
+  "opacity",
+  "display",
+  "visibility",
+  "color",
+  "color-interpolation",
+  "color-interpolation-filters",
+  "font-family",
+  "font-size",
+  "font-style",
+  "font-weight",
+  "font-variant",
+  "text-anchor",
+  "text-decoration",
+  "text-rendering",
+  "letter-spacing",
+  "word-spacing",
+  "dominant-baseline",
+  "alignment-baseline",
+  "baseline-shift",
+  "direction",
+  "unicode-bidi",
+  "writing-mode",
+  "glyph-orientation-horizontal",
+  "glyph-orientation-vertical",
+  "overflow",
+  "shape-rendering",
+  "image-rendering",
+  // Link attributes (fragment-only href is allowed via traversal logic)
+  "href",
+  // Masking and clipping attributes
+  "clip-path",
+  "clip-rule",
+  "mask",
+  "filter",
+  // Animation attributes
+  "attributename",
+  "attributetype",
+  "from",
+  "to",
+  "values",
+  "begin",
+  "dur",
+  "end",
+  "repeatcount",
+  "repeatdur",
+  "fill",
+  "calcmode",
+  "keytimes",
+  "keysplines",
+  "keypoints",
+  "additive",
+  "accumulate",
+  "path",
+  "origin",
+  "type",
+  // Use/symbol
+  "externalresourcesrequired",
+] as const);
+
+/**
+ * Check if an attribute name is an event handler attribute (on*).
+ * These are NEVER allowed.
+ */
+function isEventAttribute(attrName: string): boolean {
+  // Use localName comparison (lowercase) for robustness
+  return /^on/i.test(attrName.toLowerCase());
+}
+
+/**
+ * Check if an href or xlink:href value is a fragment reference only.
+ * External URLs and data: URLs are rejected.
+ */
+function isFragmentOnlyHref(value: string): boolean {
+  const trimmed = value.trim();
+  // Fragment-only: starts with #
+  if (trimmed.startsWith("#")) return true;
+  // Empty is also fine (some attributes allow empty)
+  if (trimmed === "") return true;
+  return false;
+}
+
+/**
+ * Check if a style attribute value contains url(...) with external
+ * or data references.
+ */
+function styleContainsExternalUrl(value: string): boolean {
+  return /url\s*\(\s*["']?(?:https?:\/\/|data:)/i.test(value);
+}
+
+/**
+ * Check if an attribute is an href or xlink:href and validate it.
+ * Returns true if safe, false if the href should cause rejection.
+ * Returns undefined if this attribute is not an href.
+ */
+function checkHrefAttribute(attr: Attr): boolean | undefined {
+  const attrName = attr.name.toLowerCase();
+  const isXlinkHref =
+    attrName === "xlink:href" ||
+    (attr.localName === "href" &&
+      attr.namespaceURI === "http://www.w3.org/1999/xlink");
+  if (isXlinkHref) {
+    return isFragmentOnlyHref(attr.value);
+  }
+
+  const isHref = attr.localName.toLowerCase() === "href" && !attr.namespaceURI;
+  if (isHref) {
+    if (!isFragmentOnlyHref(attr.value)) return false;
+    return ALLOWED_ATTRIBUTES.has("href");
+  }
+
+  return undefined; // not an href attribute
+}
+
+/**
+ * Validate all attributes on a DOM element against the allowlists.
+ * Returns true if all attributes are safe, false on any violation.
+ */
+function validateAttributes(element: Element): boolean {
+  const attrs = element.attributes;
+  for (let i = 0; i < attrs.length; i++) {
+    const attr = attrs[i]!;
+    const attrName = attr.name.toLowerCase();
+
+    // Reject all event attributes (on*)
+    if (isEventAttribute(attrName)) return false;
+
+    // Check href/xlink:href attributes
+    const hrefCheck = checkHrefAttribute(attr);
+    if (hrefCheck !== undefined) {
+      if (!hrefCheck) return false;
+      continue;
+    }
+
+    // Check non-allowlisted attributes (except xmlns variants)
+    const isXmlns = attrName.startsWith("xmlns");
+
+    const isAllowed =
+      isXmlns || ALLOWED_ATTRIBUTES.has(attr.localName.toLowerCase() as any);
+    if (!isAllowed) return false;
+
+    // Check style attributes for url(...)
+    if (attr.localName.toLowerCase() === "style") {
+      if (styleContainsExternalUrl(attr.value)) return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Traverse a DOM node tree and validate all elements and attributes
+ * against the explicit allowlists.
+ *
+ * Returns true if the entire tree is safe, false if any violation found.
+ */
+function traverseAndValidate(node: Element): boolean {
+  const tagName = node.tagName.toLowerCase();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (!ALLOWED_ELEMENTS.has(tagName as any)) {
+    return false;
+  }
+
+  if (!validateAttributes(node)) return false;
+
+  // Recurse into child elements
+  const children = node.children;
+  for (let i = 0; i < children.length; i++) {
+    if (!traverseAndValidate(children[i]!)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+// --- Unsafe patterns (coarse preflight) ---
 
 /** Tags that are never allowed in a controlled center SVG. */
 const UNSAFE_TAGS = [
@@ -63,29 +348,69 @@ const UNSAFE_PATTERNS = [
 ] as const;
 
 /**
- * Check an SVG response string against lightweight safety patterns.
- * Returns true if the SVG is considered safe, false if it should be rejected.
+ * Coarse preflight check using regex patterns.
  *
- * This is intentionally conservative — when in doubt, reject.
+ * This is a fast reject for obviously dangerous content BEFORE the more
+ * expensive DOMParser traversal. It is NOT the primary safety mechanism.
  */
-export function isSvgSafe(svgContent: string): boolean {
+function preflightCheck(svgContent: string): boolean {
   for (const pattern of UNSAFE_PATTERNS) {
     if (pattern.test(svgContent)) {
       return false;
     }
   }
+  return true;
+}
 
+/**
+ * DOMParser-based SVG content safety check (primary).
+ *
+ * Parses SVG text with DOMParser as image/svg+xml, then traverses the
+ * parsed DOM tree against explicit allowlists of SVG elements and attributes.
+ *
+ * Returns true if the SVG is considered safe, false if rejected.
+ */
+export function isSvgSafe(svgContent: string): boolean {
   const trimmed = svgContent.trimStart();
   if (!trimmed.startsWith("<svg")) {
     return false;
   }
 
-  return true;
+  // Coarse preflight first (fast reject for obvious dangers)
+  if (!preflightCheck(svgContent)) {
+    return false;
+  }
+
+  // DOMParser-based traversal (primary safety check)
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svgContent, "image/svg+xml");
+
+    // Check for parse errors
+    const parseError = doc.querySelector("parsererror");
+    if (parseError) {
+      return false;
+    }
+
+    // Root must be <svg>
+    const root = doc.documentElement;
+    if (root.tagName.toLowerCase() !== "svg") {
+      return false;
+    }
+
+    // Traverse the entire tree
+    return traverseAndValidate(root);
+  } catch {
+    return false;
+  }
 }
 
 /**
  * Fetch a controlled SVG URL with timeout and size limit.
  * Returns the SVG content string if safe, or null on any failure.
+ *
+ * IMPORTANT: Call isAllowedSvgUrl() BEFORE calling this function.
+ * This function handles content safety AFTER fetch.
  *
  * Never throws — returns null on all failure paths.
  */
@@ -185,4 +510,14 @@ function validateSvgResponse(text: string, response: Response): string | null {
 /** Get the list of unsafe tag names (for testing). */
 export function getUnsafeTags(): readonly string[] {
   return UNSAFE_TAGS;
+}
+
+/** Get the list of allowed element names (for testing). */
+export function getAllowedElements(): ReadonlySet<string> {
+  return ALLOWED_ELEMENTS;
+}
+
+/** Get the list of allowed attribute names (for testing). */
+export function getAllowedAttributes(): ReadonlySet<string> {
+  return ALLOWED_ATTRIBUTES;
 }

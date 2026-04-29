@@ -27,8 +27,8 @@ export type DoExportParams = {
   containerWidth: number;
   /** Container height in CSS pixels. */
   containerHeight: number;
-  /** Paper kind for aspect ratio. */
-  paperKind?: string;
+  /** Explicit surface aspect ratio override. */
+  aspectRatio?: number;
   /** Optional export configuration. */
   options?: ExportCanvasOptions & { filename?: string };
 };
@@ -80,7 +80,7 @@ async function executeExport(
 ): Promise<void> {
   if (!state.canExport.value) return;
 
-  const { container, containerWidth, containerHeight, paperKind, options } =
+  const { container, containerWidth, containerHeight, aspectRatio, options } =
     params;
 
   state.exporting.value = true;
@@ -97,7 +97,7 @@ async function executeExport(
       svgString: svg,
       containerWidth,
       containerHeight,
-      paperKind,
+      aspectRatio,
       exportOptions: options,
     });
 

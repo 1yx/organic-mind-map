@@ -2,10 +2,9 @@
   "id": "omm-a4-center-visual-001",
   "version": 1,
   "title": "A4 Mind Map with Center Visual",
-  "paper": {
-    "kind": "a4-landscape",
-    "widthMm": 297,
-    "heightMm": 210
+  "surface": {
+    "preset": "sqrt2-landscape",
+    "aspectRatio": 1.4142
   },
   "organicSeed": "seed456",
   "rootMap": {

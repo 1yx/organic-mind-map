@@ -6,7 +6,7 @@
  * Tasks covered:
  * - 3.1: Convert serialized SVG into a Blob URL or data URL (in svg-serialization.ts)
  * - 3.2: Draw the SVG image into a browser canvas
- * - 3.3: Preserve A3/A4 landscape aspect ratio in the canvas dimensions
+ * - 3.3: Preserve bounded surface aspect ratio in the canvas dimensions
  * - 3.4: Derive canvas physical dimensions from container size, devicePixelRatio, and memory safety
  * - 3.5: Avoid forcing canvas dimensions to equal the full logical SVG viewBox size
  * - 3.6: Reduce scale or report a local error when canvas exceeds safe browser limits
@@ -16,15 +16,10 @@
 import { svgToBlobUrl, revokeBlobUrl } from "./svg-serialization.js";
 import type { ExportCanvasOptions } from "./export-canvas-types.js";
 
-// ─── Paper Aspect Ratios ─────────────────────────────────────────────────
+// ─── Surface Aspect Ratios ────────────────────────────────────────────────
 
-/** Paper aspect ratios (width / height) for landscape orientations. */
-const PAPER_ASPECT_RATIOS: Record<string, number> = {
-  "a3-landscape": 420 / 297,
-  "a4-landscape": 297 / 210,
-};
-
-const DEFAULT_ASPECT_RATIO = 420 / 297; // A3 landscape fallback
+/** Default MVP surface aspect ratio (sqrt2-landscape ≈ 1.414). */
+const DEFAULT_SURFACE_ASPECT = Math.SQRT2;
 
 // ─── Safe Canvas Limits ──────────────────────────────────────────────────
 
@@ -114,31 +109,29 @@ export type CalculateCanvasDimensionsOptions = {
   containerWidth: number;
   /** The visible container height in CSS pixels. */
   containerHeight: number;
-  /** The paper size (e.g. "a3-landscape", "a4-landscape"). */
-  paperKind?: string;
+  /** Explicit aspect ratio override. Defaults to MVP surface ratio. */
+  aspectRatio?: number;
   /** Optional export configuration. */
   options?: ExportCanvasOptions;
 };
 
 /**
- * Calculate safe canvas dimensions preserving paper aspect ratio.
+ * Calculate safe canvas dimensions preserving surface aspect ratio.
  *
  * Tasks 3.3-3.6: Derive dimensions from container and DPR,
- * preserve paper ratio, avoid exceeding browser limits.
+ * preserve surface ratio, avoid exceeding browser limits.
  */
 export function calculateCanvasDimensions(
   dims: CalculateCanvasDimensionsOptions,
 ): CanvasDimensions | { error: string } {
-  const { containerWidth, containerHeight, paperKind, options } = dims;
-  const aspectRatio =
-    (paperKind ? PAPER_ASPECT_RATIOS[paperKind] : undefined) ??
-    DEFAULT_ASPECT_RATIO;
+  const { containerWidth, containerHeight, aspectRatio, options } = dims;
+  const effectiveRatio = aspectRatio ?? DEFAULT_SURFACE_ASPECT;
 
   const dpr = resolveDpr(options);
   const { fitWidth, fitHeight } = fitToAspectRatio(
     containerWidth,
     containerHeight,
-    aspectRatio,
+    effectiveRatio,
   );
 
   let [canvasWidth, canvasHeight] = clampToMaxDimension(
@@ -197,7 +190,7 @@ export function drawSvgToCanvas(
         return;
       }
 
-      // White background (paper)
+      // White background (surface)
       ctx.fillStyle = "#FFFFFF";
       ctx.fillRect(0, 0, width, height);
 
@@ -280,8 +273,8 @@ export type ExportPngOptions = {
   containerWidth: number;
   /** The preview container height in CSS pixels. */
   containerHeight: number;
-  /** The paper kind for aspect ratio. */
-  paperKind?: string;
+  /** Explicit surface aspect ratio. Defaults to MVP sqrt2-landscape ratio. */
+  aspectRatio?: number;
   /** Optional export configuration. */
   exportOptions?: ExportCanvasOptions & { filename?: string };
 };
@@ -289,7 +282,7 @@ export type ExportPngOptions = {
 /**
  * Full PNG export pipeline.
  *
- * 1. Calculate canvas dimensions from container and paper ratio
+ * 1. Calculate canvas dimensions from container and surface ratio
  * 2. Draw serialized SVG onto canvas
  * 3. Convert canvas to PNG
  * 4. Trigger download
@@ -301,14 +294,14 @@ export async function exportPng(
     svgString,
     containerWidth,
     containerHeight,
-    paperKind,
+    aspectRatio,
     exportOptions: options,
   } = opts;
   // Calculate safe dimensions (tasks 3.3-3.6)
   const dims = calculateCanvasDimensions({
     containerWidth,
     containerHeight,
-    paperKind,
+    aspectRatio,
     options,
   });
 

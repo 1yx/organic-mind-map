@@ -27,9 +27,9 @@ export type RenderResult = {
 export type RenderOptions = {
   /** Measurement adapter for text width computation. If omitted, uses a default heuristic. */
   measure?: TextMeasurementAdapter;
-  /** Background color for the paper (CSS color string). Default: "#FFFFFF". */
-  paperBackground?: string;
-  /** Margin ratio applied to each side of the paper. Default: 0.05 (5%). */
+  /** Background color for the surface (CSS color string). Default: "#FFFFFF". */
+  surfaceBackground?: string;
+  /** Margin ratio applied to each side of the surface. Default: 0.05 (5%). */
   marginRatio?: number;
 };
 
@@ -105,7 +105,7 @@ export type BranchGeometry = {
 export type CenterGeometry = {
   /** Bounding box of the center visual (including padding). */
   boundingBox: LayoutBox;
-  /** The center point of the paper. */
+  /** The center point of the surface. */
   centerPoint: Point;
   /** The SVG content for the center visual (inline SVG string). */
   svgContent: string;
@@ -114,12 +114,12 @@ export type CenterGeometry = {
 };
 
 export type LayoutGeometry = {
-  /** Paper kind used for this layout. */
-  paperKind: "a3-landscape" | "a4-landscape";
+  /** Surface preset used for this layout. */
+  surfacePreset: string;
   /** ViewBox string for the SVG. */
   viewBox: string;
-  /** Paper bounds in SVG units. */
-  paperBounds: LayoutBox;
+  /** Surface bounds in SVG units. */
+  surfaceBounds: LayoutBox;
   /** Usable area after margins. */
   safeArea: LayoutBox;
   /** Center visual geometry. */

@@ -5,9 +5,7 @@
  * Uses a pluggable TextMeasurementAdapter so tests can mock Canvas.
  * NEVER mounts hidden DOM/SVG elements or calls getBBox().
  *
- * Coordinate system: 10 SVG units = 1mm.
- * A3 landscape viewBox: "0 0 4200 2970"
- * A4 landscape viewBox: "0 0 2970 2100"
+ * Coordinate system: SVG units. MVP sqrt2-landscape surface viewBox: "0 0 4200 2970"
  */
 
 import type { OrganicTree, LayoutBox, Point } from "@omm/core";
@@ -28,7 +26,7 @@ import {
   assignBranchSectors,
 } from "./seed.js";
 import {
-  computePaperLayout,
+  computeSurfaceLayout,
   boxesOverlap,
   clippedTextDiagnostic,
   layoutOverflowDiagnostic,
@@ -182,7 +180,7 @@ export type LayoutResult = {
 };
 
 export type LayoutOptions = {
-  paperKind: "a3-landscape" | "a4-landscape";
+  surfacePreset?: string;
   centerVisualSvg: string;
   centerUsedFallback: boolean;
   measure: TextMeasurementAdapter;
@@ -196,18 +194,19 @@ export function computeLayout(
   const diag: RenderDiagnostic[] = [];
   const serialized = stableSerializeTree(tree);
   const contentHash = deriveOrganicSeed(serialized);
-  const { paperBounds, safeArea, viewBox, centerPoint } = computePaperLayout(
-    opts.paperKind,
-    opts.marginRatio ?? 0.05,
-  );
-  const center = buildCenter(centerPoint, paperBounds, opts);
+  const { surfaceBounds, safeArea, viewBox, centerPoint } =
+    computeSurfaceLayout(
+      opts.surfacePreset ?? "sqrt2-landscape",
+      opts.marginRatio ?? 0.05,
+    );
+  const center = buildCenter(centerPoint, surfaceBounds, opts);
   const layoutNodes = buildLayoutTree(tree, contentHash);
   const ctx: Ctx = {
     nodes: layoutNodes,
     branches: {},
     boxes: [center.boundingBox],
     order: [],
-    paper: paperBounds,
+    paper: surfaceBounds,
     safe: safeArea,
     measure: opts.measure,
     diag,
@@ -224,9 +223,9 @@ export function computeLayout(
   runCollisionDetection(ctx);
   return {
     geometry: {
-      paperKind: opts.paperKind,
+      surfacePreset: opts.surfacePreset ?? "sqrt2-landscape",
       viewBox,
-      paperBounds,
+      surfaceBounds,
       safeArea,
       center,
       branches: ctx.branches,

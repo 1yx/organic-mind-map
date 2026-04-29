@@ -2,10 +2,9 @@
   "id": "omm-invalid-paper-001",
   "version": 1,
   "title": "Invalid Paper Kind",
-  "paper": {
-    "kind": "a1-portrait",
-    "widthMm": 841,
-    "heightMm": 594
+  "surface": {
+    "preset": "invalid-landscape",
+    "aspectRatio": 1.4142
   },
   "organicSeed": "seed789",
   "rootMap": {
