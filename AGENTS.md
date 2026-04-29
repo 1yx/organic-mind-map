@@ -10,13 +10,20 @@ The current MVP is not a visual editor. The Phase 1 flow is:
 
 ```text
 Agent CLI + skill
-  -> concise OrganicTree (JSON)
-  -> project CLI validation and capacity checks
-  -> CLI passes PreviewPayload (OrganicTree + IDs/Colors) to local Web preview server
+  -> OrganicTree JSON (LLM-produced semantic tree)
+  -> CLI validation and capacity checks
+  -> CLI passes validated OrganicTree to local Web preview server
   -> browser-side DOM/SVG measurement and layout
   -> read-only SVG preview (Organic Mind Map / OMM)
   -> .omm (OmmDocument with layout snapshot) and PNG export from the browser
 ```
+
+Use these terms consistently:
+
+- `OrganicTree`: Agent/LLM-produced semantic tree and the only CLI preview input contract.
+- `OmmDocument`: final `.omm` document exported by the browser with a layout snapshot.
+
+The CLI is a Validator + Service Starter: it checks whether the OrganicTree is valid and starts the local preview service. The browser owns domain/view instantiation, IDs, colors, organic seed, center fallback, layout, `.omm` export, and PNG export.
 
 Do not add `.omm` visual editing, drag/drop editing, undo/redo, path text editing, presentation playback, cloud sync, accounts, or Plus services to MVP changes unless a change document explicitly asks for it.
 
@@ -106,8 +113,8 @@ Important distinction:
 
 MVP includes:
 
-- Agent skill list contract.
-- CLI contract validation.
+- Agent skill `OrganicTree` contract.
+- CLI OrganicTree validation.
 - CLI capacity threshold checks with retry-friendly errors for Gemini CLI / Codex CLI / Claude Code.
 - Local preview server.
 - Browser-side text measurement and layout.
@@ -139,7 +146,7 @@ Do not create boxed keyword nodes in the strict organic map. Text belongs on bra
 
 Prefer focused tests that match the change:
 
-- Contract validation tests for OrganicTree input.
+- Contract validation tests for `OrganicTree` input boundaries.
 - Capacity threshold tests for oversized input.
 - Schema validation for `.omm`.
 - Deterministic seed/id tests.
@@ -160,7 +167,9 @@ When a decision changes behavior, update all affected surfaces:
 Keep docs consistent on these terms:
 
 - Use "Agent CLI + agent skill" for orchestration.
-- Use "CLI validation and local preview startup", not "CLI generates final layout".
+- Use "`OrganicTree`" for the Agent/LLM-produced semantic tree and CLI preview input.
+- Use "`OmmDocument`" for the final `.omm` export with layout snapshot.
+- Use "CLI validation and local preview startup", not "CLI transforms input", "CLI generates final layout", or "CLI builds PreviewPayload".
 - Use "browser-side layout and export" for final `.omm` and PNG output.
 
 ## Editing Guidelines

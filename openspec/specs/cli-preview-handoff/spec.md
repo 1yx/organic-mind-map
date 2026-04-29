@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Preview handoff command
-The system SHALL provide an `omm preview <input>` CLI command that reads OrganicTree JSON and hands a `PreviewPayload` to the local preview server module.
+The system SHALL provide an `omm preview <input>` CLI command that reads OrganicTree JSON and hands validated OrganicTree to the local preview server module.
 
 #### Scenario: Valid file input
 - **WHEN** a user runs `omm preview input.json` with a readable JSON file
@@ -23,7 +23,7 @@ The system SHALL allow the preview command to read structured OrganicTree JSON f
 - **THEN** the CLI exits with parse error code `1` and a path-independent parse message
 
 ### Requirement: OrganicTree validation
-The system SHALL validate the input against the `organic-tree-contract` before creating any `PreviewPayload` or calling the local preview server module.
+The system SHALL validate the input against the `organic-tree-contract` before calling the local preview server module.
 
 #### Scenario: Valid OrganicTree
 - **WHEN** the parsed input satisfies the OrganicTree contract
@@ -38,50 +38,50 @@ The system SHALL reject inputs that exceed MVP capacity limits before handing da
 
 #### Scenario: Input is within capacity
 - **WHEN** total nodes, depth, siblings, main branches, and concept width stay within configured limits
-- **THEN** the CLI proceeds to `PreviewPayload` handoff
+- **THEN** the CLI proceeds to hand off the validated OrganicTree directly
 
 #### Scenario: Input exceeds capacity
 - **WHEN** any configured MVP capacity limit is exceeded
 - **THEN** the CLI exits with code `2` and returns regeneration-oriented feedback for the calling Agent CLI
 
-### Requirement: PreviewPayload handoff
-The system SHALL expose a `PreviewPayload` to the browser preview flow instead of a partial `OmmDocument`.
+### Requirement: OrganicTree direct handoff
+The system SHALL expose the validated `OrganicTree` to the browser preview flow instead of a `PreviewPayload` or partial `OmmDocument`.
 
-#### Scenario: PreviewPayload is produced
+#### Scenario: OrganicTree is handed off
 - **WHEN** input passes OrganicTree validation and capacity checks
-- **THEN** the CLI exposes a `PreviewPayload` containing validated semantic tree data and minimal preview options
+- **THEN** the CLI exposes the validated OrganicTree directly to the local Web preview via `/api/document`
 
 #### Scenario: Partial OmmDocument attempted
 - **WHEN** the CLI attempts to expose an object typed or shaped as `OmmDocument` without browser-computed layout
 - **THEN** the handoff is invalid because only the browser creates valid `OmmDocument` exports
 
-### Requirement: Paper option handling
-The system SHALL support selecting A3 landscape or A4 landscape paper as preview metadata.
-
-#### Scenario: Paper omitted
-- **WHEN** neither the input contract nor CLI flags specify paper
-- **THEN** the CLI includes `a3-landscape` in the `PreviewPayload`
-
-#### Scenario: Unsupported paper option
-- **WHEN** the user passes an unsupported paper value
-- **THEN** the CLI exits with code `1` and reports the invalid option
-
 ### Requirement: No domain assembly in CLI
-The system SHALL NOT assign node IDs, organic seeds, colors, center visual fallbacks, branch styles, final layout coordinates, `.omm` layout snapshots, PNG export, or network image fetching inside the CLI.
+The system SHALL NOT assign node IDs, organic seeds, colors, center visual fallbacks, branch styles, final layout coordinates, `.omm` layout snapshots, PNG export, network image fetching, or svgUrl allowlist filtering inside the CLI.
 
-#### Scenario: Valid payload handoff
+#### Scenario: Valid OrganicTree handoff
 - **WHEN** the CLI successfully validates and capacity-checks input
-- **THEN** it hands off semantic data without generated node IDs, branch colors, organic seed, fallback center visual IDs, final layout coordinates, or fetched image content
+- **THEN** it hands off the raw OrganicTree without generated node IDs, branch colors, organic seed, fallback center visual IDs, final layout coordinates, fetched image content, or allowlist-filtered URLs
 
 #### Scenario: PNG export requested from CLI
 - **WHEN** a user requests one-shot PNG export from the CLI
 - **THEN** the CLI rejects the request because PNG export is browser-side in Phase 1
 
+### Requirement: No paper option in CLI
+The system SHALL NOT support a `--paper` CLI flag or any CLI-side paper selection.
+
+#### Scenario: Paper is omitted from input
+- **WHEN** the input OrganicTree does not contain a `paper` field
+- **THEN** the CLI does not add one; the browser determines default paper proportions
+
+#### Scenario: Unsupported paper option is passed
+- **WHEN** a legacy command attempts `--paper a3-landscape`
+- **THEN** the CLI rejects the option because paper proportions are browser-owned
+
 ### Requirement: Local preview server handoff
 The system SHALL call the local preview server module after successful validation and capacity checks, while the server module owns HTTP startup details.
 
 #### Scenario: Preview handoff succeeds
-- **WHEN** the local preview server module accepts the `PreviewPayload`
+- **WHEN** the local preview server module accepts the validated OrganicTree
 - **THEN** the CLI delegates HTTP listener setup, `/api/document`, port handling, and URL output to that module
 
 #### Scenario: Preview handoff fails

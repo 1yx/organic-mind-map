@@ -1,10 +1,10 @@
 ## ADDED Requirements
 
 ### Requirement: Local preview server startup
-The system SHALL provide a local preview server module callable by `cli-preview-handoff` with a validated `PreviewPayload` or `.omm` document.
+The system SHALL provide a local preview server module callable by `cli-preview-handoff` with a validated `OrganicTree` or `.omm` document.
 
-#### Scenario: Server starts with preview payload
-- **WHEN** `cli-preview-handoff` calls the local preview server with a valid `PreviewPayload`
+#### Scenario: Server starts with OrganicTree
+- **WHEN** `cli-preview-handoff` calls the local preview server with a valid `OrganicTree`
 - **THEN** the server starts a localhost HTTP listener, keeps the process attached, and prints a ready marker containing PID and preview URL
 
 #### Scenario: Server starts with OMM document
@@ -12,11 +12,11 @@ The system SHALL provide a local preview server module callable by `cli-preview-
 - **THEN** the server exposes that document to the Web preview without requiring a cloud service
 
 ### Requirement: Document API endpoint
-The server SHALL expose the selected preview payload or `.omm` document through a local HTTP endpoint.
+The server SHALL expose the selected preview data through a local HTTP endpoint.
 
 #### Scenario: Browser requests document data
 - **WHEN** the Web preview requests `GET /api/document`
-- **THEN** the server returns the process-scoped `PreviewPayload` or `.omm` JSON
+- **THEN** the server returns the process-scoped `OrganicTree` or `.omm` JSON
 
 #### Scenario: No editing endpoints
 - **WHEN** the local preview server is running in MVP mode
@@ -47,6 +47,10 @@ The Web preview SHALL preserve the selected A3 or A4 landscape paper ratio.
 #### Scenario: A4 landscape preview
 - **WHEN** the loaded document uses A4 landscape paper
 - **THEN** the preview surface preserves the A4 landscape aspect ratio
+
+#### Scenario: OrganicTree preview uses default proportions
+- **WHEN** the server serves an `OrganicTree` without a paper specification
+- **THEN** the Web preview uses default A3 landscape proportions
 
 ### Requirement: Renderer integration boundary
 The Web preview SHALL call the read-only SVG renderer for layout and rendering while keeping renderer algorithms out of the server module.

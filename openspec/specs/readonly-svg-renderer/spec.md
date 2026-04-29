@@ -1,10 +1,10 @@
 ## ADDED Requirements
 
 ### Requirement: Read-only SVG render output
-The renderer SHALL render a valid `PreviewPayload` or `.omm` document into a non-empty SVG scene on fixed A3 or A4 landscape paper.
+The renderer SHALL render a valid `OrganicTree` or `.omm` document into a non-empty SVG scene on fixed A3 or A4 landscape paper proportions.
 
-#### Scenario: Valid preview payload renders
-- **WHEN** the renderer receives a valid `PreviewPayload`
+#### Scenario: Valid OrganicTree renders
+- **WHEN** the renderer receives a valid `OrganicTree`
 - **THEN** it returns a non-empty SVG result with the expected paper viewBox
 
 #### Scenario: Valid OMM document renders
@@ -34,13 +34,13 @@ The renderer SHALL use system font stacks for Canvas measurement and SVG text re
 - **THEN** the implementation violates the renderer contract
 
 ### Requirement: Deterministic preview instantiation
-The renderer SHALL deterministically instantiate domain state from `PreviewPayload` content.
+The renderer SHALL deterministically instantiate domain state from `OrganicTree` content.
 
-#### Scenario: Same preview payload renders twice
-- **WHEN** the same `PreviewPayload` is rendered twice
+#### Scenario: Same OrganicTree renders twice
+- **WHEN** the same `OrganicTree` is rendered twice
 - **THEN** node IDs, colors, organic seed, branch styling, and layout are stable across renders
 
-#### Scenario: Preview payload content changes
+#### Scenario: OrganicTree content changes
 - **WHEN** the OrganicTree content changes
 - **THEN** the renderer derives a different organic seed from the stable content serialization
 
@@ -82,7 +82,7 @@ The renderer SHALL include basic bounding-box collision detection and local spac
 The renderer SHALL render a compliant center visual before considering the map complete.
 
 #### Scenario: Controlled SVG URL loads
-- **WHEN** `PreviewPayload.centerVisual.svgUrl` is present and the browser loads a safe controlled SVG
+- **WHEN** `OrganicTree.center.svgUrl` is present and the browser loads a safe controlled SVG
 - **THEN** the renderer displays that SVG as the center visual
 
 #### Scenario: Controlled SVG URL is unavailable
@@ -92,6 +92,17 @@ The renderer SHALL render a compliant center visual before considering the map c
 #### Scenario: Plain text center only
 - **WHEN** the center would otherwise be represented as plain text only
 - **THEN** the renderer uses a visual fallback because plain text center is not compliant
+
+### Requirement: svgUrl allowlist filtering
+The renderer or Web layer SHALL perform allowlist filtering on `OrganicTree.center.svgUrl` before loading external SVG content.
+
+#### Scenario: Allowlisted URL is accepted
+- **WHEN** `center.svgUrl` matches the allowed host list
+- **THEN** the renderer attempts to load the SVG
+
+#### Scenario: Non-allowlisted URL is rejected
+- **WHEN** `center.svgUrl` does not match the allowed host list
+- **THEN** the renderer falls back to a built-in center visual without attempting to load the URL
 
 ### Requirement: Layout clipping and diagnostics
 The renderer SHALL keep preview rendering lightweight while reporting diagnostics for tests and development.
