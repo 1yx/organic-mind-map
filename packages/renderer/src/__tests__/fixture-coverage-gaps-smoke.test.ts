@@ -106,10 +106,7 @@ describe("coverage-gaps-smoke — paper bounds", () => {
 
 describe("coverage-gaps-smoke — structural elements", () => {
   it("stress fixtures include branch path elements and text content", () => {
-    for (const name of [
-      "stress-extreme-siblings",
-      "stress-unbalanced-tree",
-    ]) {
+    for (const name of ["stress-extreme-siblings", "stress-unbalanced-tree"]) {
       const data = loadAgentListFixture(name);
       const payload = wrapAsPreviewPayload(data, "a3-landscape");
       const result = renderFromPreview(payload, {

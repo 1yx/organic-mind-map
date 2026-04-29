@@ -3,7 +3,7 @@
  *
  * Fails fast on any document that contains URL-based font references.
  * Only system-safe font family values are allowed. Any fontFamily
- * field containing a URL (http://, https://, data:, @font-face) or
+ * field containing a URL (http://, https://, data:, \@font-face) or
  * unknown font value is rejected immediately.
  *
  * Per the fixture-coverage-gaps design decision:
@@ -55,42 +55,46 @@ function isFontFamilySafe(value: string): boolean {
 }
 
 /**
- * Recursively check an object for fontFamily fields containing unsafe values.
- * Walks into nested objects and arrays.
+ * Collect all [path, fontFamily value] pairs from nested objects/arrays.
  */
-function checkObjectForFontSafety(
+function collectFontFamilyPairs(
   obj: unknown,
   path: string,
-): OmmValidationIssue[] {
-  const issues: OmmValidationIssue[] = [];
-
-  if (!obj || typeof obj !== "object") return issues;
+): [string, string][] {
+  if (!obj || typeof obj !== "object") return [];
+  const pairs: [string, string][] = [];
 
   if (Array.isArray(obj)) {
     for (let i = 0; i < obj.length; i++) {
-      issues.push(...checkObjectForFontSafety(obj[i], `${path}[${i}]`));
+      pairs.push(...collectFontFamilyPairs(obj[i], `${path}[${i}]`));
     }
-    return issues;
+    return pairs;
   }
 
   const record = obj as Record<string, unknown>;
   for (const key of Object.keys(record)) {
     if (key === "fontFamily" && typeof record[key] === "string") {
-      const value = record[key] as string;
-      if (!isFontFamilySafe(value)) {
-        issues.push({
-          path: `${path}.fontFamily`,
-          message: `Forbidden font declaration: "${value}". Only system-safe fonts are allowed: sans-serif, serif, system-ui, monospace, cursive, fantasy`,
-          code: "font_safety.forbidden_font",
-        });
-      }
+      pairs.push([`${path}.fontFamily`, record[key] as string]);
     }
     if (typeof record[key] === "object" && record[key] !== null) {
-      issues.push(...checkObjectForFontSafety(record[key], `${path}.${key}`));
+      pairs.push(...collectFontFamilyPairs(record[key], `${path}.${key}`));
     }
   }
 
-  return issues;
+  return pairs;
+}
+
+function checkObjectForFontSafety(
+  obj: unknown,
+  path: string,
+): OmmValidationIssue[] {
+  return collectFontFamilyPairs(obj, path)
+    .filter(([, value]) => !isFontFamilySafe(value))
+    .map(([fieldPath, value]) => ({
+      path: fieldPath,
+      message: `Forbidden font declaration: "${value}". Only system-safe fonts are allowed: sans-serif, serif, system-ui, monospace, cursive, fantasy`,
+      code: "font_safety.forbidden_font" as const,
+    }));
 }
 
 /**

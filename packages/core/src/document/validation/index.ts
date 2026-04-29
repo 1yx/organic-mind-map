@@ -24,6 +24,19 @@ import { validateAssets, collectNodeAssetIds } from "./assets";
 import { checkExcludedState } from "./excluded-state";
 import { validateFontSafety } from "./font-safety";
 
+const CRITICAL_ENVELOPE_CODES = new Set([
+  "envelope.missing",
+  "envelope.missing_rootMap",
+  "envelope.missing_layout",
+  "envelope.missing_assets",
+]);
+
+function hasCriticalEnvelopeError(
+  errors: OmmValidationResult["errors"],
+): boolean {
+  return errors.some((e) => CRITICAL_ENVELOPE_CODES.has(e.code));
+}
+
 /**
  * Validates a full .omm document against all Phase 1 rules.
  *
@@ -38,17 +51,8 @@ export function validateOmmDocument(data: unknown): OmmValidationResult {
   allErrors.push(...envelopeErrors);
 
   // Early exit if envelope is fundamentally broken
-  if (envelopeErrors.length > 0) {
-    const hasCritical = envelopeErrors.some(
-      (e) =>
-        e.code === "envelope.missing" ||
-        e.code === "envelope.missing_rootMap" ||
-        e.code === "envelope.missing_layout" ||
-        e.code === "envelope.missing_assets",
-    );
-    if (hasCritical) {
-      return { valid: false, errors: allErrors, data };
-    }
+  if (envelopeErrors.length > 0 && hasCriticalEnvelopeError(envelopeErrors)) {
+    return { valid: false, errors: allErrors, data };
   }
 
   const doc = data as Record<string, unknown>;

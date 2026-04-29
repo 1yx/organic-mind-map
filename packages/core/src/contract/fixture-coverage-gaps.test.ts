@@ -15,7 +15,6 @@ import { describe, it, expect } from "vitest";
 import {
   validateAgentList,
   validateCapacity,
-  formatCapacityFeedback,
   DEFAULT_LIMITS,
   type AgentMindMapList,
 } from "./index";
@@ -150,9 +149,7 @@ describe("fixture-coverage-gaps — .omm web font declarations", () => {
     expect(
       result.errors.some((e) => e.code === "font_safety.forbidden_font"),
     ).toBe(true);
-    expect(result.errors.some((e) => e.path.includes("fontFamily"))).toBe(
-      true,
-    );
+    expect(result.errors.some((e) => e.path.includes("fontFamily"))).toBe(true);
   });
 });
 
