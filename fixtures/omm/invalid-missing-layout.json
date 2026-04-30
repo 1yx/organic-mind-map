@@ -2,10 +2,9 @@
   "id": "omm-missing-layout-001",
   "version": 1,
   "title": "Missing Layout",
-  "paper": {
-    "kind": "a3-landscape",
-    "widthMm": 420,
-    "heightMm": 297
+  "surface": {
+    "preset": "sqrt2-landscape",
+    "aspectRatio": 1.4142
   },
   "organicSeed": "seed004",
   "rootMap": {

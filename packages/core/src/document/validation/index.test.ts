@@ -33,6 +33,20 @@ describe("validateOmmDocument — valid fixtures", () => {
       true,
     );
   });
+
+  it("accepts valid-deeper-hierarchy-a3.json", () => {
+    expect(validate(loadFixture("valid-deeper-hierarchy-a3")).valid).toBe(true);
+  });
+});
+
+describe("validateOmmDocument — repair fixtures", () => {
+  it("repairs missing organicSeed when layout snapshot is present", () => {
+    const result = validate(loadFixture("repair-missing-seed-with-layout"));
+    expect(result.valid).toBe(true);
+    const doc = result.data as Record<string, unknown>;
+    expect(typeof doc.organicSeed).toBe("string");
+    expect((doc.organicSeed as string).length).toBeGreaterThan(0);
+  });
 });
 
 describe("validateOmmDocument — envelope", () => {
@@ -62,9 +76,7 @@ describe("validateOmmDocument — envelope", () => {
   });
 
   it("rejects missing organicSeed when no layout snapshot exists", () => {
-    const doc = loadFixture("valid-minimal-a3") as Record<string, unknown>;
-    const { layout: _layout, ...withoutLayout } = doc;
-    const result = validate({ ...withoutLayout, organicSeed: "" });
+    const result = validate(loadFixture("invalid-missing-seed-without-layout"));
     expect(result.valid).toBe(false);
     expect(
       result.errors.some((e) => e.code === "envelope.missing_organicSeed"),
@@ -127,6 +139,12 @@ describe("validateOmmDocument — tree", () => {
     expect(result.errors.some((e) => e.code === "tree.empty_concept")).toBe(
       true,
     );
+  });
+
+  it("rejects flat nodes dictionary (runtime topology)", () => {
+    const result = validate(loadFixture("invalid-flat-nodes"));
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.code === "tree.flat_nodes")).toBe(true);
   });
 });
 
@@ -359,5 +377,90 @@ describe("validateOmmDocument — excluded state (source)", () => {
     expect(
       result.errors.some((e) => e.code === "excluded_state.submapNavigation"),
     ).toBe(true);
+  });
+});
+
+describe("validateOmmDocument — font safety", () => {
+  it("rejects URL-based fontFamily declarations", () => {
+    const result = validate(loadFixture("invalid-web-fonts-declaration"));
+    expect(result.valid).toBe(false);
+    expect(
+      result.errors.some((e) => e.code === "font_safety.forbidden_font"),
+    ).toBe(true);
+  });
+});
+
+describe("validateOmmDocument — canonical OmmDocument shape", () => {
+  it("includes surface, organicSeed, rootMap, layout, assets, meta", () => {
+    const doc = loadFixture("valid-minimal-a3") as Record<string, unknown>;
+    expect(doc.id).toBeDefined();
+    expect(doc.version).toBe(1);
+    expect(doc.title).toBeDefined();
+    expect(doc.surface).toBeDefined();
+    expect(doc.organicSeed).toBeDefined();
+    expect(doc.rootMap).toBeDefined();
+    expect(doc.layout).toBeDefined();
+    expect(doc.assets).toBeDefined();
+    expect(doc.meta).toBeDefined();
+
+    const rootMap = doc.rootMap as Record<string, unknown>;
+    expect(rootMap.children).toBeDefined();
+    expect(Array.isArray(rootMap.children)).toBe(true);
+
+    const surface = doc.surface as Record<string, unknown>;
+    expect(surface.preset).toBe("sqrt2-landscape");
+    expect(typeof surface.aspectRatio).toBe("number");
+  });
+});
+
+function collectTreeIds(nodes: Record<string, unknown>[]): string[] {
+  const ids: string[] = [];
+  for (const node of nodes) {
+    ids.push(node.id as string);
+    const kids = node.children as Record<string, unknown>[] | undefined;
+    if (kids && kids.length > 0) {
+      ids.push(...collectTreeIds(kids));
+    }
+  }
+  return ids;
+}
+
+describe("validateOmmDocument — layout/tree ID consistency", () => {
+  it("deeper hierarchy has all layout nodes matching tree node IDs", () => {
+    const doc = loadFixture("valid-deeper-hierarchy-a3") as Record<
+      string,
+      unknown
+    >;
+    const layout = doc.layout as Record<string, unknown>;
+    const layoutNodes = layout.nodes as Record<string, unknown>;
+    const layoutBranches = layout.branches as Record<string, unknown>;
+
+    const rootMap = doc.rootMap as Record<string, unknown>;
+    const children = rootMap.children as Record<string, unknown>[];
+    const treeIds = collectTreeIds(children);
+
+    for (const nodeId of treeIds) {
+      expect(layoutNodes[nodeId]).toBeDefined();
+      expect(layoutBranches[nodeId]).toBeDefined();
+    }
+  });
+});
+
+function checkNodeNoRuntimeFields(node: Record<string, unknown>): void {
+  expect("parentId" in node).toBe(false);
+  expect("childIds" in node).toBe(false);
+  expect("displayText" in node).toBe(false);
+  const kids = node.children as Record<string, unknown>[] | undefined;
+  if (kids) {
+    for (const child of kids) checkNodeNoRuntimeFields(child);
+  }
+}
+
+describe("validateOmmDocument — no runtime fields in valid docs", () => {
+  it("no runtime topology fields present in valid documents", () => {
+    const doc = loadFixture("valid-minimal-a3") as Record<string, unknown>;
+    const rootMap = doc.rootMap as Record<string, unknown>;
+    const children = rootMap.children as Record<string, unknown>[];
+    for (const child of children) checkNodeNoRuntimeFields(child);
   });
 });

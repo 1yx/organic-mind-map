@@ -2,7 +2,10 @@
   "id": "omm-invalid-no-seed-no-layout-001",
   "version": 1,
   "title": "Invalid Missing Seed Without Layout",
-  "paper": { "kind": "a4-landscape", "widthMm": 297, "heightMm": 210 },
+  "surface": {
+    "preset": "sqrt2-landscape",
+    "aspectRatio": 1.4142
+  },
   "organicSeed": "",
   "rootMap": {
     "id": "map-noseed-001",

@@ -15,10 +15,11 @@ Documents that fail validation with specific error codes:
 - `invalid-missing-center-visual.json` — plain string instead of CenterVisual object
 - `invalid-missing-layout.json` — incomplete layout snapshot
 - `invalid-stale-parent-child-ids.json` — persisted parentId/childIds on nodes
-- `invalid-unsupported-paper.json` — unknown paper kind
+- `invalid-unsupported-paper.json` — unknown surface preset
 - `invalid-uploaded-base64-assets.json` — non-builtin asset sources
 - `invalid-web-fonts-declaration.json` — URL-based fontFamily in theme (fail-fast rejection)
 - `invalid-missing-seed-without-layout.json` — missing organicSeed with incomplete layout
+- `invalid-flat-nodes.json` — flat runtime `nodes` dictionary rejected in favor of nested `children`
 
 ### `repair-*`
 Documents that are intentionally broken but repairable:
@@ -28,7 +29,7 @@ Documents that are intentionally broken but repairable:
 
 Each `.omm` fixture follows the OmmDocument schema:
 - `id`, `version` (1), `title` — envelope fields
-- `paper` — A3/A4 landscape specification
+- `surface` — surface specification with preset and aspectRatio
 - `organicSeed` — deterministic seed for layout
 - `rootMap` — mind map tree with center visual and branches
 - `layout` — layout snapshot with geometry, paths, and viewport

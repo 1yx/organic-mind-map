@@ -2,7 +2,10 @@
   "id": "omm-test-web-fonts-001",
   "version": 1,
   "title": "Invalid Web Fonts Declaration",
-  "paper": { "kind": "a4-landscape", "widthMm": 297, "heightMm": 210 },
+  "surface": {
+    "preset": "sqrt2-landscape",
+    "aspectRatio": 1.4142
+  },
   "organicSeed": "testseed001",
   "rootMap": {
     "id": "map-webfont-001",

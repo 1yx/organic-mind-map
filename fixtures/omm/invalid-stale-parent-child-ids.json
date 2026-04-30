@@ -2,10 +2,9 @@
   "id": "omm-stale-ids-001",
   "version": 1,
   "title": "Stale Parent Child IDs",
-  "paper": {
-    "kind": "a3-landscape",
-    "widthMm": 420,
-    "heightMm": 297
+  "surface": {
+    "preset": "sqrt2-landscape",
+    "aspectRatio": 1.4142
   },
   "organicSeed": "seed003",
   "rootMap": {
