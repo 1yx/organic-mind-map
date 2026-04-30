@@ -84,6 +84,17 @@ export {
 // --- SVG Rendering ---
 export { renderSvg } from "./svg-renderer.js";
 
+// --- Branch Visual Hint Markers ---
+export {
+  resolveBranchMarker,
+  isSupportedHint,
+  renderMarkerSvg,
+  markerBoundingBox,
+  SUPPORTED_HINT_NAMES,
+  MARKER_SIZE,
+} from "./branch-markers.js";
+export type { BuiltinMarker } from "./branch-markers.js";
+
 // --- Center Visual ---
 export {
   resolveCenterVisualSync,

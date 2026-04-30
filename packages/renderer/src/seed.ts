@@ -222,6 +222,7 @@ function pushOrganicLeafNodes(
       parentId: subNode.id,
       color: mainColor,
       geometry: generateSeededGeometry(rng),
+      visualHint: leaf.visualHint,
       children: [],
     };
     subNode.children.push(leafNode);
@@ -254,6 +255,7 @@ function buildOrganicSubBranches(
       parentId: mainNode.id,
       color: mainColor,
       geometry: generateSeededGeometry(rng),
+      visualHint: sub.visualHint,
       children: [],
     };
     mainNode.children.push(subNode);
@@ -287,6 +289,7 @@ export function buildLayoutTree(tree: OrganicTree, seed: number): LayoutNode[] {
       depth: 1,
       color: mainColors[i]!,
       geometry: generateSeededGeometry(rng),
+      visualHint: main.visualHint,
       children: [],
     };
     result.push(mainNode);

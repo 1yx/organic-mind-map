@@ -32,6 +32,10 @@ import {
   layoutOverflowDiagnostic,
   unresolvedCollisionDiagnostic,
 } from "./diagnostics.js";
+import {
+  resolveBranchMarker,
+  markerBoundingBox as computeMarkerBBox,
+} from "./branch-markers.js";
 
 // ─── Default Text Measurement (heuristic) ──────────────────────────────────
 
@@ -314,6 +318,9 @@ function placeBranch(node: LayoutNode, params: BranchParams, ctx: Ctx): void {
   );
   ctx.branches[node.id] = geom;
   ctx.boxes.push(geom.boundingBox);
+  if (geom.markerBoundingBox) {
+    ctx.boxes.push(geom.markerBoundingBox);
+  }
 
   for (let c = 0; c < node.children.length; c++) {
     const span = (sector.angleEnd - sector.angleStart) / node.children.length;
@@ -370,6 +377,18 @@ function buildBranchGeom(
     height: tm.height,
   };
   if (!boxIn(bbox, ctx.safe)) ctx.diag.push(layoutOverflowDiagnostic(node.id));
+
+  // Resolve visual hint marker
+  const marker = resolveBranchMarker(node.visualHint);
+  let markerBBox: import("@omm/core").LayoutBox | undefined;
+  if (marker) {
+    // Position marker near the end of the branch (text area)
+    const mx = bi.ep.x;
+    const my = bi.ep.y;
+    const mb = computeMarkerBBox(marker, { x: mx, y: my, depth: node.depth });
+    markerBBox = { x: mb.x, y: mb.y, width: mb.width, height: mb.height };
+  }
+
   return {
     nodeId: node.id,
     concept: displayText,
@@ -385,6 +404,8 @@ function buildBranchGeom(
     textClipped,
     startPoint: bi.sp,
     endPoint: bi.ep,
+    visualHint: node.visualHint,
+    markerBoundingBox: markerBBox,
   };
 }
 

@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "title": "Branch Visual Hints Test",
+  "center": { "concept": "PROJECT PLANNING" },
+  "branches": [
+    {
+      "concept": "RESEARCH",
+      "visualHint": "lightbulb",
+      "children": [
+        { "concept": "MARKET ANALYSIS", "visualHint": "earth" },
+        { "concept": "USER STUDIES", "visualHint": "heart" }
+      ]
+    },
+    {
+      "concept": "DEVELOPMENT",
+      "visualHint": "star",
+      "children": [
+        { "concept": "FRONTEND", "visualHint": "check" },
+        { "concept": "BACKEND", "visualHint": "arrow" }
+      ]
+    },
+    {
+      "concept": "RISKS",
+      "visualHint": "warning",
+      "children": [
+        { "concept": "SECURITY", "visualHint": "lock" },
+        { "concept": "SCALABILITY", "visualHint": "unknown-hint-fallback" }
+      ]
+    }
+  ]
+}

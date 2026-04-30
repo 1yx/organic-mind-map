@@ -102,6 +102,10 @@ export type BranchGeometry = {
   startPoint: Point;
   /** End point of the branch. */
   endPoint: Point;
+  /** Optional branch visual hint string. */
+  visualHint?: string;
+  /** Bounding box of the rendered marker (if any). */
+  markerBoundingBox?: LayoutBox;
 };
 
 export type CenterGeometry = {
@@ -161,6 +165,8 @@ export type LayoutNode = {
   parentId?: string;
   color: string;
   geometry: SeededGeometry;
+  /** Optional branch visual hint string from the OrganicTree. */
+  visualHint?: string;
   children: LayoutNode[];
 };
 

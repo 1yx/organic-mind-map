@@ -76,7 +76,7 @@ export function renderFromTree(
   return buildRenderResult(
     centerResult,
     layoutResult,
-    options?.renderOptions?.surfaceBackground,
+    options?.renderOptions?.paperBackground,
   );
 }
 

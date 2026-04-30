@@ -11,6 +11,7 @@
  */
 
 import type { LayoutGeometry } from "./types.js";
+import { resolveBranchMarker, renderMarkerSvg } from "./branch-markers.js";
 
 // ─── SVG Assembly ──────────────────────────────────────────────────────────
 
@@ -137,6 +138,24 @@ function renderSingleBranch(
       ${displayText}
     </textPath>
   </text>`);
+
+  // Render branch visual hint marker (if supported)
+  if (branch.visualHint) {
+    const marker = resolveBranchMarker(branch.visualHint);
+    if (marker) {
+      const mx = branch.endPoint.x;
+      const my = branch.endPoint.y;
+      parts.push(
+        renderMarkerSvg(marker, {
+          x: mx,
+          y: my,
+          color: branch.color,
+          depth: branch.depth,
+        }),
+      );
+    }
+    // Unsupported hints are silently ignored — no marker rendered
+  }
 
   return parts.join("\n");
 }
