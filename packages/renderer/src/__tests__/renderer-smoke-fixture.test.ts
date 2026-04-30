@@ -83,8 +83,8 @@ describe("renderer-smoke-fixture — OmmDocument rendering", () => {
 
     expect(result.svg.length).toBeGreaterThan(0);
     expect(result.svg).toContain("<svg");
-    // Should contain concepts from the fixture
-    expect(result.svg).toContain("Planning");
+    // Should contain concepts from the fixture (uppercase per display rules)
+    expect(result.svg).toContain("PLANNING");
   });
 });
 

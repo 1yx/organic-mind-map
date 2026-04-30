@@ -36,6 +36,7 @@ import {
   resolveBranchMarker,
   markerBoundingBox as computeMarkerBBox,
 } from "./branch-markers.js";
+import { toDisplayLabel } from "./display-label.js";
 
 // ─── Default Text Measurement (heuristic) ──────────────────────────────────
 
@@ -444,11 +445,12 @@ function measureText(
   const sw = getStrokeWidths(node.depth);
   const textOff = (sw.start + sw.end) / 2 + getFontSize(node.depth) * 0.3;
   const fontSize = getFontSize(node.depth);
-  const tm = ctx.measure.measureText(node.concept, { fontSize });
+  const label = toDisplayLabel(node.concept);
+  const tm = ctx.measure.measureText(label, { fontSize });
   const textClipped = tm.width > branchLen * 0.95;
   const displayText = textClipped
-    ? clampText(node.concept, branchLen * 0.95, tm.width)
-    : node.concept;
+    ? clampText(label, branchLen * 0.95, tm.width)
+    : label;
   if (textClipped)
     ctx.diag.push(
       clippedTextDiagnostic(node.id, node.concept, {

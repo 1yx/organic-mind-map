@@ -57,6 +57,7 @@ describe("fixture-validation — structural validity", () => {
     "valid-center-visual-hint",
     "valid-deeper-hierarchy",
     "valid-unreachable-svg-url",
+    "valid-mixed-cjk-ascii-uppercase",
   ];
 
   for (const name of validFixtures) {
@@ -80,6 +81,7 @@ describe("fixture-validation — concept quality", () => {
     "valid-center-visual-hint",
     "valid-deeper-hierarchy",
     "valid-unreachable-svg-url",
+    "valid-mixed-cjk-ascii-uppercase",
   ];
 
   for (const name of validFixtures) {
@@ -108,6 +110,7 @@ describe("fixture-validation — capacity", () => {
     "valid-center-visual-hint",
     "valid-deeper-hierarchy",
     "valid-unreachable-svg-url",
+    "valid-mixed-cjk-ascii-uppercase",
   ];
 
   for (const name of validFixtures) {

@@ -78,6 +78,24 @@ const fixtures: Record<string, unknown> = {
       },
     ],
   },
+  "valid-mixed-cjk-ascii-uppercase.json": {
+    version: 1,
+    title: "Mixed Uppercase Test",
+    center: { concept: "AI STRATEGY" },
+    branches: [
+      {
+        concept: "PROMPT设计",
+        children: [
+          { concept: "Few-shot学习" },
+          { concept: "Chain-of-Thought" },
+        ],
+      },
+      {
+        concept: "应用场景",
+        children: [{ concept: "Code Generation" }, { concept: "文档摘要" }],
+      },
+    ],
+  },
   "invalid-missing-center.json": {
     version: 1,
     title: "Missing Center",
@@ -171,6 +189,14 @@ describe("validateOrganicTree — valid inputs", () => {
 
   it("accepts valid mixed CJK+ASCII concept fixture", () => {
     const result = validateOrganicTree(fixtures["valid-mixed-cjk-ascii.json"]);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it("accepts valid mixed CJK+ASCII uppercase concept fixture", () => {
+    const result = validateOrganicTree(
+      fixtures["valid-mixed-cjk-ascii-uppercase.json"],
+    );
     expect(result.valid).toBe(true);
     expect(result.errors).toHaveLength(0);
   });

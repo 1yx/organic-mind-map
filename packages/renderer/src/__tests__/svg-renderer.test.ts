@@ -120,11 +120,11 @@ describe("renderSvg - content", () => {
     const layout = getSampleLayout();
     const svg = renderSvg(layout);
     expect(svg).toContain("<textPath");
-    expect(svg).toContain("Branch One");
-    expect(svg).toContain("Branch Two");
-    expect(svg).toContain("Sub 1A");
-    expect(svg).toContain("Sub 2A");
-    expect(svg).toContain("Leaf 2A1");
+    expect(svg).toContain("BRANCH ONE");
+    expect(svg).toContain("BRANCH TWO");
+    expect(svg).toContain("SUB 1A");
+    expect(svg).toContain("SUB 2A");
+    expect(svg).toContain("LEAF 2A1");
   });
 
   it("does NOT render boxed node labels (no rect around text)", () => {

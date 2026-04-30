@@ -57,6 +57,22 @@ const FULL_TREE: OrganicTree = {
   },
 };
 
+const mixedTree: OrganicTree = {
+  version: 1,
+  title: "Mixed Language Map",
+  center: { concept: "AI STRATEGY" },
+  branches: [
+    {
+      concept: "PROMPT设计",
+      children: [{ concept: "Few-shot学习" }, { concept: "Chain-of-Thought" }],
+    },
+    {
+      concept: "应用场景",
+      children: [{ concept: "Code Generation" }, { concept: "文档摘要" }],
+    },
+  ],
+};
+
 const MINIMAL_OMM: OmmDocument = {
   id: "test-omm-1",
   version: 1,
@@ -173,23 +189,23 @@ describe("renderFromTree - center visual", () => {
 });
 
 describe("renderFromTree - branches", () => {
-  it("7.4: renders all branch concepts as text on path", () => {
+  it("7.4: renders all branch concepts as uppercase text on path", () => {
     const result = renderFromTree(FULL_TREE, {
       renderOptions: { measure: createMockMeasure() },
     });
 
-    expect(result.svg).toContain("Strategy");
-    expect(result.svg).toContain("Vision");
-    expect(result.svg).toContain("Long Term");
-    expect(result.svg).toContain("Goals");
-    expect(result.svg).toContain("Operations");
-    expect(result.svg).toContain("Processes");
-    expect(result.svg).toContain("Tools");
-    expect(result.svg).toContain("Software");
-    expect(result.svg).toContain("Hardware");
-    expect(result.svg).toContain("People");
-    expect(result.svg).toContain("Finance");
-    expect(result.svg).toContain("Budget");
+    expect(result.svg).toContain("STRATEGY");
+    expect(result.svg).toContain("VISION");
+    expect(result.svg).toContain("LONG TERM");
+    expect(result.svg).toContain("GOALS");
+    expect(result.svg).toContain("OPERATIONS");
+    expect(result.svg).toContain("PROCESSES");
+    expect(result.svg).toContain("TOOLS");
+    expect(result.svg).toContain("SOFTWARE");
+    expect(result.svg).toContain("HARDWARE");
+    expect(result.svg).toContain("PEOPLE");
+    expect(result.svg).toContain("FINANCE");
+    expect(result.svg).toContain("BUDGET");
   });
 
   it("7.4: no boxed node labels (no rect containers around text)", () => {
@@ -318,9 +334,9 @@ describe("renderFromOmm integration", () => {
       measure: createMockMeasure(),
     });
 
-    expect(result.svg).toContain("Branch A");
-    expect(result.svg).toContain("Sub A1");
-    expect(result.svg).toContain("Branch B");
+    expect(result.svg).toContain("BRANCH A");
+    expect(result.svg).toContain("SUB A1");
+    expect(result.svg).toContain("BRANCH B");
   });
 });
 
@@ -415,7 +431,7 @@ describe("edge cases - simple trees", () => {
     const result = renderFromTree(tree, {
       renderOptions: { measure: createMockMeasure() },
     });
-    expect(result.svg).toContain("Only");
+    expect(result.svg).toContain("ONLY");
   });
 
   it("handles tree with no branches", () => {
@@ -463,5 +479,86 @@ describe("edge cases - text handling", () => {
       (d: { kind: string }) => d.kind === "clipped-text",
     );
     expect(clippedDiags.length).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe("English uppercase - SVG text output", () => {
+  it("renders pure English concepts in uppercase", () => {
+    const result = renderFromTree(MINIMAL_TREE, {
+      renderOptions: { measure: createMockMeasure() },
+    });
+    // Branch concepts are uppercased in SVG text-on-path
+    expect(result.svg).toContain("ONLY BRANCH");
+  });
+
+  it("renders already-uppercase English concepts unchanged", () => {
+    const tree: OrganicTree = {
+      version: 1,
+      title: "Uppercase Test",
+      center: { concept: "ROOT" },
+      branches: [{ concept: "BRANCH" }],
+    };
+    const result = renderFromTree(tree, {
+      renderOptions: { measure: createMockMeasure() },
+    });
+    // Branch concept remains uppercase (center concept is not SVG text)
+    expect(result.svg).toContain("BRANCH");
+  });
+
+  it("renders mixed CJK+ASCII concepts without transformation", () => {
+    const result = renderFromTree(mixedTree, {
+      renderOptions: { measure: createMockMeasure() },
+    });
+    // Mixed CJK+ASCII should remain as-is
+    expect(result.svg).toContain("PROMPT设计");
+    expect(result.svg).toContain("Few-shot学习");
+    expect(result.svg).toContain("应用场景");
+    expect(result.svg).toContain("文档摘要");
+  });
+
+  it("renders pure English concepts in mixed tree as uppercase", () => {
+    const result = renderFromTree(mixedTree, {
+      renderOptions: { measure: createMockMeasure() },
+    });
+    // Uppercase transform is applied before clipping
+    expect(result.svg).toContain("CHAIN-OF-T");
+    expect(result.svg).toContain("CODE GENERA");
+  });
+});
+
+describe("English uppercase - BranchGeometry", () => {
+  it("preserves original concept in BranchGeometry", () => {
+    const tree: OrganicTree = {
+      version: 1,
+      title: "Preserve Test",
+      center: { concept: "strategy" },
+      branches: [{ concept: "market fit" }],
+    };
+    const result = renderFromTree(tree, {
+      renderOptions: { measure: createMockMeasure() },
+    });
+    // BranchGeometry.concept should contain the display (uppercase) label
+    const branches = Object.values(result.layout.branches) as Array<{
+      concept: string;
+    }>;
+    expect(branches.length).toBeGreaterThan(0);
+    expect(branches[0]!.concept).toBe("MARKET FIT");
+  });
+
+  it("CJK-only concepts remain unchanged in BranchGeometry", () => {
+    const tree: OrganicTree = {
+      version: 1,
+      title: "CJK Test",
+      center: { concept: "中心" },
+      branches: [{ concept: "分支" }],
+    };
+    const result = renderFromTree(tree, {
+      renderOptions: { measure: createMockMeasure() },
+    });
+    const branches = Object.values(result.layout.branches) as Array<{
+      concept: string;
+    }>;
+    expect(branches.length).toBeGreaterThan(0);
+    expect(branches[0]!.concept).toBe("分支");
   });
 });
