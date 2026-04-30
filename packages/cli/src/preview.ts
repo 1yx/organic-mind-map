@@ -454,7 +454,10 @@ async function startServer(
 ): Promise<number> {
   try {
     const normalizedTree = normalizeConcepts(tree);
-    const result = await startPreviewServerAsync(normalizedTree, options);
+    const result = await startPreviewServerAsync(normalizedTree, {
+      ...options,
+      silent: options.silent ?? isJsonMode,
+    });
 
     if (isJsonMode) {
       return emitJsonResult({

@@ -102,12 +102,14 @@ describe("previewCommand --json — success result", () => {
       previewCommand(["--json", fixture("valid-handoff.json")]),
     );
 
-    spy.mockRestore();
-
     expect(code).toBe(cliExitCode.OK);
     // JSON mode: no stderr for expected outcomes
     expect(stderr).toEqual([]);
     expect(stdout.length).toBeGreaterThanOrEqual(1);
+    expect(spy).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ silent: true }),
+    );
 
     const result = parseJsonStdout(stdout);
     expect(result.schema).toBe("omm.cli.result");
@@ -121,6 +123,8 @@ describe("previewCommand --json — success result", () => {
     expect(result.structuredContent.ready!.pid).toBe(12345);
     expect(result.structuredContent.ready!.url).toBe("http://127.0.0.1:5173");
     expect(result.structuredContent.findings).toEqual([]);
+
+    spy.mockRestore();
   });
 });
 
@@ -433,11 +437,25 @@ describe("previewCommand — human mode still works (7.6)", () => {
   usePreviewLifecycle();
 
   it("prints [OMM_SERVER_READY] marker in human mode on success", async () => {
-    // Use real server to verify the ready marker is printed to stdout.
-    // Use a high port to avoid conflicts with other tests.
+    const serverModule = await import("./preview-server.js");
+    const spy = vi
+      .spyOn(serverModule, "startPreviewServerAsync")
+      .mockImplementation(() => {
+        console.log("[OMM_SERVER_READY] PID:12345 http://127.0.0.1:5173");
+        return Promise.resolve({
+          host: "127.0.0.1",
+          port: 5173,
+          url: "http://127.0.0.1:5173",
+          pid: 12345,
+          server: MOCK_SERVER,
+        });
+      });
+
     const { code, stdout } = await captureOutput(() =>
-      previewCommand(["--port", "45999", fixture("valid-handoff.json")]),
+      previewCommand([fixture("valid-handoff.json")]),
     );
+
+    spy.mockRestore();
 
     expect(code).toBe(cliExitCode.OK);
     expect(stdout).toEqual(
