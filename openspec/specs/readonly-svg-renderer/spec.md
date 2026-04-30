@@ -1,15 +1,15 @@
 ## ADDED Requirements
 
 ### Requirement: Read-only SVG render output
-The renderer SHALL render a valid `OrganicTree` or `.omm` document into a non-empty SVG scene on fixed A3 or A4 landscape paper proportions.
+The renderer SHALL render a valid `OrganicTree` or `.omm` document into a non-empty SVG scene on a bounded landscape surface.
 
 #### Scenario: Valid OrganicTree renders via unified render() entry point
 - **WHEN** the renderer receives `render({ kind: "organic-tree", tree })` with a valid `OrganicTree`
-- **THEN** it returns a non-empty SVG result with the expected paper viewBox
+- **THEN** it returns a non-empty SVG result using the fixed MVP `sqrt2-landscape` surface ratio
 
 #### Scenario: Valid OMM document renders via unified render() entry point
 - **WHEN** the renderer receives `render({ kind: "omm-document", document })` with a valid `.omm` document
-- **THEN** it returns a non-empty SVG result using the document paper specification
+- **THEN** it returns a non-empty SVG result using the document's saved surface and layout information
 
 ### Requirement: Canvas text measurement
 The renderer SHALL use browser Canvas 2D `CanvasRenderingContext2D.measureText()` as the layout-time text measurement source for concept text.
@@ -81,12 +81,12 @@ The renderer SHALL include basic bounding-box collision detection and local spac
 ### Requirement: Center visual rendering
 The renderer SHALL render a compliant center visual before considering the map complete.
 
-#### Scenario: Controlled SVG URL loads
-- **WHEN** `OrganicTree.center.svgUrl` is present and the browser loads a safe controlled SVG
+#### Scenario: Safe inline SVG is supplied
+- **WHEN** Web supplies a loaded and safety-checked inline SVG center visual to the renderer
 - **THEN** the renderer displays that SVG as the center visual
 
 #### Scenario: Controlled SVG URL is unavailable
-- **WHEN** no center SVG URL is present, loading fails, times out, or fails the browser guard
+- **WHEN** no safe inline center SVG is supplied, loading fails, times out, is rejected, or is not available in the current render context
 - **THEN** the renderer selects a deterministic built-in center visual from the OrganicTree content hash
 
 #### Scenario: Plain text center only
@@ -94,15 +94,26 @@ The renderer SHALL render a compliant center visual before considering the map c
 - **THEN** the renderer uses a visual fallback because plain text center is not compliant
 
 ### Requirement: svgUrl allowlist filtering
-The renderer or Web layer SHALL perform allowlist filtering on `OrganicTree.center.svgUrl` before loading external SVG content.
+The renderer or Web layer SHALL provide an allowlist predicate for `OrganicTree.center.svgUrl`, and Web SHALL call it before loading external SVG content.
 
 #### Scenario: Allowlisted URL is accepted
-- **WHEN** `center.svgUrl` matches the allowed host list
-- **THEN** the renderer attempts to load the SVG
+- **WHEN** `center.svgUrl` matches the allowed HTTPS host and path pattern list
+- **THEN** Web may attempt to load the SVG
 
 #### Scenario: Non-allowlisted URL is rejected
-- **WHEN** `center.svgUrl` does not match the allowed host list
-- **THEN** the renderer falls back to a built-in center visual without attempting to load the URL
+- **WHEN** `center.svgUrl` does not match the allowed HTTPS host and path pattern list
+- **THEN** Web falls back to a built-in center visual without attempting to load the URL
+
+### Requirement: Render entry points do not perform network I/O
+The renderer SHALL keep pure render entry points free of external SVG network fetches.
+
+#### Scenario: Render OrganicTree directly
+- **WHEN** a caller invokes `render({ kind: "organic-tree", tree })`
+- **THEN** the renderer does not fetch `tree.center.svgUrl` and uses deterministic fallback unless safe inline SVG content is provided by the caller
+
+#### Scenario: Web resolves center visual asynchronously
+- **WHEN** Web wants to use `center.svgUrl`
+- **THEN** Web performs URL gate, browser fetch, and SVG safety checks before calling render with resolved safe content
 
 ### Requirement: Layout clipping and diagnostics
 The renderer SHALL keep preview rendering lightweight while reporting diagnostics for tests and development.
@@ -120,4 +131,15 @@ The renderer SHALL expose the computed geometry needed for browser-side `.omm` e
 
 #### Scenario: Browser creates final document
 - **WHEN** the browser exports `.omm` from a rendered preview
-- **THEN** the computed layout includes paper bounds, center visual bounds, branch paths, and text paths needed by the document format
+- **THEN** the computed layout includes surface bounds, center visual bounds, branch paths, and text paths needed by the document format
+
+### Requirement: MVP surface ratio
+The renderer SHALL use a single fixed MVP OrganicTree preview surface ratio named `sqrt2-landscape`.
+
+#### Scenario: OrganicTree has no surface option
+- **WHEN** an OrganicTree preview is rendered without document layout
+- **THEN** the renderer uses width/height approximately `1.414` and does not require A3/A4 paper metadata
+
+#### Scenario: Future ratio preset is needed
+- **WHEN** later phases add another bounded ratio such as `16:9`
+- **THEN** it is introduced as a render/Web surface preset rather than as an OrganicTree semantic field

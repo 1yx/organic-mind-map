@@ -23,18 +23,18 @@ The Web preview SHALL export PNG by cloning the currently rendered SVG, inlining
 - **THEN** the page displays a simple local export error
 
 ### Requirement: Paper aspect ratio preservation
-The exported PNG SHALL preserve the same A3 or A4 landscape aspect ratio shown in the local preview.
+The exported PNG SHALL preserve the same bounded surface ratio shown in the local preview.
 
-#### Scenario: A3 export
-- **WHEN** the current preview uses A3 landscape paper
-- **THEN** the PNG dimensions preserve the A3 landscape ratio
+#### Scenario: MVP OrganicTree export
+- **WHEN** the current preview uses the fixed MVP `sqrt2-landscape` surface
+- **THEN** the PNG dimensions preserve width/height approximately `1.414`
 
-#### Scenario: A4 export
-- **WHEN** the current preview uses A4 landscape paper
-- **THEN** the PNG dimensions preserve the A4 landscape ratio
+#### Scenario: Future ratio preset export
+- **WHEN** a later preview uses another supported bounded ratio preset
+- **THEN** the PNG dimensions preserve that current preview ratio
 
 ### Requirement: Adaptive export resolution
-The exported PNG SHALL use the current preview container size and a runtime-calculated safe scale factor while preserving paper aspect ratio.
+The exported PNG SHALL use the current preview container size and a runtime-calculated safe scale factor while preserving the preview surface aspect ratio.
 
 #### Scenario: Device-aware export
 - **WHEN** the user exports from a normal preview surface
@@ -52,7 +52,7 @@ The exported PNG SHALL use the current preview container size and a runtime-calc
 The exported PNG SHALL reflect the current rendered preview layout.
 
 #### Scenario: Preview contains mind map content
-- **WHEN** the preview includes paper background, center visual, branches, and text
+- **WHEN** the preview includes surface background, center visual, branches, and text
 - **THEN** the exported PNG includes the same visible content
 
 #### Scenario: Layout changes before export
@@ -68,11 +68,15 @@ PNG export SHALL use self-contained or browser-safe rendered assets and SHALL av
 
 #### Scenario: External visible asset is used
 - **WHEN** the preview SVG clone contains a visible external asset reference
-- **THEN** the export preprocessor fetches and replaces that reference with inline SVG content or a Data URL before serialization
+- **THEN** the export preprocessor rejects the uncontrolled external reference and uses deterministic fallback or blocks with a local readiness error
 
 #### Scenario: External asset cannot be inlined
 - **WHEN** a visible external asset cannot be fetched, verified, or converted to an export-safe inline form
 - **THEN** export uses a deterministic fallback or blocks with a local readiness error
+
+#### Scenario: Controlled center SVG is export-safe
+- **WHEN** a controlled SVG center visual has loaded and passed safety checks before export
+- **THEN** export uses the already loaded safe SVG content without issuing a new uncontrolled external image draw
 
 #### Scenario: Controlled center SVG is not export-safe
 - **WHEN** a controlled SVG center visual has not loaded, failed safety checks, or is not safe for canvas export

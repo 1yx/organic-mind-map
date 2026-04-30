@@ -22,9 +22,13 @@ The system SHALL require the `OrganicTree` to include a center concept and SHALL
 - **WHEN** an input JSON includes `center.visualHint`
 - **THEN** validation preserves the hint for downstream rendering
 
-#### Scenario: Center SVG URL is provided
-- **WHEN** an input JSON includes `center.svgUrl`
-- **THEN** validation preserves the URL for downstream rendering; allowlist filtering is performed by the browser/renderer
+#### Scenario: Center SVG URL is provided as string
+- **WHEN** an input JSON includes `center.svgUrl` as a string
+- **THEN** validation preserves the URL string for downstream preview handling without allowlist filtering, fetching, or rewriting
+
+#### Scenario: Center SVG URL is non-string
+- **WHEN** an input JSON includes `center.svgUrl` with a non-string value
+- **THEN** validation fails with an error pointing to `center.svgUrl`
 
 ### Requirement: Hierarchical branch structure
 The system SHALL represent map content as ordered hierarchical branches using explicit types named `OrganicMainBranch`, `OrganicSubBranch`, and `OrganicLeafNode`.
@@ -94,15 +98,23 @@ The system SHALL define configurable MVP capacity limits for total nodes, depth 
 - **THEN** validation fails before browser preview startup with a regeneration-oriented capacity error
 
 ### Requirement: Agent retry-friendly errors
-The system SHALL produce path-specific and retry-friendly validation errors suitable for Gemini CLI, Codex CLI, Claude Code, or another calling Agent CLI.
+The system SHALL produce path-specific and retry-friendly validation findings suitable for Gemini CLI, Codex CLI, Claude Code, or another calling Agent CLI.
 
 #### Scenario: Structural error
 - **WHEN** validation fails because a required field is missing or malformed
-- **THEN** the error includes the failing field path and a concise reason
+- **THEN** the finding includes the failing field path and a concise reason
 
 #### Scenario: Capacity error
 - **WHEN** validation fails because the input exceeds capacity limits
-- **THEN** the error states the exceeded limit and asks the calling agent to regenerate a shorter concept list
+- **THEN** the finding states the exceeded limit and asks the calling agent to regenerate a shorter concept list
+
+#### Scenario: Soft warning
+- **WHEN** validation finds a non-blocking quality issue such as a concept near a recommended width limit
+- **THEN** the finding can use `severity: "warning"` so preview may continue
+
+#### Scenario: Repair guidance
+- **WHEN** validation emits repair guidance
+- **THEN** the guidance describes constraints and strategies without silently rewriting, merging, splitting, or semantically compressing concepts
 
 ### Requirement: No CLI semantic rewriting
 The system SHALL NOT silently rewrite, merge, split, or semantically compress concepts inside the CLI validation step.

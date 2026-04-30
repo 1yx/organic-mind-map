@@ -38,19 +38,19 @@ The server SHALL serve a minimal read-only Web preview page from prebuilt static
 - **THEN** the page displays a simple local error state
 
 ### Requirement: Paper-proportional viewport
-The Web preview SHALL preserve the selected A3 or A4 landscape paper ratio.
+The Web preview SHALL render OrganicTree previews on one fixed MVP bounded landscape surface ratio rather than selected A3 or A4 paper proportions.
 
-#### Scenario: A3 landscape preview
-- **WHEN** the loaded document uses A3 landscape paper
-- **THEN** the preview surface preserves the A3 landscape aspect ratio
+#### Scenario: OrganicTree preview uses fixed MVP surface
+- **WHEN** the server serves an `OrganicTree`
+- **THEN** the Web preview uses the fixed `sqrt2-landscape` surface ratio with width/height approximately `1.414`
 
-#### Scenario: A4 landscape preview
-- **WHEN** the loaded document uses A4 landscape paper
-- **THEN** the preview surface preserves the A4 landscape aspect ratio
+#### Scenario: Paper preset is absent
+- **WHEN** the server exposes OrganicTree through `GET /api/document`
+- **THEN** the response does not include paper selection metadata for OrganicTree preview
 
-#### Scenario: OrganicTree preview uses default proportions
-- **WHEN** the server serves an `OrganicTree` without a paper specification
-- **THEN** the Web preview uses default A3 landscape proportions
+#### Scenario: OMM document includes saved surface
+- **WHEN** the server serves a browser-exported `.omm` document
+- **THEN** the Web preview uses the saved document surface and layout snapshot to reproduce that document
 
 ### Requirement: Renderer integration boundary
 The Web preview SHALL call the read-only SVG renderer for layout and rendering while keeping renderer algorithms out of the server module.
