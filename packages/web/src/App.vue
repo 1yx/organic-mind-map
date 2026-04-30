@@ -2,6 +2,7 @@
 import { ref, onMounted, computed, watch } from "vue";
 import { useCenterVisual } from "./composables/center-visual.js";
 import { usePngExport } from "./composables/png-export.js";
+import { useOmmExport } from "./composables/omm-export.js";
 import {
   render,
   createCanvasMeasurementAdapter,
@@ -79,6 +80,16 @@ function handleExportPng() {
     containerHeight: rect.height,
   });
 }
+
+// ─── OMM Export ──────────────────────────────────────────────────────────
+
+const { exporting: ommExporting, exportError: ommExportError, canExport: canExportOmm, doExport: handleExportOmm } = useOmmExport({
+  renderReady,
+  documentData,
+  renderResult,
+  inlineSvg,
+  fellBack,
+});
 
 // ─── Fetch & Render ─────────────────────────────────────────────────────
 
@@ -180,7 +191,15 @@ function tryRender(
         >
           {{ exporting ? "Exporting…" : "Export PNG" }}
         </button>
+        <button
+          class="export-omm-btn"
+          :disabled="!canExportOmm || ommExporting"
+          @click="handleExportOmm"
+        >
+          {{ ommExporting ? "Exporting…" : "Export .omm" }}
+        </button>
         <span v-if="exportError" class="export-error">{{ exportError }}</span>
+        <span v-if="ommExportError" class="export-error">{{ ommExportError }}</span>
       </div>
 
       <!-- Paper-proportional viewport -->
@@ -282,6 +301,28 @@ body {
 }
 
 .export-png-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.export-omm-btn {
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: inherit;
+  color: #fff;
+  background: #059669;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.export-omm-btn:hover:not(:disabled) {
+  background: #047857;
+}
+
+.export-omm-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

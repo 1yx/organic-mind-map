@@ -6,8 +6,8 @@
 
 ## 2. Export And Render
 
-- [ ] 2.1 Update Web `.omm` export to emit the canonical nested document shape with layout snapshot.
-- [ ] 2.2 Update renderer `.omm` input handling to read the canonical semantic tree and saved layout.
+- [x] 2.1 Update Web `.omm` export to emit the canonical nested document shape with layout snapshot.
+- [x] 2.2 Update renderer `.omm` input handling to read the canonical semantic tree and saved layout.
 
 ## 3. Fixtures And Tests
 
