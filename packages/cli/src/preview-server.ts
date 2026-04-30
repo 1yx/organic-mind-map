@@ -175,19 +175,19 @@ function createPreviewServer(
  * and prints the ready marker to stdout. The process remains attached to
  * the terminal until interrupted (Ctrl+C / SIGTERM / SIGKILL).
  *
- * @param payloadOrDocument - Validated OrganicTree or .omm document
+ * @param documentData - Validated OrganicTree or .omm document
  * @param options - Server configuration options
  * @returns Server result with host, port, URL, PID, and server instance
  */
 export function startPreviewServer(
-  payloadOrDocument: OrganicTree | Record<string, unknown>,
+  documentData: OrganicTree | Record<string, unknown>,
   options?: PreviewServerOptions,
 ): PreviewServerResult {
   const host = options?.host ?? DEFAULT_HOST;
   const port = options?.port ?? DEFAULT_PORT;
   const webDist = resolveWebDist(options?.webDistPath);
 
-  const server = createPreviewServer(payloadOrDocument, webDist);
+  const server = createPreviewServer(documentData, webDist);
 
   // Port conflict handling: let the OS error propagate for now
   server.on("error", (err: NodeJS.ErrnoException) => {
@@ -237,7 +237,7 @@ export function createTestServer(
  * server is listening. Useful for programmatic usage.
  */
 export function startPreviewServerAsync(
-  payloadOrDocument: OrganicTree | Record<string, unknown>,
+  documentData: OrganicTree | Record<string, unknown>,
   options?: PreviewServerOptions,
 ): Promise<PreviewServerResult> {
   const host = options?.host ?? DEFAULT_HOST;
@@ -246,7 +246,7 @@ export function startPreviewServerAsync(
   const silent = options?.silent ?? false;
 
   return new Promise((resolveP, reject) => {
-    const server = createPreviewServer(payloadOrDocument, webDist);
+    const server = createPreviewServer(documentData, webDist);
 
     server.on("error", (err: NodeJS.ErrnoException) => {
       if (err.code === "EADDRINUSE") {

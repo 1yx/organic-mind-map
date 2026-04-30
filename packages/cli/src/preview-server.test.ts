@@ -22,7 +22,7 @@ import {
 const TMP_DIR = resolve(import.meta.dirname, "../../.tmp-server-test");
 
 /** Minimal valid OrganicTree for testing (served directly via /api/document). */
-const FIXTURE_PAYLOAD = {
+const FIXTURE_TREE = {
   version: 1,
   title: "Test Map",
   center: { concept: "Center" },
@@ -106,7 +106,7 @@ describe("preview-server — startup & binding", () => {
 
   // 6.1: Server startup with valid OrganicTree
   it("starts server with valid OrganicTree (6.1)", async () => {
-    const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, {
+    const result = await startPreviewServerAsync(FIXTURE_TREE, {
       port: 0, // random available port
       host: DEFAULT_HOST,
     });
@@ -125,7 +125,7 @@ describe("preview-server — startup & binding", () => {
 
   // 6.3: Localhost default binding test
   it("binds to localhost (127.0.0.1) by default (6.3)", async () => {
-    const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, { port: 0 });
+    const result = await startPreviewServerAsync(FIXTURE_TREE, { port: 0 });
 
     expect(result.host).toBe("127.0.0.1");
     expect(result.url).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/);
@@ -140,14 +140,14 @@ describe("preview-server — port conflicts", () => {
   // 6.4: Port conflict behavior test
   it("rejects with error when port is already in use (6.4)", async () => {
     // Start first server
-    const first = await startPreviewServerAsync(FIXTURE_PAYLOAD, {
+    const first = await startPreviewServerAsync(FIXTURE_TREE, {
       port: 0,
       host: DEFAULT_HOST,
     });
 
     try {
       await expect(
-        startPreviewServerAsync(FIXTURE_PAYLOAD, {
+        startPreviewServerAsync(FIXTURE_TREE, {
           port: first.port,
           host: DEFAULT_HOST,
         }),
@@ -164,7 +164,7 @@ describe("preview-server — port conflicts", () => {
       stdout.push(args.join(" "));
     });
 
-    const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, { port: 0 });
+    const result = await startPreviewServerAsync(FIXTURE_TREE, { port: 0 });
 
     // Find the ready marker
     const marker = stdout.find((line) => line.includes(READY_MARKER_PREFIX));
@@ -193,7 +193,7 @@ describe("preview-server — /api/document endpoint", () => {
 
   // 6.2: /api/document response test — serves OrganicTree directly
   it("returns OrganicTree JSON from GET /api/document (6.2)", async () => {
-    const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, { port: 0 });
+    const result = await startPreviewServerAsync(FIXTURE_TREE, { port: 0 });
 
     const res = await httpGet(`${result.url}/api/document`);
     expect(res.status).toBe(200);
@@ -223,7 +223,7 @@ describe("preview-server — payload shape validation", () => {
 
   // 6.6: Renderer integration smoke test using fixture OrganicTree
   it("serves OrganicTree that can be consumed by the renderer (6.6)", async () => {
-    const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, { port: 0 });
+    const result = await startPreviewServerAsync(FIXTURE_TREE, { port: 0 });
 
     const res = await httpGet(`${result.url}/api/document`);
     const data = JSON.parse(res.body) as Record<string, unknown>;
@@ -250,7 +250,7 @@ describe("preview-server — payload shape validation", () => {
 
   // Additional: GET /api/document with non-GET method returns 405
   it("rejects non-GET methods on /api/document with 405", async () => {
-    const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, { port: 0 });
+    const result = await startPreviewServerAsync(FIXTURE_TREE, { port: 0 });
 
     const postResult = await httpRequest({
       hostname: result.host,
@@ -270,7 +270,7 @@ describe("preview-server — static assets & negative tests", () => {
   // 6.5: Web preview smoke test for document fetch
   it("serves index.html for / and /api/document for data (6.5)", async () => {
     const webDist = await createFakeWebDist();
-    const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, {
+    const result = await startPreviewServerAsync(FIXTURE_TREE, {
       port: 0,
       webDistPath: webDist,
     });
@@ -298,7 +298,7 @@ describe("preview-server — static assets & negative tests", () => {
     // Write an additional static file
     await writeFile(resolve(webDist, "test.js"), "console.log('test');");
 
-    const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, {
+    const result = await startPreviewServerAsync(FIXTURE_TREE, {
       port: 0,
       webDistPath: webDist,
     });
@@ -320,7 +320,7 @@ describe("preview-server — static assets & negative tests", () => {
 
   // 6.9: No file watcher / live reload / WebSocket / SSE
   it("does not implement WebSocket, SSE, or live reload endpoints (6.9)", async () => {
-    const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, { port: 0 });
+    const result = await startPreviewServerAsync(FIXTURE_TREE, { port: 0 });
 
     // SSE endpoint should not exist
     const sseRes = await httpGet(`${result.url}/api/events`);
@@ -340,7 +340,7 @@ describe("preview-server — 404 handling", () => {
   // Additional: serve index.html for any non-API route (SPA fallback)
   it("returns 404 for non-existent static files", async () => {
     const webDist = await createFakeWebDist();
-    const result = await startPreviewServerAsync(FIXTURE_PAYLOAD, {
+    const result = await startPreviewServerAsync(FIXTURE_TREE, {
       port: 0,
       webDistPath: webDist,
     });

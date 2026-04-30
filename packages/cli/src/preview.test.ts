@@ -184,7 +184,7 @@ describe("previewCommand — validation", () => {
   });
 });
 
-describe("previewCommand — payload shape", () => {
+describe("previewCommand — OrganicTree shape", () => {
   usePreviewLifecycle();
 
   // 7.4: CLI passes validated OrganicTree directly to the preview server
@@ -205,20 +205,20 @@ describe("previewCommand — payload shape", () => {
     expect(code).toBe(cliExitCode.OK);
     expect(spy).toHaveBeenCalledOnce();
 
-    const payload = spy.mock.calls[0]![0] as Record<string, unknown>;
+    const tree = spy.mock.calls[0]![0] as Record<string, unknown>;
     // OrganicTree fields at top level
-    expect(payload).toHaveProperty("version", 1);
-    expect(payload).toHaveProperty("title");
-    expect(payload).toHaveProperty("center");
-    expect(payload).toHaveProperty("branches");
-    // No CLI wrapper field (source was a PreviewPayload artifact)
-    expect(payload).not.toHaveProperty("source");
+    expect(tree).toHaveProperty("version", 1);
+    expect(tree).toHaveProperty("title");
+    expect(tree).toHaveProperty("center");
+    expect(tree).toHaveProperty("branches");
+    // No CLI wrapper fields
+    expect(tree).not.toHaveProperty("source");
     // No renderer artifacts
-    expect(payload).not.toHaveProperty("layout");
-    expect(payload).not.toHaveProperty("exportPng");
-    expect(payload).not.toHaveProperty("snapshot");
+    expect(tree).not.toHaveProperty("layout");
+    expect(tree).not.toHaveProperty("exportPng");
+    expect(tree).not.toHaveProperty("snapshot");
 
-    const center = payload.center as Record<string, unknown>;
+    const center = tree.center as Record<string, unknown>;
     expect(center).toHaveProperty("concept");
     expect(center).toHaveProperty("visualHint");
 
@@ -254,11 +254,11 @@ describe("previewCommand — forbidden artifacts", () => {
   // 7.8: CLI does NOT implement ID generation, color assignment, etc.
   it("OrganicTree contains no generated IDs, colors, organic seeds, or OmmDocument artifacts", async () => {
     const serverModule = await import("./preview-server.js");
-    let capturedPayload: unknown;
+    let capturedTree: unknown;
     const spy = vi
       .spyOn(serverModule, "startPreviewServerAsync")
       .mockImplementation((p) => {
-        capturedPayload = p;
+        capturedTree = p;
         return Promise.resolve({
           host: "127.0.0.1",
           port: 5173,
@@ -270,8 +270,8 @@ describe("previewCommand — forbidden artifacts", () => {
 
     await previewCommand([fixture("no-generated-ids.json")]);
 
-    const payload = capturedPayload as Record<string, unknown>;
-    expect(findForbiddenKeys(payload, "payload")).toEqual([]);
+    const tree = capturedTree as Record<string, unknown>;
+    expect(findForbiddenKeys(tree, "tree")).toEqual([]);
 
     spy.mockRestore();
   });
