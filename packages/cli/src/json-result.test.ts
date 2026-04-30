@@ -230,6 +230,39 @@ describe("previewCommand --json — error results: parse & contract (7.2)", () =
   });
 });
 
+describe("previewCommand --json — depth error with repair guidance", () => {
+  usePreviewLifecycle();
+
+  it("returns DEPTH_EXCEEDED code and repair guidance", async () => {
+    const { code, stdout, stderr } = await captureOutput(() =>
+      previewCommand([
+        "--json",
+        fixture("invalid-contract-exceeds-depth.json"),
+      ]),
+    );
+
+    expect(code).toBe(cliExitCode.INPUT_ERROR);
+    expect(stderr).toEqual([]);
+
+    const result = parseJsonStdout(stdout);
+    expect(result.ok).toBe(false);
+    expect(result.agentAction).toBe("regenerate-organic-tree");
+    expect(result.structuredContent.kind).toBe("contract");
+
+    const depthFinding = result.structuredContent.findings.find(
+      (f) => f.code === "DEPTH_EXCEEDED",
+    );
+    expect(depthFinding).toBeDefined();
+    expect(depthFinding!.severity).toBe("error");
+    expect(depthFinding!.path).toMatch(
+      /^\/branches\/\d+\/children\/\d+\/children\/\d+\/children$/,
+    );
+    expect(depthFinding!.repair).toContain("max 3 levels");
+    expect(depthFinding!.repair).toContain("MainBranch");
+    expect(depthFinding!.repair).toContain("LeafNode");
+  });
+});
+
 describe("previewCommand --json — error results: capacity & server (7.2)", () => {
   usePreviewLifecycle();
 

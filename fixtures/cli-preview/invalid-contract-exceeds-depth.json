@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "title": "Exceeds Depth Limit",
+  "center": {
+    "concept": "DEPTH TEST"
+  },
+  "branches": [
+    {
+      "concept": "L1 BRANCH",
+      "children": [
+        {
+          "concept": "L2 SUB",
+          "children": [
+            {
+              "concept": "L3 LEAF",
+              "children": [
+                {
+                  "concept": "L4 TOO DEEP"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

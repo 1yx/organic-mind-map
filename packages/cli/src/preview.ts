@@ -152,18 +152,28 @@ function formatValidationErrors(
 
 /**
  * Convert validation errors (structural/quality) into CLI findings with
- * JSON Pointer paths.
+ * JSON Pointer paths. Depth errors get a dedicated code and repair hint.
  */
 function validationErrorsToFindings(
   errors: ReadonlyArray<ValidationError>,
   kind: "contract" | "quality",
 ): CliFinding[] {
-  return errors.map((e) => ({
-    severity: "error" as const,
-    code: kind === "contract" ? "CONTRACT_ERROR" : "QUALITY_ERROR",
-    path: toJsonPointer(e.path),
-    message: e.message,
-  }));
+  return errors.map((e) => {
+    const isDepthError = e.code === "DEPTH_EXCEEDED";
+    return {
+      severity: "error" as const,
+      code: isDepthError
+        ? "DEPTH_EXCEEDED"
+        : kind === "contract"
+          ? "CONTRACT_ERROR"
+          : "QUALITY_ERROR",
+      path: toJsonPointer(e.path),
+      message: e.message,
+      repair: isDepthError
+        ? "Reduce nesting to max 3 levels: MainBranch \u2192 SubBranch \u2192 LeafNode. Flatten or regroup deeper concepts."
+        : undefined,
+    };
+  });
 }
 
 /**

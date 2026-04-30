@@ -221,6 +221,7 @@ function validateOrganicLeafNode(
       path: `${path}.children`,
       message:
         "Nesting exceeds maximum depth of 3 levels (OrganicMainBranch -> OrganicSubBranch -> OrganicLeafNode)",
+      code: "DEPTH_EXCEEDED",
     });
   }
 

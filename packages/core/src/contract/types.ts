@@ -71,6 +71,8 @@ export const DEFAULT_LIMITS: OrganicTreeLimits = {
 export type ValidationError = {
   path: string;
   message: string;
+  /** Machine-readable error code for downstream CLI mapping. */
+  code?: string;
 };
 
 export type ValidationResult = {

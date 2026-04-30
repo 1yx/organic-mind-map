@@ -190,3 +190,23 @@ describe("fixture-coverage-gaps — .omm missing seed without layout", () => {
     ).toBe(true);
   });
 });
+
+// ─── 2.9: OrganicTree depth limit enforcement ────────────────────────────
+
+describe("fixture-coverage-gaps — depth limit enforcement", () => {
+  it("valid-deeper-hierarchy.json is a valid 3-level OrganicTree", () => {
+    const data = loadOrganicTreeFixture("valid-deeper-hierarchy");
+    const result = validateOrganicTree(data);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it("invalid-deep-nesting.json fails with DEPTH_EXCEEDED", () => {
+    const data = loadOrganicTreeFixture("invalid-deep-nesting");
+    const result = validateOrganicTree(data);
+    expect(result.valid).toBe(false);
+    const depthError = result.errors.find((e) => e.code === "DEPTH_EXCEEDED");
+    expect(depthError).toBeDefined();
+    expect(depthError!.message).toContain("maximum depth of 3");
+  });
+});

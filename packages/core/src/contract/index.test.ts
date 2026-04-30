@@ -240,6 +240,24 @@ describe("validateOrganicTree — depth & capacity", () => {
     ).toBe(true);
   });
 
+  it("rejects nesting deeper than 3 levels with DEPTH_EXCEEDED code", () => {
+    const result = validateOrganicTree(fixtures["invalid-deep-nesting.json"]);
+    expect(result.valid).toBe(false);
+    const depthError = result.errors.find((e) => e.code === "DEPTH_EXCEEDED");
+    expect(depthError).toBeDefined();
+    expect(depthError!.path).toContain("children");
+  });
+
+  it("depth error path is JSON Pointer convertible", () => {
+    const result = validateOrganicTree(fixtures["invalid-deep-nesting.json"]);
+    const depthError = result.errors.find((e) => e.code === "DEPTH_EXCEEDED");
+    expect(depthError).toBeDefined();
+    // Path should use bracket notation convertible by toJsonPointer
+    expect(depthError!.path).toMatch(
+      /^branches\[\d+\]\.children\[\d+\]\.children\[\d+\]\.children$/,
+    );
+  });
+
   it("rejects oversized input with capacity feedback", () => {
     const strictLimits: OrganicTreeLimits = { ...DEFAULT_LIMITS, maxNodes: 10 };
     const result = validateOrganicTree(
