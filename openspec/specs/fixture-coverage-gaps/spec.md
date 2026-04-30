@@ -13,7 +13,7 @@ The project SHALL include valid OrganicTree stress fixtures that exercise dense 
 
 #### Scenario: Stress fixtures render
 - **WHEN** renderer smoke tests run against collision stress fixtures
-- **THEN** the renderer returns a non-empty SVG or render model with expected paper bounds and branch/text elements
+- **THEN** the renderer returns a non-empty SVG or render model with expected surface bounds and branch/text elements
 
 ### Requirement: Poison fixture coverage
 The project SHALL include hostile fixtures that verify unsafe inputs are rejected or safely downgraded before unsafe rendering.
@@ -35,7 +35,7 @@ The project SHALL include hostile fixtures that verify unsafe inputs are rejecte
 - **THEN** the command fails before renderer handoff with a structured, regeneration-oriented error
 
 ### Requirement: OMM runtime artifact fixtures
-The project SHALL include `.omm` negative and repair fixtures for runtime artifacts that must not persist in the document model.
+The project SHALL include `.omm` negative and repair fixtures for runtime artifacts that must not persist in the document model, including the explicit repair exception for missing `organicSeed` when a complete layout snapshot is available.
 
 #### Scenario: Web font declaration fixture is rejected
 - **WHEN** `.omm` validation loads a document containing external web font declarations, `@font-face`, WOFF/WOFF2 references, or remote font metadata

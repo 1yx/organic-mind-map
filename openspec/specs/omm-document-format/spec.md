@@ -1,37 +1,45 @@
 ## ADDED Requirements
 
 ### Requirement: JSON OMM document boundary
-The system SHALL define `.omm` as a JSON document that represents exactly one organic mind map on one paper.
+The system SHALL define `.omm` as a JSON document that represents exactly one organic mind map on one bounded surface.
 
 #### Scenario: Valid document envelope
-- **WHEN** a document includes `id`, `version: 1`, `title`, `paper`, `organicSeed`, `rootMap`, `layout`, `assets`, and `meta`
+- **WHEN** a document includes `id`, `version: 1`, `title`, `surface`, `organicSeed`, `rootMap`, `layout`, `assets`, and `meta`
 - **THEN** the document is recognized as an `.omm` candidate for schema validation
 
 #### Scenario: Multiple maps are provided
 - **WHEN** a document attempts to store multiple root maps or a collection of maps
-- **THEN** validation fails because one `.omm` represents one paper mind map
+- **THEN** validation fails because one `.omm` represents one bounded-surface mind map
 
-### Requirement: Landscape A3 or A4 paper
-The system SHALL restrict MVP `.omm` paper specs to A3 landscape or A4 landscape.
+### Requirement: Bounded surface ratio
+The system SHALL NOT require MVP `.omm` documents to use A3 or A4 paper specs; MVP documents SHALL store a bounded surface ratio.
 
-#### Scenario: A3 landscape paper
-- **WHEN** `paper.kind` is `a3-landscape` with canonical 420 x 297 mm dimensions
-- **THEN** paper validation succeeds
+#### Scenario: MVP surface ratio
+- **WHEN** `surface.preset` is `sqrt2-landscape` with width/height approximately `1.414`
+- **THEN** surface validation succeeds
 
-#### Scenario: Unsupported paper kind
-- **WHEN** `paper.kind` is not `a3-landscape` or `a4-landscape`
-- **THEN** validation fails with an error pointing to `paper.kind`
+#### Scenario: Unsupported physical paper kind
+- **WHEN** a Phase 1 `.omm` document relies on `paper.kind`, `widthMm`, or `heightMm` as the canonical preview surface
+- **THEN** validation rejects it as non-canonical for MVP surface storage
+
+#### Scenario: Unsupported surface preset
+- **WHEN** `surface.preset` is not supported by the current document schema
+- **THEN** validation fails with an error pointing to `surface.preset`
 
 ### Requirement: Center visual object
 The system SHALL require a center visual object instead of a plain center text string.
 
 #### Scenario: Phase 1 compliant center visual
 - **WHEN** `rootMap.center` includes a supported image or visual-symbol `mode` and `complianceState: "compliant"`
-- **THEN** validation accepts the center visual when referenced built-in assets are valid, even if the SVG is single-color
+- **THEN** validation accepts the center visual when referenced built-in or self-contained approved assets are valid, even if the controlled SVG source was single-color
 
 #### Scenario: Missing center visual
 - **WHEN** `rootMap.center` is missing or only represented as a plain string
 - **THEN** validation fails with an error pointing to `rootMap.center`
+
+#### Scenario: External svgUrl is used as final visual truth
+- **WHEN** a browser-exported `.omm` stores only an external `svgUrl` as the center visual asset
+- **THEN** validation rejects it because `.omm` must reopen with images intact without network dependency
 
 ### Requirement: One-way nested tree model
 The system SHALL store semantic mind map structure as a one-way nested tree using `children` arrays and stable node IDs.
@@ -64,22 +72,26 @@ The system SHALL store renderable concept units as semantic content without pers
 - **THEN** validation rejects that field because display text is a runtime ViewModel concern
 
 ### Requirement: Stable organic seed
-The system SHALL store a document-level `organicSeed` so repeated rendering of the same `.omm` can produce stable organic variation.
+The system SHALL store a document-level `organicSeed` so repeated rendering of the same `.omm` can produce stable organic variation. A missing or empty `organicSeed` is repairable only when a complete layout snapshot is present, because the validator can derive a deterministic seed without recomputing layout or changing saved geometry.
 
 #### Scenario: Organic seed exists
 - **WHEN** `organicSeed` is present and non-empty
 - **THEN** rendering can use it for deterministic branch variation
 
-#### Scenario: Organic seed is missing
-- **WHEN** `organicSeed` is missing or empty
+#### Scenario: Organic seed is missing with layout snapshot
+- **WHEN** `organicSeed` is missing or empty and the document contains a complete layout snapshot
+- **THEN** validation or repair backfills a deterministic seed from document content without relayout and without changing saved coordinates or paths
+
+#### Scenario: Organic seed is missing without layout snapshot
+- **WHEN** `organicSeed` is missing or empty and the document does not contain a complete layout snapshot
 - **THEN** validation fails with an error pointing to `organicSeed`
 
 ### Requirement: Browser-computed layout snapshot
 The system SHALL persist browser-computed layout geometry in Phase 1 `.omm` exports.
 
 #### Scenario: Layout snapshot exists
-- **WHEN** a browser-exported `.omm` contains `layout` with viewport, center layout, node layouts, and branch layouts
-- **THEN** the document can reproduce the exported paper without rerunning layout from raw logic alone
+- **WHEN** a browser-exported `.omm` contains `layout` with surface viewport, center layout, node layouts, and branch layouts
+- **THEN** the document can reproduce the exported bounded surface without rerunning layout from raw logic alone
 
 #### Scenario: Layout references unknown node
 - **WHEN** `layout.nodes` or `layout.branches` references a node ID that is absent from the nested semantic tree
@@ -87,7 +99,7 @@ The system SHALL persist browser-computed layout geometry in Phase 1 `.omm` expo
 
 #### Scenario: Branch path is missing
 - **WHEN** a renderable branch layout omits its SVG branch path or text path
-- **THEN** validation fails because the exported paper geometry is incomplete
+- **THEN** validation fails because the exported surface geometry is incomplete
 
 ### Requirement: Built-in asset references
 The system SHALL store built-in templates and built-in visual assets by stable ID rather than embedding their binary data into every `.omm`.
@@ -103,6 +115,10 @@ The system SHALL store built-in templates and built-in visual assets by stable I
 #### Scenario: Built-in asset embeds duplicated data
 - **WHEN** an image asset has `source: "builtin"` and also stores unnecessary embedded payload data
 - **THEN** validation rejects the asset as non-canonical for Phase 1 `.omm`
+
+#### Scenario: Controlled SVG was loaded before export
+- **WHEN** the browser exports a document after a controlled SVG was loaded and passed safety checks
+- **THEN** the exported document stores an approved self-contained center visual asset or a deterministic built-in fallback rather than relying on the original external URL
 
 ### Requirement: No uploaded asset embedding in Phase 1
 The system SHALL NOT support uploaded custom image assets, generated image payloads, or Base64 image embedding in Phase 1 `.omm` files.

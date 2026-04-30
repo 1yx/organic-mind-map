@@ -22,6 +22,7 @@ Use these terms consistently:
 
 - `OrganicTree`: Agent/LLM-produced semantic tree and the only CLI preview input contract.
 - `OmmDocument`: final `.omm` document exported by the browser with a layout snapshot.
+- `organicSeed`: document-level stable seed stored in `OmmDocument`; the browser/renderer derives preview seed behavior from `OrganicTree` content.
 
 The CLI is a Validator + Service Starter: it checks whether the OrganicTree is valid and starts the local preview service. The browser owns domain/view instantiation, IDs, colors, organic seed, center fallback, layout, `.omm` export, and PNG export.
 
@@ -31,12 +32,13 @@ Do not add `.omm` visual editing, drag/drop editing, undo/redo, path text editin
 
 Before making product or architecture changes, read the relevant files:
 
-1. `docs/GUIDELINES.md` for non-negotiable Buzan product rules.
-2. `docs/PRD.md` for product scope and roadmap.
-3. `docs/TECH_DESIGN.md` for technical constraints.
-4. `docs/BP.md` for Community vs Plus boundaries.
-5. `docs/OPEN_QUESTIONS_*.md` for decisions already made.
-6. Relevant `openspec/changes/<change>/proposal.md`, `design.md`, `tasks.md`, and `specs/**`.
+1. `docs/TERMS.md` for project-specific terminology and preferred spellings.
+2. `docs/GUIDELINES.md` for non-negotiable Buzan product rules.
+3. `docs/PRD.md` for product scope and roadmap.
+4. `docs/TECH_DESIGN.md` for technical constraints.
+5. `docs/BP.md` for Community vs Plus boundaries.
+6. `docs/OPEN_QUESTIONS_*.md` for decisions already made.
+7. Relevant `openspec/changes/<change>/proposal.md`, `design.md`, `tasks.md`, and `specs/**`.
 
 When a docs decision conflicts with an older OpenSpec proposal, prefer the latest explicit decision in `docs/OPEN_QUESTIONS_*.md`, then update the affected OpenSpec artifacts instead of silently diverging.
 
@@ -72,7 +74,7 @@ fixtures/
 
 Package boundaries:
 
-- `@omm/core`: environment-neutral document types, validation, assets, paper specs, seeds.
+- `@omm/core`: environment-neutral document types, validation, assets, surface specs, seeds.
 - `@omm/renderer`: consumes validated data and returns SVG-oriented render models or SVG output. It may depend on `@omm/core`.
 - `@omm/cli`: Node-only command parsing, file I/O, capacity checks, local HTTP server startup, preview orchestration.
 - `@omm/web`: Vue 3 browser app for read-only preview and browser-side export. It may depend on `@omm/core` and `@omm/renderer`.
@@ -91,9 +93,9 @@ The Web app should fetch this endpoint. Do not pass large payloads through injec
 
 Never break these rules in strict Buzan mode:
 
-- Default paper is A3/A4 landscape with real paper boundaries.
+- Phase 1 preview uses the fixed `sqrt2-landscape` bounded surface with clear boundaries; physical A3/A4 paper presets are later-phase capabilities.
 - A map starts from a center visual, not plain center text.
-- The center visual must be multi-color; free mode must still be able to produce a compliant center visual using templates, icon collage, multi-color composition, or local upload.
+- The center visual must be multi-color in the long-term strict standard; Phase 1 allows controlled single-color SVG center visuals as an exception, with deterministic built-in fallback.
 - AI-generated images are Plus efficiency/quality enhancements, not the only path to compliance.
 - A branch carries one cognitive concept unit, not paragraphs or sentence-like prose.
 - English keywords default to uppercase.
@@ -101,7 +103,7 @@ Never break these rules in strict Buzan mode:
 - Main branches use distinct colors as memory/category anchors.
 - Layout must preserve readable whitespace and avoid crowding.
 - A `.omm` file represents one map on one paper.
-- Built-in assets are referenced by stable IDs; user-uploaded custom assets are embedded so the `.omm` opens with images intact.
+- Built-in assets are referenced by stable IDs; user-uploaded custom assets are a later-phase free capability and must be embedded once supported so the `.omm` opens with images intact.
 
 Important distinction:
 
@@ -150,7 +152,7 @@ Prefer focused tests that match the change:
 - Capacity threshold tests for oversized input.
 - Schema validation for `.omm`.
 - Deterministic seed/id tests.
-- Renderer smoke tests for non-empty SVG, paper viewBox, center visual, and branch elements.
+- Renderer smoke tests for non-empty SVG, `sqrt2-landscape` surface viewBox, center visual, and branch elements.
 
 Browser export should remain browser-side. Do not add headless browser automation solely to make the CLI export PNG.
 
@@ -158,6 +160,7 @@ Browser export should remain browser-side. Do not add headless browser automatio
 
 When a decision changes behavior, update all affected surfaces:
 
+- `docs/TERMS.md`
 - `docs/PRD.md`
 - `docs/TECH_DESIGN.md`
 - `docs/BP.md`
@@ -169,6 +172,8 @@ Keep docs consistent on these terms:
 - Use "Agent CLI + agent skill" for orchestration.
 - Use "`OrganicTree`" for the Agent/LLM-produced semantic tree and CLI preview input.
 - Use "`OmmDocument`" for the final `.omm` export with layout snapshot.
+- Use "`organicSeed`" for the document-level stable seed field.
+- Use "`sqrt2-landscape` bounded surface" for the MVP preview surface; do not call it A3/A4 paper in Phase 1.
 - Use "CLI validation and local preview startup", not "CLI transforms input", "CLI generates final layout", or "CLI wraps data in an intermediate payload".
 - Use "browser-side layout and export" for final `.omm` and PNG output.
 
@@ -181,4 +186,3 @@ Preserve existing user edits. If the worktree is dirty, assume changes are inten
 Use ASCII unless the file already uses Chinese or another non-ASCII language. Chinese product docs may continue in Chinese.
 
 Do not add speculative features just because they appear in the long-term roadmap. Phase 1 work should stay focused on the validated MVP path.
- because they appear in the long-term roadmap. Phase 1 work should stay focused on the validated MVP path.

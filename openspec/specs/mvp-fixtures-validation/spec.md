@@ -9,7 +9,7 @@ The project SHALL include representative fixtures for the Phase 1 long-text-to-p
 
 #### Scenario: English fixture exists
 - **WHEN** fixture validation runs
-- **THEN** at least one English concept-phrase fixture is available and valid
+- **THEN** at least one English concept-unit fixture is available and valid
 
 #### Scenario: Center visual fixture exists
 - **WHEN** fixture validation runs
@@ -31,7 +31,7 @@ The project SHALL include invalid fixtures that fail before browser rendering.
 - **THEN** validation fails with regeneration-oriented feedback suitable for Agent CLI retry loops
 
 ### Requirement: Contract and document validation coverage
-The project SHALL test the OrganicTree contract, preview payload shape, and `.omm` document validation with fixtures.
+The project SHALL test the OrganicTree contract, OrganicTree render input shape, and `.omm` document validation with fixtures.
 
 #### Scenario: OrganicTree fixture validates
 - **WHEN** a valid OrganicTree fixture is tested
@@ -44,9 +44,9 @@ The project SHALL test the OrganicTree contract, preview payload shape, and `.om
 ### Requirement: Renderer smoke coverage
 The project SHALL include lightweight smoke coverage that renders fixture data without requiring a visual editor.
 
-#### Scenario: Preview payload renders
-- **WHEN** a valid preview payload fixture is passed to the renderer
-- **THEN** the renderer returns a non-empty SVG or render model with the expected paper viewBox
+#### Scenario: OrganicTree renders
+- **WHEN** a valid OrganicTree fixture is passed to the renderer
+- **THEN** the renderer returns a non-empty SVG or render model with the expected `sqrt2-landscape` surface viewBox
 
 #### Scenario: OMM document renders
 - **WHEN** a valid `.omm` fixture is passed to the renderer
