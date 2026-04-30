@@ -43,7 +43,7 @@ function loadOrganicTreeFixture(name: string): OrganicTree {
     "organic-tree",
     `${name}.json`,
   );
-  return JSON.parse(readFileSync(fixturePath, "utf-8"));
+  return JSON.parse(readFileSync(fixturePath, "utf-8")) as OrganicTree;
 }
 
 // ─── 3.1: Render stress-extreme-siblings ───────────────────────────────────

@@ -274,7 +274,10 @@ function validateAttributes(element: Element): boolean {
     const isXmlns = attrName.startsWith("xmlns");
 
     const isAllowed =
-      isXmlns || ALLOWED_ATTRIBUTES.has(attr.localName.toLowerCase() as any);
+      isXmlns ||
+      (ALLOWED_ATTRIBUTES as ReadonlySet<string>).has(
+        attr.localName.toLowerCase(),
+      );
     if (!isAllowed) return false;
 
     // Check style attributes for url(...)
@@ -293,8 +296,7 @@ function validateAttributes(element: Element): boolean {
  */
 function traverseAndValidate(node: Element): boolean {
   const tagName = node.tagName.toLowerCase();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if (!ALLOWED_ELEMENTS.has(tagName as any)) {
+  if (!(ALLOWED_ELEMENTS as ReadonlySet<string>).has(tagName)) {
     return false;
   }
 

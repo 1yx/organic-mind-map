@@ -39,7 +39,7 @@ function loadOrganicTreeFixture(name: string): OrganicTree {
     "organic-tree",
     `${name}.json`,
   );
-  return JSON.parse(readFileSync(fixturePath, "utf-8"));
+  return JSON.parse(readFileSync(fixturePath, "utf-8")) as OrganicTree;
 }
 
 function loadOmmFixture(name: string): unknown {
@@ -53,7 +53,7 @@ function loadOmmFixture(name: string): unknown {
     "omm",
     `${name}.json`,
   );
-  return JSON.parse(readFileSync(fixturePath, "utf-8"));
+  return JSON.parse(readFileSync(fixturePath, "utf-8")) as unknown;
 }
 
 // ─── 4.1: Deeper hierarchy fixture renders to non-empty SVG ───────────────

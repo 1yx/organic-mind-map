@@ -68,8 +68,7 @@ function usePreviewLifecycle(): void {
 }
 
 /** Minimal mock server object for spy return values. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const MOCK_SERVER = {} as any;
+const MOCK_SERVER = {} as unknown as import("node:http").Server;
 
 /**
  * Parse the first stdout line as a CliJsonResult.
