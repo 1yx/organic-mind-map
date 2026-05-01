@@ -218,7 +218,7 @@ function isOrganicTree(data: OrganicTree | OmmDocument): data is OrganicTree {
 }
 
 /** Convert an OmmDocument back to OrganicTree format. */
-function convertOmmDocumentToTree(doc: OmmDocument): OrganicTree {
+export function convertOmmDocumentToTree(doc: OmmDocument): OrganicTree {
   return {
     version: 1,
     title: doc.title,
@@ -283,12 +283,24 @@ export function useOmmExport(params: {
     exportError.value = null;
 
     try {
-      const tree = isOrganicTree(doc) ? doc : convertOmmDocumentToTree(doc);
-      const title = doc.title;
+      let ommDocument: OmmDocument;
 
-      const ommDocument = assembleOmmDocument(tree, title, result);
+      if (isOrganicTree(doc)) {
+        ommDocument = assembleOmmDocument(doc, doc.title, result);
+      } else {
+        const layoutSnapshot = buildLayoutSnapshot(result.layout);
+        ommDocument = {
+          ...doc,
+          layout: layoutSnapshot,
+          meta: {
+            ...doc.meta,
+            updatedAt: new Date().toISOString(),
+          },
+        };
+      }
+
       const json = JSON.stringify(ommDocument, null, 2);
-      const filename = `${sanitizeFilename(title)}.omm`;
+      const filename = `${sanitizeFilename(doc.title)}.omm`;
       downloadJsonAsFile(json, filename);
     } catch (e) {
       exportError.value =

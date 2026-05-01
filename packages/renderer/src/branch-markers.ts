@@ -136,13 +136,11 @@ export function renderMarkerSvg(
   const scale = markerScale(opts.depth);
   const size = MARKER_SIZE * scale;
   const half = size / 2;
-  const svgEscaped = escapeMarkerXml(marker.svg);
-
   return (
     `  <g class="branch-marker" data-hint="${marker.name}" ` +
     `transform="translate(${(opts.x - half).toFixed(1)}, ${(opts.y - half).toFixed(1)}) scale(${(size / 24).toFixed(4)})" ` +
     `style="color:${opts.color}">\n` +
-    `    ${svgEscaped}\n` +
+    `    ${marker.svg}\n` +
     `  </g>`
   );
 }
@@ -164,14 +162,4 @@ export function markerBoundingBox(
     width: size,
     height: size,
   };
-}
-
-// ─── XML Escaping ────────────────────────────────────────────────────────
-
-function escapeMarkerXml(svg: string): string {
-  return svg
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }

@@ -40,6 +40,7 @@ type NodeConceptInfo = {
   depth: number;
   parentId?: string;
   color?: string;
+  visualHint?: string;
 };
 
 // ─── Shared Helpers ─────────────────────────────────────────────────────
@@ -304,7 +305,7 @@ function buildMergedConcepts(
   tree: OrganicTree,
   mindMapConcepts: Map<
     string,
-    { concept: string; depth: number; parentId?: string }
+    { concept: string; depth: number; parentId?: string; visualHint?: string }
   >,
 ): Map<string, NodeConceptInfo> {
   const treeConcepts = collectNodeConcepts(tree);
@@ -317,6 +318,7 @@ function buildMergedConcepts(
         depth: info.depth,
         parentId: info.parentId,
         color: "#34495E",
+        visualHint: info.visualHint,
       });
     }
   }
@@ -370,6 +372,7 @@ function reconstructBranchGeometry(
     textClipped: false,
     startPoint,
     endPoint,
+    visualHint: info?.visualHint,
   };
 }
 
@@ -380,14 +383,21 @@ function reconstructBranchGeometry(
  */
 function collectMindMapConcepts(
   children: MindNode[],
-): Map<string, { concept: string; depth: number; parentId?: string }> {
+): Map<
+  string,
+  { concept: string; depth: number; parentId?: string; visualHint?: string }
+> {
   const map = new Map<
     string,
-    { concept: string; depth: number; parentId?: string }
+    { concept: string; depth: number; parentId?: string; visualHint?: string }
   >();
 
   for (const node of children) {
-    map.set(node.id, { concept: node.concept, depth: 1 });
+    map.set(node.id, {
+      concept: node.concept,
+      depth: 1,
+      visualHint: node.visualTokens?.[0]?.text,
+    });
     collectMindMapSubNodes(node, map);
   }
 
@@ -397,7 +407,10 @@ function collectMindMapConcepts(
 /** Recursively collect sub-node and leaf concepts from a MindNode. */
 function collectMindMapSubNodes(
   node: MindNode,
-  map: Map<string, { concept: string; depth: number; parentId?: string }>,
+  map: Map<
+    string,
+    { concept: string; depth: number; parentId?: string; visualHint?: string }
+  >,
 ): void {
   if (!node.children) return;
 
@@ -406,6 +419,7 @@ function collectMindMapSubNodes(
       concept: child.concept,
       depth: 2,
       parentId: node.id,
+      visualHint: child.visualTokens?.[0]?.text,
     });
     collectMindMapLeafNodes(child, map);
   }
@@ -414,7 +428,10 @@ function collectMindMapSubNodes(
 /** Collect leaf-level concepts from a sub-node. */
 function collectMindMapLeafNodes(
   child: MindNode,
-  map: Map<string, { concept: string; depth: number; parentId?: string }>,
+  map: Map<
+    string,
+    { concept: string; depth: number; parentId?: string; visualHint?: string }
+  >,
 ): void {
   if (!child.children) return;
 
@@ -423,6 +440,7 @@ function collectMindMapLeafNodes(
       concept: leaf.concept,
       depth: 3,
       parentId: child.id,
+      visualHint: leaf.visualTokens?.[0]?.text,
     });
   }
 }

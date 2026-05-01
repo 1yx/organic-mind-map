@@ -158,7 +158,7 @@ describe("branch-markers - renderMarkerSvg - structure", () => {
     expect(svg).toContain("scale(");
   });
 
-  it("renders escaped SVG content (no raw < or >)", () => {
+  it("renders raw SVG elements inside the marker group", () => {
     const marker = resolveBranchMarker("warning")!;
     const svg = renderMarkerSvg(marker, {
       x: 100,
@@ -166,8 +166,18 @@ describe("branch-markers - renderMarkerSvg - structure", () => {
       color: "#F39C12",
       depth: 3,
     });
-    expect(svg).not.toMatch(/<path /);
-    expect(svg).not.toMatch(/<polygon /);
+    expect(svg).toMatch(/<path\b/);
+  });
+
+  it("renders polygon elements for star marker", () => {
+    const marker = resolveBranchMarker("star")!;
+    const svg = renderMarkerSvg(marker, {
+      x: 100,
+      y: 200,
+      color: "#F39C12",
+      depth: 1,
+    });
+    expect(svg).toMatch(/<polygon\b/);
   });
 });
 
