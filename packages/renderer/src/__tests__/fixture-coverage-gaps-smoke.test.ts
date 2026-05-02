@@ -72,10 +72,24 @@ describe("coverage-gaps-smoke — stress-unbalanced-tree", () => {
   });
 });
 
-// ─── 3.3: Stress output uses expected paper bounds ────────────────────────
+// ─── 3.3: Anthropic product team radial fixture ───────────────────────────
 
-describe("coverage-gaps-smoke — paper bounds", () => {
-  it("stress-extreme-siblings uses a3-landscape viewBox 0 0 4200 2970", () => {
+describe("coverage-gaps-smoke — anthropic-product-team", () => {
+  it("renders with zero diagnostics", () => {
+    const tree = loadOrganicTreeFixture("anthropic-product-team");
+    const result = renderFromTree(tree, {
+      renderOptions: { measure: createMockMeasure() },
+    });
+    expect(result.svg.length).toBeGreaterThan(0);
+    expect(result.svg).toContain("<svg");
+    expect(result.diagnostics).toHaveLength(0);
+  });
+});
+
+// ─── 3.4: Stress output uses expected surface bounds ──────────────────────
+
+describe("coverage-gaps-smoke — surface bounds", () => {
+  it("stress-extreme-siblings uses sqrt2-landscape viewBox 0 0 4200 2970", () => {
     const tree = loadOrganicTreeFixture("stress-extreme-siblings");
     const result = renderFromTree(tree, {
       renderOptions: { measure: createMockMeasure() },
@@ -84,7 +98,7 @@ describe("coverage-gaps-smoke — paper bounds", () => {
   });
 });
 
-// ─── 3.4: Stress output includes branch and text markers ──────────────────
+// ─── 3.5: Stress output includes branch and text markers ──────────────────
 
 describe("coverage-gaps-smoke — structural elements", () => {
   it("stress fixtures include branch path elements and text content", () => {
@@ -99,7 +113,7 @@ describe("coverage-gaps-smoke — structural elements", () => {
   });
 });
 
-// ─── 3.5: Documentation test (structural assertions only) ─────────────────
+// ─── 3.6: Documentation test (structural assertions only) ─────────────────
 
 describe("coverage-gaps-smoke — testing philosophy", () => {
   it("structural checks are used — not pixel-perfect snapshots", () => {
@@ -107,7 +121,7 @@ describe("coverage-gaps-smoke — testing philosophy", () => {
   });
 });
 
-// ─── 3.6: Poison XSS protocol renders safely ──────────────────────────────
+// ─── 3.7: Poison XSS protocol renders safely ──────────────────────────────
 
 describe("coverage-gaps-smoke — poison XSS protocol", () => {
   it("poison-xss-protocol.json renders without crash (URL is not used in renderer)", () => {
@@ -121,7 +135,7 @@ describe("coverage-gaps-smoke — poison XSS protocol", () => {
   });
 });
 
-// ─── 3.7: Poison text injection renders safely ────────────────────────────
+// ─── 3.8: Poison text injection renders safely ────────────────────────────
 
 describe("coverage-gaps-smoke — poison text injection", () => {
   it("poison-text-injection.json renders without crash — text is safely truncated", () => {

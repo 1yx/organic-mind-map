@@ -116,6 +116,12 @@ describe("renderSvg - content", () => {
     }
   });
 
+  it("renders tapered branch paths with complete quadratic commands", () => {
+    const layout = getSampleLayout();
+    const svg = renderSvg(layout);
+    expect(svg).not.toMatch(/Q[-\d.]+,[-\d.]+\s+Z/);
+  });
+
   it("renders branch concepts as text on path", () => {
     const layout = getSampleLayout();
     const svg = renderSvg(layout);
@@ -138,6 +144,12 @@ describe("renderSvg - content", () => {
     const layout = getSampleLayout();
     const svg = renderSvg(layout);
     expect(svg).toContain("<!-- Center visual");
+  });
+
+  it("sets explicit dimensions on embedded center SVGs", () => {
+    const layout = getSampleLayout();
+    const svg = renderSvg(layout);
+    expect(svg).toContain('<svg width="200" height="200"></svg>');
   });
 });
 
@@ -164,6 +176,12 @@ describe("renderSvg - styling and refs", () => {
     for (const nodeId of layout.nodeOrder) {
       expect(svg).toContain(`href="#textpath-${nodeId}"`);
     }
+  });
+
+  it("places secondary branch text away from the branch origin", () => {
+    const layout = getSampleLayout();
+    const svg = renderSvg(layout);
+    expect(svg).toContain('startOffset="58%"');
   });
 });
 

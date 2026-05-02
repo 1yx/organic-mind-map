@@ -83,6 +83,10 @@ export type BranchGeometry = {
   concept: string;
   depth: number;
   parentNodeId?: string;
+  /** First-level branch that owns this branch subtree. */
+  rootNodeId: string;
+  /** Side of the radial layout assigned to the owning main branch. */
+  side: "left" | "right";
   color: string;
   /** The SVG path data for the branch curve. */
   branchPath: string;

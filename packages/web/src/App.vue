@@ -206,7 +206,10 @@ function tryRender(
       <div
         ref="paperSurfaceRef"
         class="paper-surface"
-        :style="{ aspectRatio: String(surfaceAspect) }"
+        :style="{
+          aspectRatio: String(surfaceAspect),
+          '--surface-aspect': String(surfaceAspect),
+        }"
       >
         <!-- eslint-disable-next-line vue/no-v-html -->
         <div class="svg-container" v-html="renderResult.svg" />
@@ -339,6 +342,8 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
+  width: 100%;
+  height: 100%;
   max-width: 100%;
   max-height: 100%;
 }
@@ -349,10 +354,8 @@ body {
   border-radius: 4px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   overflow: hidden;
-  max-width: 90vw;
-  max-height: 85vh;
-  width: auto;
-  height: auto;
+  width: min(90vw, calc((100vh - 5rem) * var(--surface-aspect)));
+  max-width: 100%;
 }
 
 .svg-container {
@@ -360,7 +363,7 @@ body {
   height: 100%;
 }
 
-.svg-container :deep(svg) {
+.svg-container > svg {
   width: 100%;
   height: 100%;
   display: block;

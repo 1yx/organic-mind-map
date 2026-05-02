@@ -136,6 +136,52 @@ export function boxesOverlap(a: LayoutBox, b: LayoutBox, padding = 0): boolean {
   );
 }
 
+export function buildParentMap(
+  branches: Record<string, import("./types.js").BranchGeometry>,
+): Map<string, string | undefined> {
+  const parentOf = new Map<string, string | undefined>();
+  for (const [, branch] of Object.entries(branches)) {
+    parentOf.set(branch.nodeId, branch.parentNodeId);
+  }
+  return parentOf;
+}
+
+export function isParentChildPair(
+  id1: string | null,
+  id2: string | null,
+  parentOf: Map<string, string | undefined>,
+): boolean {
+  if (!id1 || !id2) return false;
+  return parentOf.get(id1) === id2 || parentOf.get(id2) === id1;
+}
+
+export function areSiblings(
+  id1: string | null,
+  id2: string | null,
+  parentOf: Map<string, string | undefined>,
+): boolean {
+  if (!id1 || !id2) return false;
+  const p1 = parentOf.get(id1);
+  return p1 !== undefined && p1 === parentOf.get(id2);
+}
+
+export function reportCollision(opts: {
+  id1: string | null;
+  id2: string | null;
+  fallbackI: number;
+  fallbackJ: number;
+  seen: Set<string>;
+  diag: RenderDiagnostic[];
+}): void {
+  const a = opts.id1 ?? `box-${opts.fallbackI}`;
+  const b = opts.id2 ?? `box-${opts.fallbackJ}`;
+  const key = [a, b].sort().join(":");
+  if (!opts.seen.has(key)) {
+    opts.seen.add(key);
+    opts.diag.push(unresolvedCollisionDiagnostic(a, b));
+  }
+}
+
 /**
  * Find all pairs of overlapping bounding boxes.
  * Returns array of [indexA, indexB] pairs (A \< B).

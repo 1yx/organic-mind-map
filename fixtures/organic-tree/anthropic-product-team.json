@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "title": "How Anthropic's Product Team Moves",
+  "center": {
+    "concept": "Anthropic 产品之道"
+  },
+  "meta": {
+    "sourceTitle": "How Anthropic's Product Team Moves — Cat Wu on Lenny's Podcast",
+    "sourceSummary": "Cat Wu 谈 Anthropic 的极速交付文化、PM 角色进化、产品矩阵、使命聚焦与 AI 时代的团队建设"
+  },
+  "branches": [
+    {
+      "concept": "极速交付",
+      "children": [
+        { "concept": "研究预览" },
+        { "concept": "跨职能" }
+      ]
+    },
+    {
+      "concept": "PM 角色",
+      "children": [
+        { "concept": "产品品味" },
+        { "concept": "角色融合" }
+      ]
+    },
+    {
+      "concept": "产品矩阵",
+      "children": [
+        { "concept": "CLI·Desktop" },
+        { "concept": "Mobile" }
+      ]
+    },
+    {
+      "concept": "使命聚焦",
+      "children": [
+        { "concept": "安全AGI" },
+        { "concept": "组织优先" }
+      ]
+    },
+    {
+      "concept": "团队文化",
+      "children": [
+        { "concept": "偏向行动" },
+        { "concept": "移除旧功能" }
+      ]
+    },
+    {
+      "concept": "AI 实践",
+      "children": [
+        { "concept": "自动化" },
+        { "concept": "EVALS" }
+      ]
+    }
+  ]
+}

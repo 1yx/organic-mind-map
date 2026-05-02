@@ -110,7 +110,7 @@ function renderSingleBranch(
   const textPathId = `textpath-${nodeId}`;
   const fontSize = branch.depth === 1 ? 80 : branch.depth === 2 ? 56 : 42;
   const fontWeight = branch.depth === 1 ? "bold" : "normal";
-  const startOffset = branch.depth === 1 ? "30%" : "25%";
+  const startOffset = branch.depth === 1 ? "35%" : "58%";
 
   // Branch path with tapered stroke — using a single <path> with stroke-width
   // For true tapering, we use a filled shape instead of a stroked path
@@ -170,8 +170,16 @@ function renderCenterVisual(layout: LayoutGeometry): string {
   // We scale and position it within the bounding box
   return `  <!-- Center visual${center.usedFallback ? " (fallback)" : ""} -->
   <g transform="translate(${bbox.x.toFixed(1)}, ${bbox.y.toFixed(1)}) scale(${(bbox.width / 200).toFixed(4)}, ${(bbox.height / 200).toFixed(4)})">
-    ${center.svgContent}
+    ${normalizeEmbeddedSvgSize(center.svgContent)}
   </g>`;
+}
+
+function normalizeEmbeddedSvgSize(svgContent: string): string {
+  return svgContent.replace(/<svg\b([^>]*)>/i, (match, attrs: string) => {
+    const width = /\swidth\s*=/.test(attrs) ? "" : ' width="200"';
+    const height = /\sheight\s*=/.test(attrs) ? "" : ' height="200"';
+    return width || height ? `<svg${attrs}${width}${height}>` : match;
+  });
 }
 
 // ─── XML Escaping ──────────────────────────────────────────────────────────
@@ -220,5 +228,5 @@ function buildTaperedPath(
   const d = { x: start.x - nx * hs, y: start.y - ny * hs };
 
   const f = (v: Vec2) => `${v.x.toFixed(1)},${v.y.toFixed(1)}`;
-  return `M${f(a)} L${f(b)} Q${f(end)} ${f(c)} L${f(d)} Q${f(start)} Z`;
+  return `M${f(a)} L${f(b)} Q${f(end)} ${f(c)} L${f(d)} Q${f(start)} ${f(a)} Z`;
 }

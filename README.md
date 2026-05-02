@@ -66,3 +66,10 @@ fixtures/
 @omm/cli → @omm/core
 @omm/web → @omm/core, @omm/renderer
 ```
+
+
+
+  - Graphviz — 最经典的图/关系图工具，用 DOT 语言描述节点和边，渲染为图片。brew install graphviz
+  - PlantUML — 文本描述生成 UML 图，支持类图、时序图、思维导图等
+  - esimov/diagram — 直接把 ASCII 画转为手绘风格图片，CLI 工具
+  - D2 —新一代声明式图表语言，语法比 DOT 简洁很多，brew install d2

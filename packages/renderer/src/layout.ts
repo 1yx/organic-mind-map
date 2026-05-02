@@ -7,6 +7,7 @@
  *
  * Coordinate system: SVG units. MVP sqrt2-landscape surface viewBox: "0 0 4200 2970"
  */
+/* eslint-disable max-lines */
 
 import type { OrganicTree, LayoutBox, Point } from "@omm/core";
 import type {
@@ -28,9 +29,12 @@ import {
 import {
   computeSurfaceLayout,
   boxesOverlap,
+  buildParentMap,
+  isParentChildPair,
+  areSiblings,
+  reportCollision,
   clippedTextDiagnostic,
   layoutOverflowDiagnostic,
-  unresolvedCollisionDiagnostic,
 } from "./diagnostics.js";
 import {
   resolveBranchMarker,
@@ -168,6 +172,8 @@ type Ctx = {
   nodes: LayoutNode[];
   branches: Record<string, BranchGeometry>;
   boxes: LayoutBox[];
+  boxOwners: (string | null)[];
+  boxKinds: Array<"center" | "branch-path" | "marker">;
   order: string[];
   paper: LayoutBox;
   safe: LayoutBox;
@@ -192,6 +198,30 @@ export type LayoutOptions = {
   marginRatio?: number;
 };
 
+type CtxParams = {
+  layoutNodes: LayoutNode[];
+  center: CenterGeometry;
+  surfaceBounds: LayoutBox;
+  safeArea: LayoutBox;
+  measure: TextMeasurementAdapter;
+  diag: RenderDiagnostic[];
+};
+
+function buildLayoutCtx(p: CtxParams): Ctx {
+  return {
+    nodes: p.layoutNodes,
+    branches: {},
+    boxes: [p.center.boundingBox],
+    boxOwners: [null],
+    boxKinds: ["center"],
+    order: [],
+    paper: p.surfaceBounds,
+    safe: p.safeArea,
+    measure: p.measure,
+    diag: p.diag,
+  };
+}
+
 export function computeLayout(
   tree: OrganicTree,
   opts: LayoutOptions,
@@ -206,16 +236,14 @@ export function computeLayout(
     );
   const center = buildCenter(centerPoint, surfaceBounds, opts);
   const layoutNodes = buildLayoutTree(tree, contentHash);
-  const ctx: Ctx = {
-    nodes: layoutNodes,
-    branches: {},
-    boxes: [center.boundingBox],
-    order: [],
-    paper: surfaceBounds,
-    safe: safeArea,
+  const ctx = buildLayoutCtx({
+    layoutNodes,
+    center,
+    surfaceBounds,
+    safeArea,
     measure: opts.measure,
     diag,
-  };
+  });
   placeOrganicMainBranches(
     layoutNodes,
     {
@@ -287,41 +315,32 @@ type BranchParams = {
   radius: number;
   sector: BranchSector;
   depth: number;
+  rootNodeId?: string;
+  rootSide?: "left" | "right";
 };
 
 function placeBranch(node: LayoutNode, params: BranchParams, ctx: Ctx): void {
-  const { origin, radius, sector, depth } = params;
+  const { sector, depth } = params;
   ctx.order.push(node.id);
-  const angle = branchAngle(node, sector, ctx);
-  const len =
-    getDefaultBranchLength(node.depth, ctx.paper.width, node.children.length) *
-    node.geometry.lengthPreference;
-  const sp = {
-    x: origin.x + Math.cos(angle) * radius,
-    y: origin.y + Math.sin(angle) * radius,
-  };
-  const ep = {
-    x: origin.x + Math.cos(angle) * (radius + len),
-    y: origin.y + Math.sin(angle) * (radius + len),
-  };
-  const pathData =
-    node.depth === 1
-      ? generateCubicBezier(
-          { start: sp, end: ep },
-          { curvature: node.geometry.curvature, side: sector.side },
-        )
-      : generateQuadraticBezier(sp, ep, node.geometry.curvature);
+  const curve = computeBranchCurve(node, params, ctx);
 
   const geom = buildBranchGeom(
     node,
-    { sp, ep, pathData, branchLen: len, angle },
+    {
+      sp: curve.startPoint,
+      ep: curve.endPoint,
+      pathData: curve.pathData,
+      branchLen: curve.length,
+      angle: curve.angle,
+      side: sector.side,
+      rootNodeId: params.rootNodeId ?? node.id,
+      rootSide:
+        params.rootSide ??
+        inferSideFromPoints(curve.startPoint, curve.endPoint),
+    },
     ctx,
   );
-  ctx.branches[node.id] = geom;
-  ctx.boxes.push(geom.boundingBox);
-  if (geom.markerBoundingBox) {
-    ctx.boxes.push(geom.markerBoundingBox);
-  }
+  registerBranchBoxes(ctx, geom);
 
   for (let c = 0; c < node.children.length; c++) {
     const span = (sector.angleEnd - sector.angleStart) / node.children.length;
@@ -332,16 +351,86 @@ function placeBranch(node: LayoutNode, params: BranchParams, ctx: Ctx): void {
     };
     placeBranch(
       node.children[c]!,
-      { origin: ep, radius: 0, sector: childSector, depth: depth + 1 },
+      {
+        origin: curve.endPoint,
+        radius: 0,
+        sector: childSector,
+        depth: depth + 1,
+        rootNodeId: geom.rootNodeId,
+        rootSide: geom.side,
+      },
       ctx,
     );
   }
 }
 
+function computeBranchCurve(
+  node: LayoutNode,
+  params: BranchParams,
+  ctx: Ctx,
+): {
+  angle: number;
+  length: number;
+  startPoint: Point;
+  endPoint: Point;
+  pathData: string;
+} {
+  const angle = branchAngle(node, params.sector, ctx);
+  const length =
+    getDefaultBranchLength(node.depth, ctx.paper.width, node.children.length) *
+    node.geometry.lengthPreference;
+  const startPoint = pointOnRay(params.origin, angle, params.radius);
+  const endPoint = pointOnRay(params.origin, angle, params.radius + length);
+  const pathData = branchPathData({
+    node,
+    sector: params.sector,
+    startPoint,
+    endPoint,
+  });
+  return { angle, length, startPoint, endPoint, pathData };
+}
+
+function pointOnRay(origin: Point, angle: number, radius: number): Point {
+  return {
+    x: origin.x + Math.cos(angle) * radius,
+    y: origin.y + Math.sin(angle) * radius,
+  };
+}
+
+function branchPathData(opts: {
+  node: LayoutNode;
+  sector: BranchSector;
+  startPoint: Point;
+  endPoint: Point;
+}): string {
+  if (opts.node.depth === 1) {
+    return generateCubicBezier(
+      { start: opts.startPoint, end: opts.endPoint },
+      { curvature: opts.node.geometry.curvature, side: opts.sector.side },
+    );
+  }
+  return generateQuadraticBezier(
+    opts.startPoint,
+    opts.endPoint,
+    opts.node.geometry.curvature,
+  );
+}
+
+function registerBranchBoxes(ctx: Ctx, geom: BranchGeometry): void {
+  ctx.branches[geom.nodeId] = geom;
+  ctx.boxes.push(geom.boundingBox);
+  ctx.boxOwners.push(geom.nodeId);
+  ctx.boxKinds.push("branch-path");
+  if (geom.markerBoundingBox) {
+    ctx.boxes.push(geom.markerBoundingBox);
+    ctx.boxOwners.push(geom.nodeId);
+    ctx.boxKinds.push("marker");
+  }
+}
+
 function branchAngle(node: LayoutNode, sector: BranchSector, ctx: Ctx): number {
   const depth = node.depth;
-  const mid = (sector.angleStart + sector.angleEnd) / 2;
-  if (depth === 1) return mid * 0.7 + node.geometry.angle * 0.3;
+  if (depth === 1) return mainBranchAngle(node, sector);
   const idx = getSiblingIndex(ctx.nodes, node);
   const cnt = getSiblingCount(ctx.nodes, node);
   return (
@@ -350,12 +439,22 @@ function branchAngle(node: LayoutNode, sector: BranchSector, ctx: Ctx): number {
   );
 }
 
+function mainBranchAngle(node: LayoutNode, sector: BranchSector): number {
+  const mid = (sector.angleStart + sector.angleEnd) / 2;
+  const halfSpan = (sector.angleEnd - sector.angleStart) / 2;
+  const jitter = node.geometry.angle / (Math.PI * 2) - 0.5;
+  return mid + jitter * halfSpan * 0.5;
+}
+
 type BranchGeomInput = {
   sp: Point;
   ep: Point;
   pathData: string;
   branchLen: number;
   angle: number;
+  side: "left" | "right";
+  rootNodeId: string;
+  rootSide: "left" | "right";
 };
 
 function buildBranchGeom(
@@ -395,6 +494,8 @@ function buildBranchGeom(
     concept: displayText,
     depth: node.depth,
     parentNodeId: node.parentId,
+    rootNodeId: bi.rootNodeId,
+    side: bi.rootSide,
     color: node.color,
     branchPath: bi.pathData,
     textPath,
@@ -505,20 +606,105 @@ function clampText(text: string, maxW: number, measuredW: number): string {
 }
 
 function runCollisionDetection(ctx: Ctx): void {
-  const minPad = 20;
+  const minPad = 40;
   const seen = new Set<string>();
+  const parentOf = buildParentMap(ctx.branches);
+
   for (let i = 0; i < ctx.boxes.length; i++) {
     if (i === 0) continue;
+    const id1 = ctx.boxOwners[i];
     for (let j = i + 1; j < ctx.boxes.length; j++) {
+      const id2 = ctx.boxOwners[j];
+      if (isParentChildPair(id1, id2, parentOf)) continue;
+      if (areSiblings(id1, id2, parentOf)) continue;
       if (boxesOverlap(ctx.boxes[i]!, ctx.boxes[j]!, minPad)) {
-        const id1 = ctx.order[i - 1] ?? `unknown-${i}`;
-        const id2 = ctx.order[j - 1] ?? `unknown-${j}`;
-        const key = [id1, id2].sort().join(":");
-        if (!seen.has(key)) {
-          seen.add(key);
-          ctx.diag.push(unresolvedCollisionDiagnostic(id1, id2));
+        if (
+          isRadialOriginFalsePositive(
+            {
+              id1,
+              id2,
+              kind1: ctx.boxKinds[i]!,
+              kind2: ctx.boxKinds[j]!,
+            },
+            ctx,
+          )
+        ) {
+          continue;
         }
+        reportCollision({
+          id1,
+          id2,
+          fallbackI: i,
+          fallbackJ: j,
+          seen,
+          diag: ctx.diag,
+        });
       }
     }
   }
+}
+
+function isRadialOriginFalsePositive(
+  pair: {
+    id1: string | null;
+    id2: string | null;
+    kind1: "center" | "branch-path" | "marker";
+    kind2: "center" | "branch-path" | "marker";
+  },
+  ctx: Ctx,
+): boolean {
+  if (!hasDistinctBranchPathOwners(pair)) return false;
+
+  const a = ctx.branches[pair.id1];
+  const b = ctx.branches[pair.id2];
+  if (!a || !b) return false;
+  if (!hasDifferentRootsOnSameSide(a, b)) return false;
+
+  const rootA = ctx.branches[a.rootNodeId];
+  const rootB = ctx.branches[b.rootNodeId];
+  if (!rootA || !rootB) return false;
+
+  const sharedOriginRadius =
+    Math.max(rootA.strokeWidthStart, rootB.strokeWidthStart) * 8;
+  return (
+    distance(rootA.startPoint, rootB.startPoint) <= sharedOriginRadius &&
+    distance(a.endPoint, b.endPoint) > sharedOriginRadius * 2
+  );
+}
+
+function hasDistinctBranchPathOwners(pair: {
+  id1: string | null;
+  id2: string | null;
+  kind1: "center" | "branch-path" | "marker";
+  kind2: "center" | "branch-path" | "marker";
+}): pair is {
+  id1: string;
+  id2: string;
+  kind1: "branch-path";
+  kind2: "branch-path";
+} {
+  return (
+    pair.kind1 === "branch-path" &&
+    pair.kind2 === "branch-path" &&
+    Boolean(pair.id1) &&
+    Boolean(pair.id2) &&
+    pair.id1 !== pair.id2
+  );
+}
+
+function hasDifferentRootsOnSameSide(
+  a: BranchGeometry,
+  b: BranchGeometry,
+): boolean {
+  return a.rootNodeId !== b.rootNodeId && a.side === b.side;
+}
+
+function inferSideFromPoints(start: Point, end: Point): "left" | "right" {
+  return end.x < start.x ? "left" : "right";
+}
+
+function distance(a: Point, b: Point): number {
+  const dx = a.x - b.x;
+  const dy = a.y - b.y;
+  return Math.sqrt(dx * dx + dy * dy);
 }
