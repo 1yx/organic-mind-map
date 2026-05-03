@@ -108,21 +108,46 @@
       const NS = "http://www.w3.org/2000/svg";
       const center = { x: 590, y: 360 };
 
-      const palette = [
-        "#e84d3c",
-        "#28b463",
-        "#1f8fe5",
-        "#f28c28",
-        "#18b7a1",
-        "#6c5ce7",
-      ];
+      const MAX_TERMINAL_SLOPE = Math.tan(Math.PI / 6);
 
-      const mainSpecs = [
-        { side: "left", level: -1, length: 320, color: palette[0], seed: 11 },
-        { side: "left", level: 1, length: 300, color: palette[1], seed: 19 },
-        { side: "right", level: -1, length: 325, color: palette[2], seed: 29 },
-        { side: "right", level: 0, length: 300, color: palette[3], seed: 37 },
-        { side: "right", level: 1, length: 310, color: palette[4], seed: 43 },
+      const semanticBranches = [
+        {
+          id: "branch-1",
+          order: 0,
+          leafCount: 3,
+          color: "#e84d3c",
+          seed: 11,
+          children: [
+            { id: "branch-1-a", leafCount: 1 },
+            { id: "branch-1-b", leafCount: 1 },
+            { id: "branch-1-c", leafCount: 1 },
+          ],
+        },
+        {
+          id: "branch-2",
+          order: 1,
+          leafCount: 5,
+          color: "#1f8fe5",
+          seed: 29,
+          children: [
+            { id: "branch-2-a", leafCount: 1 },
+            { id: "branch-2-b", leafCount: 1 },
+            { id: "branch-2-c", leafCount: 1 },
+            { id: "branch-2-d", leafCount: 1 },
+            { id: "branch-2-e", leafCount: 1 },
+          ],
+        },
+        {
+          id: "branch-3",
+          order: 2,
+          leafCount: 2,
+          color: "#28b463",
+          seed: 43,
+          children: [
+            { id: "branch-3-a", leafCount: 1 },
+            { id: "branch-3-b", leafCount: 1 },
+          ],
+        },
       ];
 
       function createEl(name, attrs = {}) {
@@ -185,16 +210,81 @@
         return { x: v.x / len, y: v.y / len };
       }
 
+      function branchWeight(branch) {
+        return (
+          branch.leafCount +
+          (branch.children?.length ?? 0) * 0.15 +
+          (branch.children?.reduce((sum, child) => sum + child.leafCount, 0) ??
+            0) *
+            0.05
+        );
+      }
+
+      function partitionBranches(branches) {
+        const weights = branches.map(branchWeight);
+        const total = weights.reduce((sum, weight) => sum + weight, 0);
+        let best = null;
+        const maxMask = 1 << branches.length;
+        for (let mask = 1; mask < maxMask - 1; mask += 1) {
+          const left = [];
+          const right = [];
+          let leftWeight = 0;
+          for (let i = 0; i < branches.length; i += 1) {
+            if (mask & (1 << i)) {
+              left.push(branches[i]);
+              leftWeight += weights[i];
+            } else {
+              right.push(branches[i]);
+            }
+          }
+          const diff = Math.abs(total - leftWeight * 2);
+          const countDiff = Math.abs(left.length - right.length);
+          const firstOnLeft = left.includes(branches[0]) ? 0 : 1;
+          const score = [diff, countDiff, firstOnLeft, mask];
+          if (!best || compareScore(score, best.score) < 0) {
+            best = { score, left, right };
+          }
+        }
+        return {
+          left: best.left.sort((a, b) => a.order - b.order),
+          right: best.right.sort((a, b) => a.order - b.order),
+        };
+      }
+
+      function compareScore(a, b) {
+        for (let i = 0; i < a.length; i += 1) {
+          if (a[i] !== b[i]) return a[i] - b[i];
+        }
+        return 0;
+      }
+
+      function laneOffsets(count) {
+        if (count === 1) return [0];
+        const step = Math.min(150, 300 / (count - 1));
+        return Array.from(
+          { length: count },
+          (_, index) => (index - (count - 1) / 2) * step,
+        );
+      }
+
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+      }
+
       function branchCurve(start, spec) {
         const sideSign = spec.side === "right" ? 1 : -1;
-        const terminalSlope = spec.terminalSlope ?? spec.level * 0.08;
+        const terminalSlope = clamp(
+          spec.terminalSlope ?? 0,
+          -MAX_TERMINAL_SLOPE,
+          MAX_TERMINAL_SLOPE,
+        );
         const end = {
           x: start.x + sideSign * spec.length,
-          y: start.y + spec.level * 138 + (spec.yOffset ?? 0),
+          y: start.y + (spec.yOffset ?? 0),
         };
         const growth = normalize({
-          x: sideSign * 0.8,
-          y: spec.level * 0.62 + (spec.growthBias ?? 0),
+          x: sideSign * 0.72,
+          y: (spec.growthY ?? 0) * 0.85,
         });
         const reading = normalize({ x: sideSign, y: terminalSlope });
         return {
@@ -210,6 +300,141 @@
           p3: end,
         };
       }
+
+      function branchCurveTo(start, end, spec) {
+        const sideSign = spec.side === "right" ? 1 : -1;
+        const terminalSlope = clamp(
+          spec.terminalSlope ?? 0,
+          -MAX_TERMINAL_SLOPE,
+          MAX_TERMINAL_SLOPE,
+        );
+        const distance = Math.abs(end.x - start.x);
+        const vertical = end.y - start.y;
+        const reading = normalize({ x: sideSign, y: terminalSlope });
+        return {
+          p0: start,
+          c1: {
+            x: start.x + sideSign * distance * 0.34,
+            y: start.y + vertical * 0.18 + (spec.launchY ?? 0),
+          },
+          c2: {
+            x: end.x - reading.x * distance * 0.48,
+            y: end.y - reading.y * distance * 0.48,
+          },
+          p3: end,
+        };
+      }
+
+      function siblingOffsets(count) {
+        if (count === 1) return [0];
+        if (count === 2) return [-1, 1];
+        if (count === 3) return [-1, 0, 1];
+        const step = 2 / (count - 1);
+        return Array.from({ length: count }, (_, index) => -1 + index * step);
+      }
+
+      function childCurve(parentCurve, parentBranch, child, index, count) {
+        const sideSign = parentBranch.side === "right" ? 1 : -1;
+        const anchorT =
+          count >= 4
+            ? 0.34 + (index + 0.5) * (0.5 / count)
+            : 0.56 + (index + 0.5) * (0.32 / count);
+        const anchor = cubicPoint(parentCurve, anchorT);
+        const tangent = normalize(cubicTangent(parentCurve, anchorT));
+        const normal = { x: -tangent.y, y: tangent.x };
+        const split = siblingOffsets(count)[index];
+        if (count >= 4) {
+          const rows = [170, 255, 345, 435, 520];
+          const textStops = [1085, 1055, 1105, 1065, 1090];
+          const rowIndex = Math.round(((split + 1) / 2) * (rows.length - 1));
+          const targetY = rows[rowIndex];
+          const endX =
+            parentBranch.side === "right"
+              ? textStops[rowIndex]
+              : 1180 - textStops[rowIndex];
+          return branchCurveTo(anchor, { x: endX, y: targetY }, {
+            id: child.id,
+            side: parentBranch.side,
+            terminalSlope: clamp(split * 0.1, -0.26, 0.26),
+            launchY: split * 18,
+          });
+        }
+        const yOffset =
+          normal.y * split * 126 +
+          Math.sign(split) * 34 +
+          parentBranch.laneOffset * 0.08;
+        return branchCurve(anchor, {
+          id: child.id,
+          side: parentBranch.side,
+          length: 150 + child.leafCount * 10,
+          yOffset,
+          terminalSlope: clamp(split * 0.18, -0.42, 0.42),
+          growthY: split * 0.42,
+        });
+      }
+
+      function buildSkeleton() {
+        const partition = partitionBranches(semanticBranches);
+        const skeleton = [];
+        for (const side of ["left", "right"]) {
+          const branches = partition[side];
+          const offsets = laneOffsets(branches.length);
+          branches.forEach((branch, sideIndex) => {
+            const laneOffset = offsets[sideIndex];
+            const mainCurve = branchCurve(center, {
+              id: branch.id,
+              side,
+              length: 330 + branch.leafCount * 20,
+              yOffset: branch.children.length >= 4 ? 42 : laneOffset,
+              terminalSlope:
+                branch.children.length >= 4
+                  ? 0.08
+                  : clamp(laneOffset / 640, -0.3, 0.3),
+              growthY:
+                branch.children.length >= 4 ? 0.34 : laneOffset / 210,
+            });
+            const main = {
+              id: branch.id,
+              semanticOrder: branch.order,
+              side,
+              laneOffset,
+              depth: 1,
+              color: branch.color,
+              seed: branch.seed,
+              curve: mainCurve,
+              startWidth: 42,
+              endWidth: 8,
+              jitter: 7,
+            };
+            skeleton.push(main);
+            branch.children.forEach((child, childIndex) => {
+              skeleton.push({
+                id: child.id,
+                parentId: branch.id,
+                semanticOrder: branch.order,
+                side,
+                depth: 2,
+                color: branch.color,
+                seed: branch.seed + 200 + childIndex * 17,
+                curve: childCurve(
+                  mainCurve,
+                  main,
+                  child,
+                  childIndex,
+                  branch.children.length,
+                ),
+                startWidth: 15,
+                endWidth: 3.5,
+                jitter: 4,
+                opacity: 0.9,
+              });
+            });
+          });
+        }
+        return skeleton;
+      }
+
+      const skeleton = buildSkeleton();
 
       function widthAt(t, startWidth, endWidth) {
         const decay = Math.pow(1 - smoothstep(t), 0.72);
@@ -254,44 +479,68 @@
         return `M${fmt(curve.p0)} C${fmt(curve.c1)} ${fmt(curve.c2)} ${fmt(curve.p3)}`;
       }
 
-      function drawBranch(group, curve, opts, mode) {
+      function terminalAngleDegrees(curve) {
+        const tangent = normalize(cubicTangent(curve, 1));
+        return (Math.atan2(tangent.y, Math.abs(tangent.x)) * 180) / Math.PI;
+      }
+
+      window.__handdrawDemoDebug = {
+        semanticOrder: semanticBranches.map((branch) => branch.id),
+        sideWeights: {
+          left: skeleton
+            .filter((branch) => branch.depth === 1 && branch.side === "left")
+            .reduce((sum, branch) => {
+              const semantic = semanticBranches.find((item) => item.id === branch.id);
+              return sum + branchWeight(semantic);
+            }, 0),
+          right: skeleton
+            .filter((branch) => branch.depth === 1 && branch.side === "right")
+            .reduce((sum, branch) => {
+              const semantic = semanticBranches.find((item) => item.id === branch.id);
+              return sum + branchWeight(semantic);
+            }, 0),
+        },
+        skeleton: skeleton.map((branch) => ({
+          id: branch.id,
+          parentId: branch.parentId ?? null,
+          semanticOrder: branch.semanticOrder,
+          side: branch.side,
+          depth: branch.depth,
+          start: branch.curve.p0,
+          end: branch.curve.p3,
+          terminalAngle: terminalAngleDegrees(branch.curve),
+        })),
+      };
+
+      function drawBranch(group, branch, mode) {
+        const { curve } = branch;
         if (mode === "baseline") {
           group.append(
             createEl("path", {
               d: centerPath(curve),
               class: "baseline",
-              stroke: opts.color,
-              "stroke-width": opts.startWidth * 0.34,
+              stroke: branch.color,
+              "stroke-width": branch.startWidth * 0.34,
+              "data-branch-skeleton": branch.id,
+              "data-depth": branch.depth,
             }),
           );
           return;
         }
         const path = createEl("path", {
           d: ribbonPath(curve, {
-            startWidth: opts.startWidth,
-            endWidth: opts.endWidth,
-            jitter: mode === "jittered" ? opts.jitter : 0,
-            seed: opts.seed,
+            startWidth: branch.startWidth,
+            endWidth: branch.endWidth,
+            jitter: mode === "jittered" ? branch.jitter : 0,
+            seed: branch.seed,
           }),
-          fill: opts.color,
-          opacity: opts.opacity ?? 0.96,
+          fill: branch.color,
+          opacity: branch.opacity ?? 0.96,
           "data-branch-body": "true",
+          "data-branch-skeleton": branch.id,
+          "data-depth": branch.depth,
         });
         group.append(path);
-      }
-
-      function childSpecs(parentSpec) {
-        const side = parentSpec.side;
-        const spread = parentSpec.level === 0 ? [-0.7, 0.72] : [-0.5, 0.45];
-        return spread.map((level, index) => ({
-          side,
-          level: parentSpec.level + level,
-          length: 170 - index * 12,
-          yOffset: index === 0 ? -14 : 18,
-          growthBias: index === 0 ? -0.12 : 0.12,
-          terminalSlope: level * 0.05,
-          seed: parentSpec.seed + 200 + index * 17,
-        }));
       }
 
       function draw(mode) {
@@ -301,38 +550,18 @@
         const centerLayer = createEl("g");
         svg.append(layer, bodies, centerLayer);
 
-        for (const spec of mainSpecs) {
-          const curve = branchCurve(center, spec);
-          drawBranch(bodies, curve, {
-            color: spec.color,
-            startWidth: 42,
-            endWidth: 8,
-            jitter: 7,
-            seed: spec.seed,
-          }, mode);
-
-          childSpecs(spec).forEach((child, index) => {
-            const anchorT = 0.58 + index * 0.18;
-            const anchor = cubicPoint(curve, anchorT);
-            const childCurve = branchCurve(anchor, child);
-            drawBranch(bodies, childCurve, {
-              color: spec.color,
-              startWidth: 15,
-              endWidth: 3.5,
-              jitter: 4,
-              seed: child.seed,
-              opacity: 0.9,
-            }, mode);
-          });
-
-          const guide = createEl("path", {
-            d: centerPath(curve),
-            fill: "none",
-            stroke: "rgba(255,255,255,0.42)",
-            "stroke-width": mode === "baseline" ? 0 : 1.5,
-            "stroke-linecap": "round",
-          });
-          layer.append(guide);
+        for (const branch of skeleton) {
+          drawBranch(bodies, branch, mode);
+          if (branch.depth === 1) {
+            const guide = createEl("path", {
+              d: centerPath(branch.curve),
+              fill: "none",
+              stroke: "rgba(255,255,255,0.42)",
+              "stroke-width": mode === "baseline" ? 0 : 1.5,
+              "stroke-linecap": "round",
+            });
+            layer.append(guide);
+          }
         }
 
         centerLayer.append(

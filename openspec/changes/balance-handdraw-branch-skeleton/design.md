@@ -56,6 +56,14 @@ Child placement will be relative to the parent tangent/normal at the child ancho
 
 This avoids placing both branches of a 1-to-2 structure on the same side.
 
+### Use Trunk-Segmented Placement for Dense Child Sets
+
+For 4+ children, the demo should look closer to a traditional Buzan branch structure than a random fan. Child anchors will be placed at multiple positions along the parent branch, so children appear to grow from the main trunk in sequence.
+
+The terminal rows for dense child sets should be visually even and reserve room for future branch text. In the demo, the 5-child right-side branch uses fixed readable rows across the page height, with terminal x positions kept inside the paper bounds instead of pushed to the edge. Terminal tangents remain near horizontal, while the curve body may sweep organically into the row.
+
+This rule is still demo-specific. It is a visual prototype for later renderer discussion, not a production layout algorithm.
+
 ### Separate Skeleton From Rendering Style
 
 The demo will compute one skeleton and render it three ways:
@@ -72,3 +80,4 @@ This makes mode comparison about style, not layout.
 - Strict horizontal constraints can reduce organic variety -> allow the curve body to bend while clamping only terminal/readability direction.
 - Exhaustive subset partitioning needs deterministic tie-breaks -> define tie-break order and keep inputs stable.
 - Child normal splitting can still collide in dense cases -> acceptable for demo; future renderer integration will need collision-aware refinement.
+- Dense child-set rows can look too regular if applied universally -> acceptable here because the demo is evaluating readable branch structure before text rendering exists.

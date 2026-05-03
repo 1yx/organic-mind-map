@@ -33,6 +33,14 @@ The hand-drawn branch demo SHALL distribute sibling child branches around the pa
 - **WHEN** a parent branch has exactly three child branches
 - **THEN** the children are distributed above, near the parent direction, and below
 
+#### Scenario: Dense child set grows along the trunk
+- **WHEN** a parent branch has four or more child branches
+- **THEN** child anchors are distributed along the parent branch rather than all emerging from one terminal point
+
+#### Scenario: Dense child terminals reserve text room
+- **WHEN** a parent branch has four or more child branches
+- **THEN** child terminal rows are evenly spread across the available page height and kept inside the paper bounds to reserve horizontal room for future branch text
+
 ### Requirement: Horizontal-readable terminal angles
 The hand-drawn branch demo SHALL keep branch terminal directions close to horizontal to support future branch text placement.
 
