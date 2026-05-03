@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Handdraw Branch Demo</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: #1f2933;
+        background: #f2f2ef;
+      }
+
+      main {
+        width: min(1180px, calc(100vw - 40px));
+        margin: 0 auto;
+        padding: 24px 0 32px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 16px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 650;
+      }
+
+      .controls {
+        display: flex;
+        gap: 8px;
+      }
+
+      button {
+        border: 1px solid #b9c0c8;
+        border-radius: 6px;
+        padding: 8px 12px;
+        font: inherit;
+        background: #fff;
+        cursor: pointer;
+      }
+
+      button[aria-pressed="true"] {
+        color: #fff;
+        border-color: #243b53;
+        background: #243b53;
+      }
+
+      .surface {
+        overflow: hidden;
+        border: 1px solid #d2d6dc;
+        border-radius: 8px;
+        background: #fffdf8;
+        box-shadow: 0 10px 24px rgb(15 23 42 / 10%);
+      }
+
+      svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .baseline {
+        opacity: 0.82;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        fill: none;
+      }
+
+      .center {
+        fill: #fff7ed;
+        stroke: #d4a373;
+        stroke-width: 3;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Handdraw Organic Branch Prototype</h1>
+        <div class="controls" aria-label="Branch variant">
+          <button type="button" data-mode="baseline">Baseline</button>
+          <button type="button" data-mode="organic">Organic</button>
+          <button type="button" data-mode="jittered">Jittered</button>
+        </div>
+      </header>
+      <div class="surface">
+        <svg id="demo" viewBox="0 0 1180 720" role="img" aria-label="Branch-only handdraw mind map demo"></svg>
+      </div>
+    </main>
+
+    <script>
+      const svg = document.querySelector("#demo");
+      const buttons = [...document.querySelectorAll("button[data-mode]")];
+      const NS = "http://www.w3.org/2000/svg";
+      const center = { x: 590, y: 360 };
+
+      const palette = [
+        "#e84d3c",
+        "#28b463",
+        "#1f8fe5",
+        "#f28c28",
+        "#18b7a1",
+        "#6c5ce7",
+      ];
+
+      const mainSpecs = [
+        { side: "left", level: -1, length: 320, color: palette[0], seed: 11 },
+        { side: "left", level: 1, length: 300, color: palette[1], seed: 19 },
+        { side: "right", level: -1, length: 325, color: palette[2], seed: 29 },
+        { side: "right", level: 0, length: 300, color: palette[3], seed: 37 },
+        { side: "right", level: 1, length: 310, color: palette[4], seed: 43 },
+      ];
+
+      function createEl(name, attrs = {}) {
+        const el = document.createElementNS(NS, name);
+        for (const [key, value] of Object.entries(attrs)) {
+          el.setAttribute(key, String(value));
+        }
+        return el;
+      }
+
+      function mulberry32(seed) {
+        return function rand() {
+          let t = (seed += 0x6d2b79f5);
+          t = Math.imul(t ^ (t >>> 15), t | 1);
+          t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+
+      function easeOutCubic(t) {
+        return 1 - Math.pow(1 - t, 3);
+      }
+
+      function smoothstep(t) {
+        return t * t * (3 - 2 * t);
+      }
+
+      function cubicPoint(c, t) {
+        const mt = 1 - t;
+        return {
+          x:
+            mt * mt * mt * c.p0.x +
+            3 * mt * mt * t * c.c1.x +
+            3 * mt * t * t * c.c2.x +
+            t * t * t * c.p3.x,
+          y:
+            mt * mt * mt * c.p0.y +
+            3 * mt * mt * t * c.c1.y +
+            3 * mt * t * t * c.c2.y +
+            t * t * t * c.p3.y,
+        };
+      }
+
+      function cubicTangent(c, t) {
+        const mt = 1 - t;
+        return {
+          x:
+            3 * mt * mt * (c.c1.x - c.p0.x) +
+            6 * mt * t * (c.c2.x - c.c1.x) +
+            3 * t * t * (c.p3.x - c.c2.x),
+          y:
+            3 * mt * mt * (c.c1.y - c.p0.y) +
+            6 * mt * t * (c.c2.y - c.c1.y) +
+            3 * t * t * (c.p3.y - c.c2.y),
+        };
+      }
+
+      function normalize(v) {
+        const len = Math.hypot(v.x, v.y) || 1;
+        return { x: v.x / len, y: v.y / len };
+      }
+
+      function branchCurve(start, spec) {
+        const sideSign = spec.side === "right" ? 1 : -1;
+        const terminalSlope = spec.terminalSlope ?? spec.level * 0.08;
+        const end = {
+          x: start.x + sideSign * spec.length,
+          y: start.y + spec.level * 138 + (spec.yOffset ?? 0),
+        };
+        const growth = normalize({
+          x: sideSign * 0.8,
+          y: spec.level * 0.62 + (spec.growthBias ?? 0),
+        });
+        const reading = normalize({ x: sideSign, y: terminalSlope });
+        return {
+          p0: start,
+          c1: {
+            x: start.x + growth.x * spec.length * 0.36,
+            y: start.y + growth.y * spec.length * 0.36,
+          },
+          c2: {
+            x: end.x - reading.x * spec.length * 0.42,
+            y: end.y - reading.y * spec.length * 0.42,
+          },
+          p3: end,
+        };
+      }
+
+      function widthAt(t, startWidth, endWidth) {
+        const decay = Math.pow(1 - smoothstep(t), 0.72);
+        return endWidth + (startWidth - endWidth) * decay;
+      }
+
+      function ribbonPath(curve, opts) {
+        const steps = opts.steps ?? 28;
+        const randA = mulberry32(opts.seed);
+        const randB = mulberry32(opts.seed + 101);
+        const left = [];
+        const right = [];
+        for (let i = 0; i <= steps; i += 1) {
+          const t = i / steps;
+          const p = cubicPoint(curve, t);
+          const tangent = normalize(cubicTangent(curve, t));
+          const normal = { x: -tangent.y, y: tangent.x };
+          const w = widthAt(t, opts.startWidth, opts.endWidth);
+          const j = opts.jitter * (1 - t * 0.35);
+          const leftJitter = (randA() - 0.5) * j;
+          const rightJitter = (randB() - 0.5) * j;
+          left.push({
+            x: p.x + normal.x * (w / 2 + leftJitter),
+            y: p.y + normal.y * (w / 2 + leftJitter),
+          });
+          right.push({
+            x: p.x - normal.x * (w / 2 + rightJitter),
+            y: p.y - normal.y * (w / 2 + rightJitter),
+          });
+        }
+        const fmt = (p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+        return [
+          `M${fmt(left[0])}`,
+          ...left.slice(1).map((p) => `L${fmt(p)}`),
+          ...right.reverse().map((p) => `L${fmt(p)}`),
+          "Z",
+        ].join(" ");
+      }
+
+      function centerPath(curve) {
+        const fmt = (p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+        return `M${fmt(curve.p0)} C${fmt(curve.c1)} ${fmt(curve.c2)} ${fmt(curve.p3)}`;
+      }
+
+      function drawBranch(group, curve, opts, mode) {
+        if (mode === "baseline") {
+          group.append(
+            createEl("path", {
+              d: centerPath(curve),
+              class: "baseline",
+              stroke: opts.color,
+              "stroke-width": opts.startWidth * 0.34,
+            }),
+          );
+          return;
+        }
+        const path = createEl("path", {
+          d: ribbonPath(curve, {
+            startWidth: opts.startWidth,
+            endWidth: opts.endWidth,
+            jitter: mode === "jittered" ? opts.jitter : 0,
+            seed: opts.seed,
+          }),
+          fill: opts.color,
+          opacity: opts.opacity ?? 0.96,
+          "data-branch-body": "true",
+        });
+        group.append(path);
+      }
+
+      function childSpecs(parentSpec) {
+        const side = parentSpec.side;
+        const spread = parentSpec.level === 0 ? [-0.7, 0.72] : [-0.5, 0.45];
+        return spread.map((level, index) => ({
+          side,
+          level: parentSpec.level + level,
+          length: 170 - index * 12,
+          yOffset: index === 0 ? -14 : 18,
+          growthBias: index === 0 ? -0.12 : 0.12,
+          terminalSlope: level * 0.05,
+          seed: parentSpec.seed + 200 + index * 17,
+        }));
+      }
+
+      function draw(mode) {
+        svg.replaceChildren();
+        const layer = createEl("g");
+        const bodies = createEl("g");
+        const centerLayer = createEl("g");
+        svg.append(layer, bodies, centerLayer);
+
+        for (const spec of mainSpecs) {
+          const curve = branchCurve(center, spec);
+          drawBranch(bodies, curve, {
+            color: spec.color,
+            startWidth: 42,
+            endWidth: 8,
+            jitter: 7,
+            seed: spec.seed,
+          }, mode);
+
+          childSpecs(spec).forEach((child, index) => {
+            const anchorT = 0.58 + index * 0.18;
+            const anchor = cubicPoint(curve, anchorT);
+            const childCurve = branchCurve(anchor, child);
+            drawBranch(bodies, childCurve, {
+              color: spec.color,
+              startWidth: 15,
+              endWidth: 3.5,
+              jitter: 4,
+              seed: child.seed,
+              opacity: 0.9,
+            }, mode);
+          });
+
+          const guide = createEl("path", {
+            d: centerPath(curve),
+            fill: "none",
+            stroke: "rgba(255,255,255,0.42)",
+            "stroke-width": mode === "baseline" ? 0 : 1.5,
+            "stroke-linecap": "round",
+          });
+          layer.append(guide);
+        }
+
+        centerLayer.append(
+          createEl("circle", {
+            cx: center.x,
+            cy: center.y,
+            r: 47,
+            class: "center",
+          }),
+          createEl("circle", {
+            cx: center.x,
+            cy: center.y,
+            r: 17,
+            fill: "#f59e0b",
+          }),
+        );
+      }
+
+      function setMode(mode) {
+        for (const button of buttons) {
+          button.setAttribute("aria-pressed", String(button.dataset.mode === mode));
+        }
+        draw(mode);
+      }
+
+      for (const button of buttons) {
+        button.addEventListener("click", () => setMode(button.dataset.mode));
+      }
+
+      setMode("jittered");
+    </script>
+  </body>
+</html>

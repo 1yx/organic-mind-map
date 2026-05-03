@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Standalone hand-drawn branch demo
-The system SHALL provide a standalone demo page under `.tmp/` that renders branch-only SVG examples for the hand-drawn organic branch algorithm.
+The system SHALL provide a standalone demo page under `handdraw-branch-demo/` that renders branch-only SVG examples for the hand-drawn organic branch algorithm.
 
 #### Scenario: Demo opens without production app
 - **WHEN** the demo HTML file is opened directly or served from a simple local static server

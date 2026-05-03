@@ -8,7 +8,7 @@ This change creates a demo surface before changing production renderer behavior.
 
 **Goals:**
 
-- Render a standalone branch-only SVG demo under `.tmp/`.
+- Render a standalone branch-only SVG demo under `handdraw-branch-demo/`.
 - Show readability-biased branches: outward organic growth with near-horizontal terminal segments.
 - Generate branch bodies from sampled variable-width ribbons rather than straight-line quadrilaterals.
 - Add deterministic edge jitter to approximate hand-drawn branch contours.
@@ -25,9 +25,9 @@ This change creates a demo surface before changing production renderer behavior.
 
 ## Decisions
 
-### Use a Static Demo Under `.tmp/`
+### Use a Static Demo Under `handdraw-branch-demo/`
 
-The prototype SHALL live under `.tmp/` so it is explicitly separated from production code and generated artifacts. This keeps the experiment easy to open in a browser while avoiding accidental coupling to the renderer package.
+The prototype SHALL live under `handdraw-branch-demo/` so it is explicitly separated from production code and generated artifacts. This keeps the experiment easy to open in a browser while avoiding accidental coupling to the renderer package.
 
 Alternative considered: add a Vite route to `@omm/web`. Rejected because this would mix exploratory UI with the MVP preview app.
 
@@ -59,5 +59,5 @@ Alternative considered: all children start at the parent endpoint. Rejected beca
 
 - Hand-drawn jitter can create self-intersecting outlines -> keep jitter amplitude small and depth-scaled.
 - Near-horizontal terminal segments can make branch spacing harder -> demo should show several branch counts and expose parameters for later tuning.
-- A demo under `.tmp/` is not production-tested -> keep implementation small and Playwright-verified, then use a later change for renderer integration.
+- A demo under `handdraw-branch-demo/` is not production-tested -> keep implementation small and Playwright-verified, then use a later change for renderer integration.
 - Branch-only validation cannot prove text readability -> this change intentionally defers text until the branch shape is accepted.

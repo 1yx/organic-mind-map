@@ -4,7 +4,7 @@ The current preview branches still read as mechanically generated ribbons, while
 
 ## What Changes
 
-- Add a standalone static demo under `.tmp/` that renders hand-drawn organic branch examples without text.
+- Add a standalone static demo under `handdraw-branch-demo/` that renders hand-drawn organic branch examples without text.
 - Demonstrate readability-biased branch geometry: curved growth from the center with near-horizontal terminal segments.
 - Demonstrate sampled variable-width branch ribbons with deterministic edge jitter.
 - Demonstrate child branches growing from different points along a parent branch instead of all children starting at the same endpoint.
@@ -23,6 +23,6 @@ The current preview branches still read as mechanically generated ribbons, while
 
 ## Impact
 
-- Adds demo-only files under `.tmp/`.
+- Adds demo-only files under `handdraw-branch-demo/`.
 - May add small demo verification scripts or package commands if useful.
 - Does not change `@omm/renderer`, `@omm/web`, `.omm` output, CLI behavior, or existing production specs.

@@ -73,6 +73,8 @@ export default [
       "node_modules/**",
       // Local scratch/reference checkouts.
       ".tmp/**",
+      // Standalone browser demo verification script, intentionally outside TS packages.
+      "handdraw-branch-demo/verify.mjs",
       // Common build output directories.
       "**/dist/**",
       // Test coverage output.
