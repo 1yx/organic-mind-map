@@ -207,7 +207,7 @@ window.onload = function() {{
 
   // --- State ---
   let showHandles = true, showOutline = true, showSource = true;
-  let outlineGroup = null, sourceRaster = null;
+  let sourceRaster = null;
   const editPaths = [];
   const outlinePaths = [];   // parallel array: outline path per edit path
   const origData = [];
@@ -221,11 +221,7 @@ window.onload = function() {{
     sourceRaster.onError = () => {{ sourceRaster = null; showSource = false; draw(); }};
   }}
 
-  // --- Load outline paths ---
-  bgLayer.activate();
-  const outlineImported = paper.project.importSVG(`{esc(outline_svg)}`);
-  outlineGroup = outlineImported;
-  outlineGroup.name = 'outline-ref';
+  // Static outline SVG is skipped — we generate outlines dynamically from width profiles
 
   // --- Load centerline paths as editable curves ---
   bgLayer.activate();
@@ -309,8 +305,6 @@ window.onload = function() {{
   // --- Drawing ---
   function draw() {{
     if (sourceRaster) {{ sourceRaster.visible = showSource; if (showSource) sourceRaster.sendToBack(); }}
-    if (outlineGroup) outlineGroup.visible = showOutline;
-    // Also toggle the live outline paths
     for (const op of outlinePaths) op.visible = showOutline;
 
     const opacity = parseInt(document.getElementById('rOpacity').value) / 100;
