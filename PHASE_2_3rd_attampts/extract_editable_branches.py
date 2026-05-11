@@ -525,6 +525,68 @@ def points_to_cubic_bezier(points, dense_points=None):
 
 
 # ---------------------------------------------------------------------------
+# 6b. Parametric taper width model
+# ---------------------------------------------------------------------------
+
+def build_branch_tree(simplified_segments, image_center):
+    """Build tree topology from simplified segments.
+
+    Returns dict: seg_id -> {level, root_dist, root_end, parent_id, parent_tip_width}
+    """
+    cx, cy = image_center
+
+    # For each segment, find root end (closer to center)
+    seg_info = {}
+    for seg, smooth_pts in simplified_segments:
+        p0, p1 = smooth_pts[0], smooth_pts[-1]
+        d0 = math.hypot(p0[0] - cx, p0[1] - cy)
+        d1 = math.hypot(p1[0] - cx, p1[1] - cy)
+        root_end = "first" if d0 <= d1 else "last"
+        root_dist = min(d0, d1)
+        seg_info[seg.id] = {
+            "level": 1,
+            "root_dist": root_dist,
+            "root_end": root_end,
+            "root_point": p0 if root_end == "first" else p1,
+            "tip_point": p1 if root_end == "first" else p0,
+            "parent_id": None,
+        }
+
+    # Detect junctions: endpoints within 30px
+    junction_thresh = 30.0
+    ids = list(seg_info.keys())
+    for i, id_a in enumerate(ids):
+        for j in range(i + 1, len(ids)):
+            id_b = ids[j]
+            ta = seg_info[id_a]["tip_point"]
+            ra = seg_info[id_a]["root_point"]
+            tb = seg_info[id_b]["tip_point"]
+            rb = seg_info[id_b]["root_point"]
+            for pa in [ra, ta]:
+                for pb in [rb, tb]:
+                    if math.hypot(pa[0] - pb[0], pa[1] - pb[1]) < junction_thresh:
+                        if pa is ta and pb is rb:
+                            if seg_info[id_b]["level"] <= seg_info[id_a]["level"]:
+                                seg_info[id_b]["level"] = seg_info[id_a]["level"] + 1
+                                seg_info[id_b]["parent_id"] = id_a
+                        elif pa is ra and pb is tb:
+                            if seg_info[id_a]["level"] <= seg_info[id_b]["level"]:
+                                seg_info[id_a]["level"] = seg_info[id_b]["level"] + 1
+                                seg_info[id_a]["parent_id"] = id_b
+
+    return seg_info
+
+
+def taper_width(t, root_w, taper_rate=0.7, min_width=3.0):
+    """Parametric width at normalized position t along a branch.
+
+    t: 0 = root end, 1 = tip
+    root_w: width at root (t=0), either from parametric model or inherited from parent tip
+    """
+    return max(min_width, root_w * (1.0 - taper_rate * t))
+
+
+# ---------------------------------------------------------------------------
 # 7. Variable-width outline generation
 # ---------------------------------------------------------------------------
 
@@ -852,12 +914,41 @@ def run(image_path: Path, mask_path: Path | None, out_dir: Path,
             simplified_segments.append((seg, smooth_pts))
     print(f"  Segments after simplification: {len(simplified_segments)}")
 
-    # Step 5-6: Estimate width and color, build SVG paths
-    # Use original mask for distance transform (preserves true branch width).
-    print("Estimating stroke widths and colors...")
-    dist_transform = cv2.distanceTransform(original_mask, cv2.DIST_L2, 5)
-    # Dilate the distance transform to get local max width (robust to off-center skeleton)
-    dt_dilated = cv2.dilate(dist_transform, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (21, 21)))
+    # Step 5-6: Parametric taper width + color estimation
+    print("Building branch tree and computing taper widths...")
+    tree = build_branch_tree(simplified_segments, (w / 2, h / 2))
+    max_root_dist = max(info["root_dist"] for info in tree.values()) if tree else 1.0
+
+    taper_params = {
+        "base_width": 30.0, "dist_power": 0.5,
+        "taper_rate": 0.7, "min_width": 3.0,
+    }
+
+    # Compute root_w for each branch (parent tip → child root continuity)
+    seg_tip_widths = {}  # seg_id -> width at tip (t=1)
+    seg_root_widths = {}  # seg_id -> width at root (t=0)
+
+    # Process in level order so parents are computed before children
+    sorted_segs = sorted(simplified_segments,
+                         key=lambda s: tree.get(s[0].id, {}).get("level", 1))
+
+    for seg, smooth_pts in sorted_segs:
+        info = tree.get(seg.id, {"level": 1, "root_dist": 0, "parent_id": None})
+        parent_id = info.get("parent_id")
+
+        if parent_id and parent_id in seg_tip_widths:
+            root_w = seg_tip_widths[parent_id]
+        else:
+            # Root branch: compute base width from distance to center
+            root_dist = info["root_dist"]
+            dist_factor = max(0.3, 1.0 - root_dist / max_root_dist) ** taper_params["dist_power"]
+            root_w = taper_params["base_width"] * dist_factor
+
+        seg_root_widths[seg.id] = root_w
+        seg_tip_widths[seg.id] = taper_width(1.0, root_w,
+                                              taper_rate=taper_params["taper_rate"],
+                                              min_width=taper_params["min_width"])
+
     branch_results: list[BranchResult] = []
 
     for seg, smooth_pts in simplified_segments:
@@ -866,18 +957,34 @@ def run(image_path: Path, mask_path: Path | None, out_dir: Path,
         if len(resampled) < 2:
             resampled = smooth_pts
 
-        # Sample width at resampled points using dilated distance transform
-        # (gives local max width, robust to off-center skeleton points)
-        fine_widths = []
-        for x, y in resampled:
-            ix, iy = int(round(x)), int(round(y))
-            if 0 <= iy < h and 0 <= ix < w:
-                fine_widths.append(float(dt_dilated[iy, ix] * 2))
-            else:
-                fine_widths.append(0.0)
+        # Compute taper widths from parametric model
+        info = tree.get(seg.id, {"root_end": "first"})
+        root_end = info["root_end"]
+        root_w = seg_root_widths.get(seg.id, 10.0)
 
-        # Smooth width profile (large window to fill local dips)
-        fine_widths = smooth_width_profile(fine_widths, window=11)
+        # Ensure points go root→tip for t computation
+        if root_end == "last":
+            resampled = list(reversed(resampled))
+
+        # Compute cumulative arc-length for t ∈ [0,1]
+        cum = 0.0
+        t_values = [0.0]
+        for i in range(1, len(resampled)):
+            cum += math.hypot(resampled[i][0] - resampled[i-1][0],
+                              resampled[i][1] - resampled[i-1][1])
+            t_values.append(cum)
+        total_len = cum if cum > 0 else 1.0
+        t_values = [tv / total_len for tv in t_values]
+
+        fine_widths = [taper_width(t, root_w,
+                                   taper_rate=taper_params["taper_rate"],
+                                   min_width=taper_params["min_width"])
+                       for t in t_values]
+
+        # Reverse back if needed
+        if root_end == "last":
+            resampled = list(reversed(resampled))
+            fine_widths = list(reversed(fine_widths))
 
         # Median width for the constant-width centerline path
         median_width = sorted(fine_widths)[len(fine_widths) // 2] if fine_widths else 10.0
@@ -962,6 +1069,7 @@ def run(image_path: Path, mask_path: Path | None, out_dir: Path,
         "source": str(image_path),
         "image": {"width": w, "height": h},
         "segmentCount": len(branch_results),
+        "taperParams": taper_params,
         "settings": {
             "rdpEpsilon": rdp_epsilon,
             "smoothPasses": smooth_passes,

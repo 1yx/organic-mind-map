@@ -41,6 +41,10 @@ def generate_html(json_path: Path, outline_svg_path: Path, centerline_svg_path: 
             "widthProfile": normalize_width_profile(rpts, wsamps),
         }
     inline_meta = json.dumps(branch_meta)
+    taper_params = json.dumps(data.get("taperParams", {
+        "base_width": 30.0, "level_decay": 0.6, "dist_power": 0.5,
+        "taper_rate": 0.7, "min_width": 3.0,
+    }))
 
     img_src = ""
     if image_path and image_path.exists():
@@ -100,6 +104,14 @@ window.onload = function() {{
   const W = {data["image"]["width"]};
   const H = {data["image"]["height"]};
   const META = {inline_meta};
+  const TAPER = {taper_params};
+  const CX = W / 2, CY = H / 2;
+
+  function taperWidth(t, rootDist, maxDist) {{
+    const df = Math.max(0.3, 1.0 - rootDist / maxDist) ** TAPER.dist_power;
+    const base = TAPER.base_width * df;
+    return Math.max(TAPER.min_width, base * (1.0 - TAPER.taper_rate * t));
+  }}
 
   // --- Canvas setup ---
   const canvas = document.getElementById('canvas');
@@ -283,6 +295,12 @@ window.onload = function() {{
   console.log('Loaded ' + editPaths.length + ' editable paths with live outlines');
 
   // --- Regenerate outline for a specific branch ---
+  const maxDist = editPaths.reduce((mx, p) => {{
+    const r0 = Math.hypot(p.firstSegment.point.x - CX, p.firstSegment.point.y - CY);
+    const r1 = Math.hypot(p.lastSegment.point.x - CX, p.lastSegment.point.y - CY);
+    return Math.max(mx, Math.min(r0, r1));
+  }}, 1);
+
   function regenerateOutline(idx) {{
     const p = editPaths[idx];
     const id = p.name || '';
@@ -295,7 +313,16 @@ window.onload = function() {{
     const widths = [];
     for (let j = 0; j < dense.length; j++) {{
       const t = totalLen > 0 ? cumT / totalLen : 0;
-      widths.push(interpWidth(profile, t));
+      if (profile.length > 0) {{
+        widths.push(interpWidth(profile, t));
+      }} else {{
+        // New branch: use taper model based on distance to center
+        const rootDist = Math.min(
+          Math.hypot(dense[0][0] - CX, dense[0][1] - CY),
+          Math.hypot(dense[dense.length-1][0] - CX, dense[dense.length-1][1] - CY)
+        );
+        widths.push(taperWidth(t, rootDist, maxDist));
+      }}
       if (j < dense.length - 1) cumT += Math.hypot(dense[j+1][0]-dense[j][0], dense[j+1][1]-dense[j][1]);
     }}
     const outlineD = generateOutline(dense, widths, 1.0);
