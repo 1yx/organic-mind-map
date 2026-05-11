@@ -60,7 +60,7 @@ The exported PNG SHALL reflect the current rendered preview layout.
 - **THEN** the PNG reflects the latest rendered SVG rather than stale geometry
 
 ### Requirement: Self-contained asset handling
-PNG export SHALL use self-contained or browser-safe rendered assets and SHALL avoid uncontrolled external image drawing.
+PNG export SHALL use self-contained or browser-safe rendered assets, SHALL use the already resolved safe center visual content or deterministic built-in fallback, and SHALL NOT draw uncontrolled external center image references.
 
 #### Scenario: Built-in assets are used
 - **WHEN** the preview contains built-in center visuals or SVG shapes
@@ -75,12 +75,12 @@ PNG export SHALL use self-contained or browser-safe rendered assets and SHALL av
 - **THEN** export uses a deterministic fallback or blocks with a local readiness error
 
 #### Scenario: Controlled center SVG is export-safe
-- **WHEN** a controlled SVG center visual has loaded and passed safety checks before export
-- **THEN** export uses the already loaded safe SVG content without issuing a new uncontrolled external image draw
+- **WHEN** PNG export runs after a controlled center SVG has passed browser safety checks and resolved safe inline SVG content is available
+- **THEN** the exported PNG uses the safe inline SVG content without issuing a new external image draw
 
-#### Scenario: Controlled center SVG is not export-safe
-- **WHEN** a controlled SVG center visual has not loaded, failed safety checks, or is not safe for canvas export
-- **THEN** export uses the deterministic built-in fallback or blocks with a local readiness error
+#### Scenario: Controlled center SVG is unresolved or unsafe
+- **WHEN** PNG export runs and the controlled center SVG is missing, still loading, rejected, failed safety checks, or otherwise not safe for canvas export
+- **THEN** export uses the deterministic built-in fallback or reports a local readiness error without drawing the external URL
 
 ### Requirement: System font export consistency
 The renderer and PNG export SHALL use system font stacks only and SHALL NOT depend on Web Fonts.

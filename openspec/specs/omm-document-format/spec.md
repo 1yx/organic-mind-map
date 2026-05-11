@@ -1,5 +1,20 @@
 ## ADDED Requirements
 
+### Requirement: Phase 1 persisted document model is canonical
+The system SHALL implement the Phase 1 `.omm` schema as a nested semantic tree with browser-computed layout snapshot and SHALL keep runtime topology helpers out of persisted documents.
+
+#### Scenario: Browser exports canonical document
+- **WHEN** the Web preview exports an `.omm` document from a rendered OrganicTree
+- **THEN** the document contains `surface`, `organicSeed`, `rootMap.children`, `layout`, `assets`, and `meta` in the canonical Phase 1 shape
+
+#### Scenario: Runtime topology fields are rejected
+- **WHEN** `.omm` validation receives a node with `parentId`, `childIds`, a flat `nodes` source of truth, or `displayText`
+- **THEN** validation fails with a path-specific error instead of accepting the runtime artifact
+
+#### Scenario: Renderer reloads exported document
+- **WHEN** the renderer receives a valid exported `.omm` document
+- **THEN** it renders from the saved semantic tree and layout snapshot without requiring editor state
+
 ### Requirement: JSON OMM document boundary
 The system SHALL define `.omm` as a JSON document that represents exactly one organic mind map on one bounded surface.
 
@@ -70,6 +85,10 @@ The system SHALL store renderable concept units as semantic content without pers
 #### Scenario: Display text is persisted
 - **WHEN** a node includes `displayText`, ellipsis text, truncation text, or another rendered display string
 - **THEN** validation rejects that field because display text is a runtime ViewModel concern
+
+#### Scenario: English concept is exported
+- **WHEN** the preview exports an `.omm` document containing an English-only concept
+- **THEN** the semantic node concept remains the original input text and the layout snapshot reflects the uppercase rendered label
 
 ### Requirement: Stable organic seed
 The system SHALL store a document-level `organicSeed` so repeated rendering of the same `.omm` can produce stable organic variation. A missing or empty `organicSeed` is repairable only when a complete layout snapshot is present, because the validator can derive a deterministic seed without recomputing layout or changing saved geometry.

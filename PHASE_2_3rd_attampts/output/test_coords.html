@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.18/paper-full.min.js"></script>
+<style>
+body { margin:0; background:#222; }
+canvas { display:block; }
+</style></head><body>
+<canvas id="c"></canvas>
+<script>
+window.onload = function() {
+  const c = document.getElementById('c');
+  const W = 600, H = 400;
+  c.width = W; c.height = H;
+  paper.setup(c);
+  paper.view.viewSize = new paper.Size(W, H);
+
+  // Draw a red circle at (100, 100)
+  new paper.Path.Circle({ center: [100, 100], radius: 20, fillColor: 'red' });
+  // Draw a blue circle at (300, 200)
+  new paper.Path.Circle({ center: [300, 200], radius: 20, fillColor: 'blue' });
+
+  const tool = new paper.Tool();
+  tool.onMouseDown = function(e) {
+    console.log('click at paper point:', e.point.x, e.point.y);
+    new paper.Path.Circle({ center: e.point, radius: 5, fillColor: 'lime' });
+  };
+  tool.onMouseMove = function(e) {
+    console.log('move:', e.point.x.toFixed(1), e.point.y.toFixed(1));
+  };
+
+  // Now apply CSS scaling
+  c.style.width = '300px';
+  c.style.height = '200px';
+
+  paper.view.update();
+};
+</script>
+</body></html>

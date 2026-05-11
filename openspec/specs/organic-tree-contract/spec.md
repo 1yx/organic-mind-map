@@ -41,13 +41,21 @@ The system SHALL represent map content as ordered hierarchical branches using ex
 - **WHEN** a branch contains `children` that is not an array
 - **THEN** validation fails with an error pointing to that branch's `children` path
 
+#### Scenario: Three-level tree is valid
+- **WHEN** an OrganicTree uses `OrganicMainBranch -> OrganicSubBranch -> OrganicLeafNode`
+- **THEN** validation accepts the depth if all other contract and capacity rules pass
+
 #### Scenario: Nesting exceeds 3 levels
-- **WHEN** an input JSON contains nesting deeper than `OrganicMainBranch -> OrganicSubBranch -> OrganicLeafNode`
-- **THEN** validation fails with a structural error indicating the maximum depth is 3
+- **WHEN** an OrganicTree contains a child below an `OrganicLeafNode` (nesting deeper than `OrganicMainBranch -> OrganicSubBranch -> OrganicLeafNode`)
+- **THEN** validation fails before the CLI starts the local preview server, with an error pointing to the offending `children` path
 
 #### Scenario: OrganicLeafNode keeps optional children field
 - **WHEN** TypeScript code references `OrganicLeafNode`
 - **THEN** the type includes an optional `children` field for structural consistency, while validation still rejects input that exceeds the MVP depth limit
+
+#### Scenario: CLI JSON mode receives over-depth input
+- **WHEN** `omm preview --json` validates an over-depth OrganicTree
+- **THEN** it exits non-zero with `agentAction: "regenerate-organic-tree"` and repair guidance to reduce or regroup depth
 
 ### Requirement: Concept unit validation
 The system SHALL validate that each branch `concept` is a concise cognitive concept unit rather than a prose sentence or paragraph. Concept length is measured by unified unit-width: CJK/fullwidth characters count as 2, ASCII/halfwidth characters count as 1, maximum total unit-width is 25.
@@ -65,7 +73,7 @@ The system SHALL validate that each branch `concept` is a concise cognitive conc
 - **THEN** validation returns a concept quality **Error** pointing to the branch path
 
 ### Requirement: Optional semantic hints
-The system SHALL allow optional `visualHint` and `colorHint` fields on OrganicTree branches for downstream rendering guidance.
+The system SHALL allow optional `visualHint` and `colorHint` fields on OrganicTree branches for downstream rendering guidance. Branch `visualHint` values SHALL NOT require the CLI to validate them against a visual asset registry.
 
 #### Scenario: Optional hints are supplied
 - **WHEN** a branch includes `visualHint` or `colorHint`
@@ -74,6 +82,10 @@ The system SHALL allow optional `visualHint` and `colorHint` fields on OrganicTr
 #### Scenario: Optional hints are omitted
 - **WHEN** a branch omits `visualHint` and `colorHint`
 - **THEN** validation accepts the branch if required fields are valid
+
+#### Scenario: Visual hint is unsupported by renderer
+- **WHEN** a branch includes a `visualHint` that has no built-in Phase 1 marker mapping
+- **THEN** validation still accepts the branch if all required fields are valid
 
 ### Requirement: Optional meta fields
 The system SHALL allow optional `meta.sourceTitle` and `meta.sourceSummary` fields on OrganicTree for Agent-generated source metadata.
@@ -87,7 +99,7 @@ The system SHALL allow optional `meta.sourceTitle` and `meta.sourceSummary` fiel
 - **THEN** validation accepts the input if all required fields are valid
 
 ### Requirement: Capacity threshold validation
-The system SHALL define configurable MVP capacity limits for total nodes, depth (fixed at 3), siblings per node, main branches, and concept unit-width (fixed at 25) using `OrganicTreeLimits`.
+The system SHALL define configurable MVP capacity limits for total nodes, depth (fixed at 3), siblings per node, main branches, and concept unit-width (fixed at 25) using `OrganicTreeLimits`. The depth limit SHALL be enforced before the CLI starts the local preview server.
 
 #### Scenario: Input is within capacity
 - **WHEN** an `OrganicTree` stays within configured capacity limits

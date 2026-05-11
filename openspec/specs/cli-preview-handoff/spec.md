@@ -286,15 +286,19 @@ The Agent skill SHALL NOT ask the model to compute spatial or rendering details.
 - **THEN** browser-side code remains responsible for spatial layout, svgUrl allowlist filtering, and export artifacts
 
 ### Requirement: No PreviewPayload in Agent preview handoff
-The Agent preview workflow SHALL pass validated OrganicTree from CLI to Web without wrapping it in `PreviewPayload`.
+The CLI, local preview server, and Agent preview workflow SHALL use validated `OrganicTree` as the active preview handoff shape. The system SHALL NOT construct, expose, or require `PreviewPayload` in the active handoff path, and no active source, tests, fixtures, or non-migration documentation SHALL reference `PreviewPayload` or `preview-payload`.
 
 #### Scenario: CLI validation succeeds
 - **WHEN** `omm preview` validates OrganicTree successfully
-- **THEN** the local Web preview receives the validated OrganicTree as the semantic input via `/api/document`
+- **THEN** the local Web preview receives the validated OrganicTree as the semantic input via `/api/document` without wrapping it in `PreviewPayload`
 
 #### Scenario: Web instantiates domain state
 - **WHEN** the Web app receives OrganicTree
 - **THEN** it derives IDs, colors, organic seed, center fallback, layout, and export state in browser memory
+
+#### Scenario: Repository usage is free of PreviewPayload
+- **WHEN** active source, tests, fixtures, and non-migration documentation are searched for `PreviewPayload` or `preview-payload`
+- **THEN** no active usage remains
 
 ### Requirement: No paper in OrganicTree
 The Agent skill SHALL NOT include a `paper`, `PaperSpec`, `surface`, `aspectRatio`, `widthMm`, or `heightMm` field in generated OrganicTree JSON.

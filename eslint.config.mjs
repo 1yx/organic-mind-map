@@ -71,10 +71,14 @@ export default [
     ignores: [
       // Node dependencies.
       "node_modules/**",
+      // Python virtual environments.
+      "**/.venv/**",
       // Local scratch/reference checkouts.
       ".tmp/**",
       // Standalone browser demo verification script, intentionally outside TS packages.
       "handdraw-branch-demo/verify.mjs",
+      // Standalone editable browser demo verification script, intentionally outside TS packages.
+      "editable-handdraw-canvas-demo/verify.mjs",
       // Common build output directories.
       "**/dist/**",
       // Test coverage output.
@@ -85,6 +89,8 @@ export default [
       "vitest.config.ts",
       "**/vitest.config.ts",
       "**/vite.config.ts",
+      // Standalone scripts not in any tsconfig project.
+      "scripts/**",
     ],
   },
   {

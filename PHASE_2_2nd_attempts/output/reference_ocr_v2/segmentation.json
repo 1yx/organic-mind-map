@@ -1,0 +1,1791 @@
+{
+  "input": "input/reference.png",
+  "image": {
+    "width": 1448,
+    "height": 1086
+  },
+  "ocr": "paddle",
+  "text_boxes": [
+    {
+      "id": "text_ocr_001",
+      "bbox": [
+        474,
+        6,
+        554,
+        53
+      ],
+      "text": "How Anthropic's Product Team Moves",
+      "score": 0.978210985660553
+    },
+    {
+      "id": "text_ocr_002",
+      "bbox": [
+        58,
+        58,
+        132,
+        49
+      ],
+      "text": "\u7814\u7a76\u9884\u89c8",
+      "score": 0.9987767934799194
+    },
+    {
+      "id": "text_ocr_003",
+      "bbox": [
+        1222,
+        59,
+        134,
+        38
+      ],
+      "text": "\u2606\u6d1e\u5bdf\u6df1\u523b",
+      "score": 0.9494103193283081
+    },
+    {
+      "id": "text_ocr_004",
+      "bbox": [
+        293,
+        97,
+        73,
+        39
+      ],
+      "text": "\u9884\u89c8\u7248",
+      "score": 0.9977307319641113
+    },
+    {
+      "id": "text_ocr_005",
+      "bbox": [
+        915,
+        98,
+        119,
+        55
+      ],
+      "text": "\u4ea7\u54c1\u54c1\u5473",
+      "score": 0.9878857135772705
+    },
+    {
+      "id": "text_ocr_006",
+      "bbox": [
+        1225,
+        97,
+        130,
+        34
+      ],
+      "text": "\u2606\u5224\u65ad\u53d6\u820d",
+      "score": 0.9875179529190063
+    },
+    {
+      "id": "text_ocr_007",
+      "bbox": [
+        1225,
+        132,
+        133,
+        37
+      ],
+      "text": "\u2605\u7b80\u6d01\u4f18\u96c5",
+      "score": 0.941912829875946
+    },
+    {
+      "id": "text_ocr_008",
+      "bbox": [
+        389,
+        146,
+        196,
+        103
+      ],
+      "text": "1.\u6781\u901f\u4ea4\u4ed8",
+      "score": 0.9987165927886963
+    },
+    {
+      "id": "text_ocr_009",
+      "bbox": [
+        742,
+        163,
+        175,
+        102
+      ],
+      "text": "2.PM\u89d2\u8272",
+      "score": 0.9263420701026917
+    },
+    {
+      "id": "text_ocr_010",
+      "bbox": [
+        996,
+        239,
+        130,
+        53
+      ],
+      "text": "\u89d2\u8272\u878d\u5408",
+      "score": 0.9996100664138794
+    },
+    {
+      "id": "text_ocr_011",
+      "bbox": [
+        1170,
+        245,
+        44,
+        31
+      ],
+      "text": "\u7528\u6237",
+      "score": 0.9976826906204224
+    },
+    {
+      "id": "text_ocr_012",
+      "bbox": [
+        1249,
+        241,
+        48,
+        28
+      ],
+      "text": "\u5de5\u7a0b",
+      "score": 0.9998803734779358
+    },
+    {
+      "id": "text_ocr_013",
+      "bbox": [
+        1167,
+        272,
+        50,
+        30
+      ],
+      "text": "\u6d1e\u5bdf",
+      "score": 0.997201144695282
+    },
+    {
+      "id": "text_ocr_014",
+      "bbox": [
+        1252,
+        268,
+        47,
+        26
+      ],
+      "text": "\u601d\u7ef4",
+      "score": 0.999384880065918
+    },
+    {
+      "id": "text_ocr_015",
+      "bbox": [
+        55,
+        283,
+        98,
+        40
+      ],
+      "text": "\u8de8\u804c\u80fd",
+      "score": 0.9995819926261902
+    },
+    {
+      "id": "text_ocr_016",
+      "bbox": [
+        1199,
+        320,
+        81,
+        36
+      ],
+      "text": "\u5546\u4e1a\u89c6\u89d2",
+      "score": 0.9966471791267395
+    },
+    {
+      "id": "text_ocr_017",
+      "bbox": [
+        75,
+        338,
+        42,
+        28
+      ],
+      "text": "</>",
+      "score": 0.91316819190979
+    },
+    {
+      "id": "text_ocr_018",
+      "bbox": [
+        1160,
+        392,
+        174,
+        38
+      ],
+      "text": "CLI\u00b7Desktop",
+      "score": 0.960524320602417
+    },
+    {
+      "id": "text_ocr_019",
+      "bbox": [
+        593,
+        444,
+        200,
+        59
+      ],
+      "text": "Anthropic",
+      "score": 0.9987012147903442
+    },
+    {
+      "id": "text_ocr_020",
+      "bbox": [
+        1370,
+        442,
+        18,
+        8
+      ],
+      "text": "\u30020",
+      "score": 0.541338324546814
+    },
+    {
+      "id": "text_ocr_021",
+      "bbox": [
+        917,
+        430,
+        181,
+        76
+      ],
+      "text": "3.\u4ea7\u54c1\u77e9\u9635",
+      "score": 0.9971112608909607
+    },
+    {
+      "id": "text_ocr_022",
+      "bbox": [
+        256,
+        506,
+        183,
+        59
+      ],
+      "text": "4.\u4f7f\u547d\u805a\u7126",
+      "score": 0.9984293580055237
+    },
+    {
+      "id": "text_ocr_023",
+      "bbox": [
+        590,
+        497,
+        209,
+        73
+      ],
+      "text": "\u4ea7\u54c1\u4e4b\u9053",
+      "score": 0.9972745776176453
+    },
+    {
+      "id": "text_ocr_024",
+      "bbox": [
+        36,
+        540,
+        120,
+        50
+      ],
+      "text": "\u5b89\u5168AGI",
+      "score": 0.9989274144172668
+    },
+    {
+      "id": "text_ocr_025",
+      "bbox": [
+        1162,
+        555,
+        92,
+        46
+      ],
+      "text": "Mobile",
+      "score": 0.9985052943229675
+    },
+    {
+      "id": "text_ocr_026",
+      "bbox": [
+        860,
+        691,
+        167,
+        118
+      ],
+      "text": "6.AI\u5b9e\u8df5",
+      "score": 0.9914187788963318
+    },
+    {
+      "id": "text_ocr_027",
+      "bbox": [
+        42,
+        701,
+        120,
+        42
+      ],
+      "text": "\u7ec4\u7ec7\u4f18\u5148",
+      "score": 0.9989330768585205
+    },
+    {
+      "id": "text_ocr_028",
+      "bbox": [
+        241,
+        748,
+        87,
+        35
+      ],
+      "text": "\u957f\u671f\u601d\u8003",
+      "score": 0.9986577033996582
+    },
+    {
+      "id": "text_ocr_029",
+      "bbox": [
+        455,
+        651,
+        173,
+        138
+      ],
+      "text": "5.\u56e2\u961f\u6587\u5316",
+      "score": 0.9975008964538574
+    },
+    {
+      "id": "text_ocr_030",
+      "bbox": [
+        1052,
+        751,
+        100,
+        45
+      ],
+      "text": "\u81ea\u52a8\u5316",
+      "score": 0.9994616508483887
+    },
+    {
+      "id": "text_ocr_031",
+      "bbox": [
+        241,
+        786,
+        92,
+        32
+      ],
+      "text": "\u7a33\u5065\u63a8\u8fdb",
+      "score": 0.9978165030479431
+    },
+    {
+      "id": "text_ocr_032",
+      "bbox": [
+        1371,
+        806,
+        31,
+        24
+      ],
+      "text": "00",
+      "score": 0.5813136100769043
+    },
+    {
+      "id": "text_ocr_033",
+      "bbox": [
+        241,
+        823,
+        107,
+        36
+      ],
+      "text": "\u53ef\u6301\u7eed\u6210\u957f",
+      "score": 0.9997432827949524
+    },
+    {
+      "id": "text_ocr_034",
+      "bbox": [
+        456,
+        816,
+        123,
+        43
+      ],
+      "text": "\u504f\u5411\u884c\u52a8",
+      "score": 0.999390184879303
+    },
+    {
+      "id": "text_ocr_035",
+      "bbox": [
+        610,
+        816,
+        107,
+        34
+      ],
+      "text": "\u5148\u505a\u8d77\u6765\uff01",
+      "score": 0.9725538492202759
+    },
+    {
+      "id": "text_ocr_036",
+      "bbox": [
+        1036,
+        882,
+        103,
+        36
+      ],
+      "text": "EVALS",
+      "score": 0.9969921112060547
+    },
+    {
+      "id": "text_ocr_037",
+      "bbox": [
+        1296,
+        890,
+        89,
+        32
+      ],
+      "text": "\u91cf\u5316\u8bc4\u4f30",
+      "score": 0.9993230104446411
+    },
+    {
+      "id": "text_ocr_038",
+      "bbox": [
+        275,
+        912,
+        138,
+        42
+      ],
+      "text": "\u79fb\u9664\u65e7\u529f\u80fd",
+      "score": 0.9983747601509094
+    },
+    {
+      "id": "text_ocr_039",
+      "bbox": [
+        1295,
+        921,
+        91,
+        31
+      ],
+      "text": "\u6301\u7eed\u6539\u8fdb",
+      "score": 0.9994089603424072
+    },
+    {
+      "id": "text_ocr_040",
+      "bbox": [
+        1063,
+        966,
+        14,
+        15
+      ],
+      "text": "V",
+      "score": 0.6787881851196289
+    },
+    {
+      "id": "text_ocr_041",
+      "bbox": [
+        531,
+        991,
+        31,
+        33
+      ],
+      "text": "X",
+      "score": 0.8567343950271606
+    },
+    {
+      "id": "text_ocr_042",
+      "bbox": [
+        699,
+        984,
+        94,
+        37
+      ],
+      "text": "\u5c11\u5373\u662f\u591a",
+      "score": 0.9993805885314941
+    },
+    {
+      "id": "text_ocr_043",
+      "bbox": [
+        1061,
+        1015,
+        18,
+        20
+      ],
+      "text": "M",
+      "score": 0.623348593711853
+    }
+  ],
+  "components": [
+    {
+      "id": "doodle_001",
+      "layer": "doodle",
+      "bbox": [
+        1112,
+        53,
+        92,
+        95
+      ],
+      "area": 1352,
+      "crop": "doodles/doodle_001.png"
+    },
+    {
+      "id": "doodle_002",
+      "layer": "doodle",
+      "bbox": [
+        247,
+        62,
+        121,
+        98
+      ],
+      "area": 3201,
+      "crop": "doodles/doodle_002.png"
+    },
+    {
+      "id": "doodle_003",
+      "layer": "doodle",
+      "bbox": [
+        383,
+        80,
+        26,
+        28
+      ],
+      "area": 324,
+      "crop": "doodles/doodle_003.png"
+    },
+    {
+      "id": "doodle_004",
+      "layer": "doodle",
+      "bbox": [
+        1136,
+        80,
+        41,
+        36
+      ],
+      "area": 912,
+      "crop": "doodles/doodle_004.png"
+    },
+    {
+      "id": "doodle_005",
+      "layer": "doodle",
+      "bbox": [
+        1039,
+        95,
+        84,
+        117
+      ],
+      "area": 5334,
+      "crop": "doodles/doodle_005.png"
+    },
+    {
+      "id": "doodle_006",
+      "layer": "doodle",
+      "bbox": [
+        260,
+        102,
+        30,
+        44
+      ],
+      "area": 632,
+      "crop": "doodles/doodle_006.png"
+    },
+    {
+      "id": "doodle_007",
+      "layer": "doodle",
+      "bbox": [
+        207,
+        106,
+        32,
+        20
+      ],
+      "area": 262,
+      "crop": "doodles/doodle_007.png"
+    },
+    {
+      "id": "doodle_008",
+      "layer": "doodle",
+      "bbox": [
+        101,
+        121,
+        66,
+        61
+      ],
+      "area": 1786,
+      "crop": "doodles/doodle_008.png"
+    },
+    {
+      "id": "doodle_009",
+      "layer": "doodle",
+      "bbox": [
+        91,
+        123,
+        59,
+        65
+      ],
+      "area": 469,
+      "crop": "doodles/doodle_009.png"
+    },
+    {
+      "id": "doodle_010",
+      "layer": "doodle",
+      "bbox": [
+        1376,
+        139,
+        37,
+        44
+      ],
+      "area": 486,
+      "crop": "doodles/doodle_010.png"
+    },
+    {
+      "id": "doodle_011",
+      "layer": "doodle",
+      "bbox": [
+        117,
+        185,
+        102,
+        89
+      ],
+      "area": 2520,
+      "crop": "doodles/doodle_011.png"
+    },
+    {
+      "id": "doodle_012",
+      "layer": "doodle",
+      "bbox": [
+        1142,
+        191,
+        223,
+        38
+      ],
+      "area": 1662,
+      "crop": "doodles/doodle_012.png"
+    },
+    {
+      "id": "doodle_013",
+      "layer": "doodle",
+      "bbox": [
+        223,
+        195,
+        99,
+        71
+      ],
+      "area": 1985,
+      "crop": "doodles/doodle_013.png"
+    },
+    {
+      "id": "doodle_014",
+      "layer": "doodle",
+      "bbox": [
+        58,
+        207,
+        60,
+        14
+      ],
+      "area": 226,
+      "crop": "doodles/doodle_014.png"
+    },
+    {
+      "id": "doodle_015",
+      "layer": "doodle",
+      "bbox": [
+        1152,
+        230,
+        163,
+        116
+      ],
+      "area": 8163,
+      "crop": "doodles/doodle_015.png"
+    },
+    {
+      "id": "doodle_016",
+      "layer": "doodle",
+      "bbox": [
+        1352,
+        289,
+        43,
+        41
+      ],
+      "area": 475,
+      "crop": "doodles/doodle_016.png"
+    },
+    {
+      "id": "doodle_017",
+      "layer": "doodle",
+      "bbox": [
+        77,
+        324,
+        200,
+        161
+      ],
+      "area": 14815,
+      "crop": "doodles/doodle_017.png"
+    },
+    {
+      "id": "doodle_018",
+      "layer": "doodle",
+      "bbox": [
+        160,
+        335,
+        29,
+        25
+      ],
+      "area": 488,
+      "crop": "doodles/doodle_018.png"
+    },
+    {
+      "id": "doodle_019",
+      "layer": "doodle",
+      "bbox": [
+        231,
+        338,
+        31,
+        26
+      ],
+      "area": 326,
+      "crop": "doodles/doodle_019.png"
+    },
+    {
+      "id": "doodle_020",
+      "layer": "doodle",
+      "bbox": [
+        1205,
+        348,
+        71,
+        25
+      ],
+      "area": 1208,
+      "crop": "doodles/doodle_020.png"
+    },
+    {
+      "id": "doodle_021",
+      "layer": "doodle",
+      "bbox": [
+        729,
+        385,
+        43,
+        54
+      ],
+      "area": 665,
+      "crop": "doodles/doodle_021.png"
+    },
+    {
+      "id": "doodle_022",
+      "layer": "doodle",
+      "bbox": [
+        1402,
+        402,
+        28,
+        35
+      ],
+      "area": 316,
+      "crop": "doodles/doodle_022.png"
+    },
+    {
+      "id": "doodle_023",
+      "layer": "doodle",
+      "bbox": [
+        537,
+        420,
+        341,
+        176
+      ],
+      "area": 35250,
+      "crop": "doodles/doodle_023.png"
+    },
+    {
+      "id": "doodle_024",
+      "layer": "doodle",
+      "bbox": [
+        1284,
+        437,
+        125,
+        110
+      ],
+      "area": 4585,
+      "crop": "doodles/doodle_024.png"
+    },
+    {
+      "id": "doodle_025",
+      "layer": "doodle",
+      "bbox": [
+        1164,
+        446,
+        97,
+        80
+      ],
+      "area": 7497,
+      "crop": "doodles/doodle_025.png"
+    },
+    {
+      "id": "doodle_026",
+      "layer": "doodle",
+      "bbox": [
+        1268,
+        558,
+        97,
+        122
+      ],
+      "area": 5042,
+      "crop": "doodles/doodle_026.png"
+    },
+    {
+      "id": "doodle_027",
+      "layer": "doodle",
+      "bbox": [
+        1309,
+        575,
+        31,
+        22
+      ],
+      "area": 526,
+      "crop": "doodles/doodle_027.png"
+    },
+    {
+      "id": "doodle_028",
+      "layer": "doodle",
+      "bbox": [
+        160,
+        586,
+        73,
+        90
+      ],
+      "area": 1740,
+      "crop": "doodles/doodle_028.png"
+    },
+    {
+      "id": "doodle_029",
+      "layer": "doodle",
+      "bbox": [
+        1389,
+        588,
+        43,
+        43
+      ],
+      "area": 1431,
+      "crop": "doodles/doodle_029.png"
+    },
+    {
+      "id": "doodle_030",
+      "layer": "doodle",
+      "bbox": [
+        211,
+        592,
+        33,
+        47
+      ],
+      "area": 247,
+      "crop": "doodles/doodle_030.png"
+    },
+    {
+      "id": "doodle_031",
+      "layer": "doodle",
+      "bbox": [
+        58,
+        603,
+        66,
+        69
+      ],
+      "area": 3303,
+      "crop": "doodles/doodle_031.png"
+    },
+    {
+      "id": "doodle_032",
+      "layer": "doodle",
+      "bbox": [
+        173,
+        608,
+        62,
+        42
+      ],
+      "area": 1556,
+      "crop": "doodles/doodle_032.png"
+    },
+    {
+      "id": "doodle_033",
+      "layer": "doodle",
+      "bbox": [
+        249,
+        638,
+        33,
+        44
+      ],
+      "area": 1150,
+      "crop": "doodles/doodle_033.png"
+    },
+    {
+      "id": "doodle_034",
+      "layer": "doodle",
+      "bbox": [
+        1393,
+        719,
+        32,
+        39
+      ],
+      "area": 436,
+      "crop": "doodles/doodle_034.png"
+    },
+    {
+      "id": "doodle_035",
+      "layer": "doodle",
+      "bbox": [
+        1159,
+        729,
+        103,
+        115
+      ],
+      "area": 4473,
+      "crop": "doodles/doodle_035.png"
+    },
+    {
+      "id": "doodle_036",
+      "layer": "doodle",
+      "bbox": [
+        302,
+        735,
+        55,
+        74
+      ],
+      "area": 482,
+      "crop": "doodles/doodle_036.png"
+    },
+    {
+      "id": "doodle_037",
+      "layer": "doodle",
+      "bbox": [
+        195,
+        739,
+        154,
+        141
+      ],
+      "area": 1233,
+      "crop": "doodles/doodle_037.png"
+    },
+    {
+      "id": "doodle_038",
+      "layer": "doodle",
+      "bbox": [
+        26,
+        754,
+        148,
+        125
+      ],
+      "area": 13469,
+      "crop": "doodles/doodle_038.png"
+    },
+    {
+      "id": "doodle_039",
+      "layer": "doodle",
+      "bbox": [
+        214,
+        756,
+        17,
+        25
+      ],
+      "area": 230,
+      "crop": "doodles/doodle_039.png"
+    },
+    {
+      "id": "doodle_040",
+      "layer": "doodle",
+      "bbox": [
+        1362,
+        770,
+        60,
+        69
+      ],
+      "area": 943,
+      "crop": "doodles/doodle_040.png"
+    },
+    {
+      "id": "doodle_041",
+      "layer": "doodle",
+      "bbox": [
+        1287,
+        783,
+        47,
+        48
+      ],
+      "area": 1472,
+      "crop": "doodles/doodle_041.png"
+    },
+    {
+      "id": "doodle_042",
+      "layer": "doodle",
+      "bbox": [
+        214,
+        792,
+        16,
+        25
+      ],
+      "area": 222,
+      "crop": "doodles/doodle_042.png"
+    },
+    {
+      "id": "doodle_043",
+      "layer": "doodle",
+      "bbox": [
+        371,
+        807,
+        40,
+        39
+      ],
+      "area": 396,
+      "crop": "doodles/doodle_043.png"
+    },
+    {
+      "id": "doodle_044",
+      "layer": "doodle",
+      "bbox": [
+        738,
+        824,
+        79,
+        78
+      ],
+      "area": 2510,
+      "crop": "doodles/doodle_044.png"
+    },
+    {
+      "id": "doodle_045",
+      "layer": "doodle",
+      "bbox": [
+        620,
+        862,
+        78,
+        14
+      ],
+      "area": 343,
+      "crop": "doodles/doodle_045.png"
+    },
+    {
+      "id": "doodle_046",
+      "layer": "doodle",
+      "bbox": [
+        523,
+        867,
+        89,
+        61
+      ],
+      "area": 2382,
+      "crop": "doodles/doodle_046.png"
+    },
+    {
+      "id": "doodle_047",
+      "layer": "doodle",
+      "bbox": [
+        827,
+        867,
+        45,
+        42
+      ],
+      "area": 462,
+      "crop": "doodles/doodle_047.png"
+    },
+    {
+      "id": "doodle_048",
+      "layer": "doodle",
+      "bbox": [
+        113,
+        886,
+        33,
+        33
+      ],
+      "area": 735,
+      "crop": "doodles/doodle_048.png"
+    },
+    {
+      "id": "doodle_049",
+      "layer": "doodle",
+      "bbox": [
+        1411,
+        910,
+        37,
+        36
+      ],
+      "area": 356,
+      "crop": "doodles/doodle_049.png"
+    },
+    {
+      "id": "doodle_050",
+      "layer": "doodle",
+      "bbox": [
+        1037,
+        930,
+        108,
+        133
+      ],
+      "area": 5030,
+      "crop": "doodles/doodle_050.png"
+    },
+    {
+      "id": "doodle_051",
+      "layer": "doodle",
+      "bbox": [
+        1196,
+        956,
+        131,
+        104
+      ],
+      "area": 5624,
+      "crop": "doodles/doodle_051.png"
+    },
+    {
+      "id": "doodle_052",
+      "layer": "doodle",
+      "bbox": [
+        1306,
+        961,
+        53,
+        20
+      ],
+      "area": 274,
+      "crop": "doodles/doodle_052.png"
+    },
+    {
+      "id": "doodle_053",
+      "layer": "doodle",
+      "bbox": [
+        315,
+        971,
+        69,
+        77
+      ],
+      "area": 4285,
+      "crop": "doodles/doodle_053.png"
+    },
+    {
+      "id": "doodle_054",
+      "layer": "doodle",
+      "bbox": [
+        583,
+        977,
+        69,
+        60
+      ],
+      "area": 1684,
+      "crop": "doodles/doodle_054.png"
+    },
+    {
+      "id": "doodle_055",
+      "layer": "doodle",
+      "bbox": [
+        485,
+        981,
+        89,
+        55
+      ],
+      "area": 2863,
+      "crop": "doodles/doodle_055.png"
+    },
+    {
+      "id": "doodle_056",
+      "layer": "doodle",
+      "bbox": [
+        1060,
+        989,
+        24,
+        19
+      ],
+      "area": 269,
+      "crop": "doodles/doodle_056.png"
+    },
+    {
+      "id": "doodle_057",
+      "layer": "doodle",
+      "bbox": [
+        1366,
+        993,
+        39,
+        38
+      ],
+      "area": 720,
+      "crop": "doodles/doodle_057.png"
+    },
+    {
+      "id": "doodle_058",
+      "layer": "doodle",
+      "bbox": [
+        810,
+        995,
+        54,
+        52
+      ],
+      "area": 2168,
+      "crop": "doodles/doodle_058.png"
+    },
+    {
+      "id": "doodle_059",
+      "layer": "doodle",
+      "bbox": [
+        717,
+        1033,
+        31,
+        27
+      ],
+      "area": 301,
+      "crop": "doodles/doodle_059.png"
+    },
+    {
+      "id": "branch_001",
+      "layer": "branch",
+      "bbox": [
+        705,
+        142,
+        427,
+        276
+      ],
+      "area": 10351,
+      "crop": null
+    },
+    {
+      "id": "branch_002",
+      "layer": "branch",
+      "bbox": [
+        169,
+        162,
+        478,
+        258
+      ],
+      "area": 12912,
+      "crop": null
+    },
+    {
+      "id": "branch_003",
+      "layer": "branch",
+      "bbox": [
+        836,
+        424,
+        420,
+        189
+      ],
+      "area": 8914,
+      "crop": null
+    },
+    {
+      "id": "branch_004",
+      "layer": "branch",
+      "bbox": [
+        169,
+        526,
+        382,
+        202
+      ],
+      "area": 9170,
+      "crop": null
+    },
+    {
+      "id": "branch_005",
+      "layer": "branch",
+      "bbox": [
+        428,
+        594,
+        364,
+        353
+      ],
+      "area": 11163,
+      "crop": null
+    },
+    {
+      "id": "branch_006",
+      "layer": "branch",
+      "bbox": [
+        796,
+        594,
+        353,
+        343
+      ],
+      "area": 10642,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_001",
+      "layer": "text_box",
+      "bbox": [
+        474,
+        6,
+        554,
+        53
+      ],
+      "area": 29362,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_002",
+      "layer": "text_box",
+      "bbox": [
+        58,
+        58,
+        132,
+        49
+      ],
+      "area": 6468,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_003",
+      "layer": "text_box",
+      "bbox": [
+        1222,
+        59,
+        134,
+        38
+      ],
+      "area": 5092,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_004",
+      "layer": "text_box",
+      "bbox": [
+        293,
+        97,
+        73,
+        39
+      ],
+      "area": 2847,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_005",
+      "layer": "text_box",
+      "bbox": [
+        915,
+        98,
+        119,
+        55
+      ],
+      "area": 6545,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_006",
+      "layer": "text_box",
+      "bbox": [
+        1225,
+        97,
+        130,
+        34
+      ],
+      "area": 4420,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_007",
+      "layer": "text_box",
+      "bbox": [
+        1225,
+        132,
+        133,
+        37
+      ],
+      "area": 4921,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_008",
+      "layer": "text_box",
+      "bbox": [
+        389,
+        146,
+        196,
+        103
+      ],
+      "area": 20188,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_009",
+      "layer": "text_box",
+      "bbox": [
+        742,
+        163,
+        175,
+        102
+      ],
+      "area": 17850,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_010",
+      "layer": "text_box",
+      "bbox": [
+        996,
+        239,
+        130,
+        53
+      ],
+      "area": 6890,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_011",
+      "layer": "text_box",
+      "bbox": [
+        1170,
+        245,
+        44,
+        31
+      ],
+      "area": 1364,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_012",
+      "layer": "text_box",
+      "bbox": [
+        1249,
+        241,
+        48,
+        28
+      ],
+      "area": 1344,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_013",
+      "layer": "text_box",
+      "bbox": [
+        1167,
+        272,
+        50,
+        30
+      ],
+      "area": 1500,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_014",
+      "layer": "text_box",
+      "bbox": [
+        1252,
+        268,
+        47,
+        26
+      ],
+      "area": 1222,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_015",
+      "layer": "text_box",
+      "bbox": [
+        55,
+        283,
+        98,
+        40
+      ],
+      "area": 3920,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_016",
+      "layer": "text_box",
+      "bbox": [
+        1199,
+        320,
+        81,
+        36
+      ],
+      "area": 2916,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_017",
+      "layer": "text_box",
+      "bbox": [
+        75,
+        338,
+        42,
+        28
+      ],
+      "area": 1176,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_018",
+      "layer": "text_box",
+      "bbox": [
+        1160,
+        392,
+        174,
+        38
+      ],
+      "area": 6612,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_019",
+      "layer": "text_box",
+      "bbox": [
+        593,
+        444,
+        200,
+        59
+      ],
+      "area": 11800,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_020",
+      "layer": "text_box",
+      "bbox": [
+        1370,
+        442,
+        18,
+        8
+      ],
+      "area": 144,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_021",
+      "layer": "text_box",
+      "bbox": [
+        917,
+        430,
+        181,
+        76
+      ],
+      "area": 13756,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_022",
+      "layer": "text_box",
+      "bbox": [
+        256,
+        506,
+        183,
+        59
+      ],
+      "area": 10797,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_023",
+      "layer": "text_box",
+      "bbox": [
+        590,
+        497,
+        209,
+        73
+      ],
+      "area": 15257,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_024",
+      "layer": "text_box",
+      "bbox": [
+        36,
+        540,
+        120,
+        50
+      ],
+      "area": 6000,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_025",
+      "layer": "text_box",
+      "bbox": [
+        1162,
+        555,
+        92,
+        46
+      ],
+      "area": 4232,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_026",
+      "layer": "text_box",
+      "bbox": [
+        860,
+        691,
+        167,
+        118
+      ],
+      "area": 19706,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_027",
+      "layer": "text_box",
+      "bbox": [
+        42,
+        701,
+        120,
+        42
+      ],
+      "area": 5040,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_028",
+      "layer": "text_box",
+      "bbox": [
+        241,
+        748,
+        87,
+        35
+      ],
+      "area": 3045,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_029",
+      "layer": "text_box",
+      "bbox": [
+        455,
+        651,
+        173,
+        138
+      ],
+      "area": 23874,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_030",
+      "layer": "text_box",
+      "bbox": [
+        1052,
+        751,
+        100,
+        45
+      ],
+      "area": 4500,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_031",
+      "layer": "text_box",
+      "bbox": [
+        241,
+        786,
+        92,
+        32
+      ],
+      "area": 2944,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_032",
+      "layer": "text_box",
+      "bbox": [
+        1371,
+        806,
+        31,
+        24
+      ],
+      "area": 744,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_033",
+      "layer": "text_box",
+      "bbox": [
+        241,
+        823,
+        107,
+        36
+      ],
+      "area": 3852,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_034",
+      "layer": "text_box",
+      "bbox": [
+        456,
+        816,
+        123,
+        43
+      ],
+      "area": 5289,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_035",
+      "layer": "text_box",
+      "bbox": [
+        610,
+        816,
+        107,
+        34
+      ],
+      "area": 3638,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_036",
+      "layer": "text_box",
+      "bbox": [
+        1036,
+        882,
+        103,
+        36
+      ],
+      "area": 3708,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_037",
+      "layer": "text_box",
+      "bbox": [
+        1296,
+        890,
+        89,
+        32
+      ],
+      "area": 2848,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_038",
+      "layer": "text_box",
+      "bbox": [
+        275,
+        912,
+        138,
+        42
+      ],
+      "area": 5796,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_039",
+      "layer": "text_box",
+      "bbox": [
+        1295,
+        921,
+        91,
+        31
+      ],
+      "area": 2821,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_040",
+      "layer": "text_box",
+      "bbox": [
+        1063,
+        966,
+        14,
+        15
+      ],
+      "area": 210,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_041",
+      "layer": "text_box",
+      "bbox": [
+        531,
+        991,
+        31,
+        33
+      ],
+      "area": 1023,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_042",
+      "layer": "text_box",
+      "bbox": [
+        699,
+        984,
+        94,
+        37
+      ],
+      "area": 3478,
+      "crop": null
+    },
+    {
+      "id": "text_ocr_043",
+      "layer": "text_box",
+      "bbox": [
+        1061,
+        1015,
+        18,
+        20
+      ],
+      "area": 360,
+      "crop": null
+    }
+  ],
+  "outputs": {
+    "foreground_mask": "foreground_mask.png",
+    "branches_mask": "branches_mask.png",
+    "text_mask": "text_mask.png",
+    "doodles_mask": "doodles_mask.png",
+    "branches_rgba": "branches_rgba.png",
+    "text_rgba": "text_rgba.png",
+    "doodles_rgba": "doodles_rgba.png",
+    "debug_overlay": "debug_overlay.png"
+  }
+}

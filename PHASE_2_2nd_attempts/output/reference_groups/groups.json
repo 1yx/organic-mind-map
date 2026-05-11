@@ -1,0 +1,2131 @@
+{
+  "input": "output/reference_ocr_v2",
+  "source_image": "input/reference.png",
+  "groups": [
+    {
+      "id": "group_002",
+      "kind": "doodle_with_text",
+      "doodles": [
+        {
+          "id": "doodle_002",
+          "layer": "doodle_refined",
+          "bbox": [
+            247,
+            62,
+            121,
+            98
+          ],
+          "area": 3204,
+          "crop": "doodles/doodle_002.png"
+        }
+      ],
+      "doodle_text": [
+        {
+          "id": "text_ocr_004",
+          "bbox": [
+            293,
+            97,
+            73,
+            39
+          ],
+          "text": "预览版",
+          "score": 0.9977307319641113
+        }
+      ],
+      "bbox": [
+        247,
+        62,
+        121,
+        98
+      ]
+    },
+    {
+      "id": "group_014",
+      "kind": "doodle_with_text",
+      "doodles": [
+        {
+          "id": "doodle_014",
+          "layer": "doodle_refined",
+          "bbox": [
+            1152,
+            230,
+            163,
+            116
+          ],
+          "area": 10737,
+          "crop": "doodles/doodle_014.png"
+        }
+      ],
+      "doodle_text": [
+        {
+          "id": "text_ocr_011",
+          "bbox": [
+            1170,
+            245,
+            44,
+            31
+          ],
+          "text": "用户",
+          "score": 0.9976826906204224
+        },
+        {
+          "id": "text_ocr_012",
+          "bbox": [
+            1249,
+            241,
+            48,
+            28
+          ],
+          "text": "工程",
+          "score": 0.9998803734779358
+        },
+        {
+          "id": "text_ocr_013",
+          "bbox": [
+            1167,
+            272,
+            50,
+            30
+          ],
+          "text": "洞察",
+          "score": 0.997201144695282
+        },
+        {
+          "id": "text_ocr_014",
+          "bbox": [
+            1252,
+            268,
+            47,
+            26
+          ],
+          "text": "思维",
+          "score": 0.999384880065918
+        },
+        {
+          "id": "text_ocr_016",
+          "bbox": [
+            1199,
+            320,
+            81,
+            36
+          ],
+          "text": "商业视角",
+          "score": 0.9966471791267395
+        }
+      ],
+      "bbox": [
+        1152,
+        230,
+        163,
+        126
+      ]
+    },
+    {
+      "id": "group_016",
+      "kind": "doodle_with_text",
+      "doodles": [
+        {
+          "id": "doodle_016",
+          "layer": "doodle_refined",
+          "bbox": [
+            77,
+            324,
+            200,
+            161
+          ],
+          "area": 16717,
+          "crop": "doodles/doodle_016.png"
+        }
+      ],
+      "doodle_text": [
+        {
+          "id": "text_ocr_015",
+          "bbox": [
+            55,
+            283,
+            98,
+            40
+          ],
+          "text": "跨职能",
+          "score": 0.9995819926261902
+        },
+        {
+          "id": "text_ocr_017",
+          "bbox": [
+            75,
+            338,
+            42,
+            28
+          ],
+          "text": "</>",
+          "score": 0.91316819190979
+        }
+      ],
+      "bbox": [
+        55,
+        283,
+        222,
+        202
+      ]
+    },
+    {
+      "id": "group_021",
+      "kind": "doodle_with_text",
+      "doodles": [
+        {
+          "id": "doodle_021",
+          "layer": "doodle_refined",
+          "bbox": [
+            537,
+            420,
+            341,
+            176
+          ],
+          "area": 45871,
+          "crop": "doodles/doodle_021.png"
+        }
+      ],
+      "doodle_text": [
+        {
+          "id": "text_ocr_019",
+          "bbox": [
+            593,
+            444,
+            200,
+            59
+          ],
+          "text": "Anthropic",
+          "score": 0.9987012147903442
+        },
+        {
+          "id": "text_ocr_023",
+          "bbox": [
+            590,
+            497,
+            209,
+            73
+          ],
+          "text": "产品之道",
+          "score": 0.9972745776176453
+        }
+      ],
+      "bbox": [
+        537,
+        420,
+        341,
+        176
+      ]
+    },
+    {
+      "id": "group_022",
+      "kind": "doodle_with_text",
+      "doodles": [
+        {
+          "id": "doodle_022",
+          "layer": "doodle_refined",
+          "bbox": [
+            1284,
+            437,
+            125,
+            110
+          ],
+          "area": 5004,
+          "crop": "doodles/doodle_022.png"
+        }
+      ],
+      "doodle_text": [
+        {
+          "id": "text_ocr_020",
+          "bbox": [
+            1370,
+            442,
+            18,
+            8
+          ],
+          "text": "。0",
+          "score": 0.541338324546814
+        }
+      ],
+      "bbox": [
+        1284,
+        437,
+        125,
+        110
+      ]
+    },
+    {
+      "id": "group_035",
+      "kind": "doodle_with_text",
+      "doodles": [
+        {
+          "id": "doodle_035",
+          "layer": "doodle_refined",
+          "bbox": [
+            26,
+            754,
+            148,
+            125
+          ],
+          "area": 13610,
+          "crop": "doodles/doodle_035.png"
+        }
+      ],
+      "doodle_text": [
+        {
+          "id": "text_ocr_027",
+          "bbox": [
+            42,
+            701,
+            120,
+            42
+          ],
+          "text": "组织优先",
+          "score": 0.9989330768585205
+        }
+      ],
+      "bbox": [
+        26,
+        701,
+        148,
+        178
+      ]
+    },
+    {
+      "id": "group_034",
+      "kind": "doodle_with_text",
+      "doodles": [
+        {
+          "id": "doodle_034",
+          "layer": "doodle_refined",
+          "bbox": [
+            195,
+            739,
+            154,
+            141
+          ],
+          "area": 1237,
+          "crop": "doodles/doodle_034.png"
+        }
+      ],
+      "doodle_text": [
+        {
+          "id": "text_ocr_028",
+          "bbox": [
+            241,
+            748,
+            87,
+            35
+          ],
+          "text": "长期思考",
+          "score": 0.9986577033996582
+        },
+        {
+          "id": "text_ocr_031",
+          "bbox": [
+            241,
+            786,
+            92,
+            32
+          ],
+          "text": "稳健推进",
+          "score": 0.9978165030479431
+        },
+        {
+          "id": "text_ocr_033",
+          "bbox": [
+            241,
+            823,
+            107,
+            36
+          ],
+          "text": "可持续成长",
+          "score": 0.9997432827949524
+        }
+      ],
+      "bbox": [
+        195,
+        739,
+        154,
+        141
+      ]
+    },
+    {
+      "id": "group_037",
+      "kind": "doodle_with_text",
+      "doodles": [
+        {
+          "id": "doodle_037",
+          "layer": "doodle_refined",
+          "bbox": [
+            1362,
+            770,
+            60,
+            69
+          ],
+          "area": 4115,
+          "crop": "doodles/doodle_037.png"
+        }
+      ],
+      "doodle_text": [
+        {
+          "id": "text_ocr_032",
+          "bbox": [
+            1371,
+            806,
+            31,
+            24
+          ],
+          "text": "00",
+          "score": 0.5813136100769043
+        }
+      ],
+      "bbox": [
+        1362,
+        770,
+        60,
+        69
+      ]
+    },
+    {
+      "id": "group_042",
+      "kind": "doodle_with_text",
+      "doodles": [
+        {
+          "id": "doodle_042",
+          "layer": "doodle_refined",
+          "bbox": [
+            620,
+            862,
+            78,
+            14
+          ],
+          "area": 346,
+          "crop": "doodles/doodle_042.png"
+        }
+      ],
+      "doodle_text": [
+        {
+          "id": "text_ocr_035",
+          "bbox": [
+            610,
+            816,
+            107,
+            34
+          ],
+          "text": "先做起来！",
+          "score": 0.9725538492202759
+        }
+      ],
+      "bbox": [
+        610,
+        816,
+        107,
+        60
+      ]
+    },
+    {
+      "id": "group_047",
+      "kind": "doodle_with_text",
+      "doodles": [
+        {
+          "id": "doodle_047",
+          "layer": "doodle_refined",
+          "bbox": [
+            1037,
+            930,
+            108,
+            133
+          ],
+          "area": 13024,
+          "crop": "doodles/doodle_047.png"
+        }
+      ],
+      "doodle_text": [
+        {
+          "id": "text_ocr_036",
+          "bbox": [
+            1036,
+            882,
+            103,
+            36
+          ],
+          "text": "EVALS",
+          "score": 0.9969921112060547
+        },
+        {
+          "id": "text_ocr_040",
+          "bbox": [
+            1063,
+            966,
+            14,
+            15
+          ],
+          "text": "V",
+          "score": 0.6787881851196289
+        },
+        {
+          "id": "text_ocr_043",
+          "bbox": [
+            1061,
+            1015,
+            18,
+            20
+          ],
+          "text": "M",
+          "score": 0.623348593711853
+        }
+      ],
+      "bbox": [
+        1036,
+        882,
+        109,
+        181
+      ]
+    },
+    {
+      "id": "group_049",
+      "kind": "doodle_with_text",
+      "doodles": [
+        {
+          "id": "doodle_049",
+          "layer": "doodle_refined",
+          "bbox": [
+            1306,
+            961,
+            53,
+            20
+          ],
+          "area": 285,
+          "crop": "doodles/doodle_049.png"
+        }
+      ],
+      "doodle_text": [
+        {
+          "id": "text_ocr_039",
+          "bbox": [
+            1295,
+            921,
+            91,
+            31
+          ],
+          "text": "持续改进",
+          "score": 0.9994089603424072
+        }
+      ],
+      "bbox": [
+        1295,
+        921,
+        91,
+        60
+      ]
+    },
+    {
+      "id": "group_052",
+      "kind": "doodle_with_text",
+      "doodles": [
+        {
+          "id": "doodle_052",
+          "layer": "doodle_refined",
+          "bbox": [
+            485,
+            981,
+            89,
+            55
+          ],
+          "area": 3374,
+          "crop": "doodles/doodle_052.png"
+        }
+      ],
+      "doodle_text": [
+        {
+          "id": "text_ocr_041",
+          "bbox": [
+            531,
+            991,
+            31,
+            33
+          ],
+          "text": "X",
+          "score": 0.8567343950271606
+        }
+      ],
+      "bbox": [
+        485,
+        981,
+        89,
+        55
+      ]
+    },
+    {
+      "id": "group_055",
+      "kind": "doodle_with_text",
+      "doodles": [
+        {
+          "id": "doodle_055",
+          "layer": "doodle_refined",
+          "bbox": [
+            717,
+            1033,
+            31,
+            27
+          ],
+          "area": 307,
+          "crop": "doodles/doodle_055.png"
+        }
+      ],
+      "doodle_text": [
+        {
+          "id": "text_ocr_042",
+          "bbox": [
+            699,
+            984,
+            94,
+            37
+          ],
+          "text": "少即是多",
+          "score": 0.9993805885314941
+        }
+      ],
+      "bbox": [
+        699,
+        984,
+        94,
+        76
+      ]
+    },
+    {
+      "id": "group_001",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_001",
+          "layer": "doodle_refined",
+          "bbox": [
+            1112,
+            53,
+            92,
+            95
+          ],
+          "area": 5734,
+          "crop": "doodles/doodle_001.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        1112,
+        53,
+        92,
+        95
+      ]
+    },
+    {
+      "id": "group_003",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_003",
+          "layer": "doodle_refined",
+          "bbox": [
+            383,
+            80,
+            26,
+            28
+          ],
+          "area": 328,
+          "crop": "doodles/doodle_003.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        383,
+        80,
+        26,
+        28
+      ]
+    },
+    {
+      "id": "group_004",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_004",
+          "layer": "doodle_refined",
+          "bbox": [
+            1039,
+            95,
+            84,
+            117
+          ],
+          "area": 5736,
+          "crop": "doodles/doodle_004.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        1039,
+        95,
+        84,
+        117
+      ]
+    },
+    {
+      "id": "group_005",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_005",
+          "layer": "doodle_refined",
+          "bbox": [
+            260,
+            102,
+            30,
+            44
+          ],
+          "area": 644,
+          "crop": "doodles/doodle_005.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        260,
+        102,
+        30,
+        44
+      ]
+    },
+    {
+      "id": "group_006",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_006",
+          "layer": "doodle_refined",
+          "bbox": [
+            207,
+            106,
+            32,
+            20
+          ],
+          "area": 266,
+          "crop": "doodles/doodle_006.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        207,
+        106,
+        32,
+        20
+      ]
+    },
+    {
+      "id": "group_007",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_007",
+          "layer": "doodle_refined",
+          "bbox": [
+            101,
+            121,
+            66,
+            61
+          ],
+          "area": 2073,
+          "crop": "doodles/doodle_007.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        101,
+        121,
+        66,
+        61
+      ]
+    },
+    {
+      "id": "group_008",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_008",
+          "layer": "doodle_refined",
+          "bbox": [
+            91,
+            123,
+            59,
+            65
+          ],
+          "area": 469,
+          "crop": "doodles/doodle_008.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        91,
+        123,
+        59,
+        65
+      ]
+    },
+    {
+      "id": "group_009",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_009",
+          "layer": "doodle_refined",
+          "bbox": [
+            1376,
+            139,
+            37,
+            44
+          ],
+          "area": 486,
+          "crop": "doodles/doodle_009.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        1376,
+        139,
+        37,
+        44
+      ]
+    },
+    {
+      "id": "group_010",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_010",
+          "layer": "doodle_refined",
+          "bbox": [
+            117,
+            185,
+            102,
+            89
+          ],
+          "area": 2600,
+          "crop": "doodles/doodle_010.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        117,
+        185,
+        102,
+        89
+      ]
+    },
+    {
+      "id": "group_011",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_011",
+          "layer": "doodle_refined",
+          "bbox": [
+            1142,
+            191,
+            223,
+            38
+          ],
+          "area": 1662,
+          "crop": "doodles/doodle_011.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        1142,
+        191,
+        223,
+        38
+      ]
+    },
+    {
+      "id": "group_012",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_012",
+          "layer": "doodle_refined",
+          "bbox": [
+            223,
+            195,
+            99,
+            71
+          ],
+          "area": 3145,
+          "crop": "doodles/doodle_012.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        223,
+        195,
+        99,
+        71
+      ]
+    },
+    {
+      "id": "group_013",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_013",
+          "layer": "doodle_refined",
+          "bbox": [
+            58,
+            207,
+            60,
+            14
+          ],
+          "area": 226,
+          "crop": "doodles/doodle_013.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        58,
+        207,
+        60,
+        14
+      ]
+    },
+    {
+      "id": "group_015",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_015",
+          "layer": "doodle_refined",
+          "bbox": [
+            1352,
+            289,
+            43,
+            41
+          ],
+          "area": 480,
+          "crop": "doodles/doodle_015.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        1352,
+        289,
+        43,
+        41
+      ]
+    },
+    {
+      "id": "group_017",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_017",
+          "layer": "doodle_refined",
+          "bbox": [
+            160,
+            335,
+            29,
+            25
+          ],
+          "area": 493,
+          "crop": "doodles/doodle_017.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        160,
+        335,
+        29,
+        25
+      ]
+    },
+    {
+      "id": "group_018",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_018",
+          "layer": "doodle_refined",
+          "bbox": [
+            1205,
+            348,
+            71,
+            25
+          ],
+          "area": 1211,
+          "crop": "doodles/doodle_018.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        1205,
+        348,
+        71,
+        25
+      ]
+    },
+    {
+      "id": "group_019",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_019",
+          "layer": "doodle_refined",
+          "bbox": [
+            729,
+            385,
+            43,
+            54
+          ],
+          "area": 666,
+          "crop": "doodles/doodle_019.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        729,
+        385,
+        43,
+        54
+      ]
+    },
+    {
+      "id": "group_020",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_020",
+          "layer": "doodle_refined",
+          "bbox": [
+            1402,
+            402,
+            28,
+            35
+          ],
+          "area": 316,
+          "crop": "doodles/doodle_020.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        1402,
+        402,
+        28,
+        35
+      ]
+    },
+    {
+      "id": "group_023",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_023",
+          "layer": "doodle_refined",
+          "bbox": [
+            1164,
+            446,
+            97,
+            80
+          ],
+          "area": 7502,
+          "crop": "doodles/doodle_023.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        1164,
+        446,
+        97,
+        80
+      ]
+    },
+    {
+      "id": "group_024",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_024",
+          "layer": "doodle_refined",
+          "bbox": [
+            1268,
+            558,
+            97,
+            122
+          ],
+          "area": 8068,
+          "crop": "doodles/doodle_024.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        1268,
+        558,
+        97,
+        122
+      ]
+    },
+    {
+      "id": "group_025",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_025",
+          "layer": "doodle_refined",
+          "bbox": [
+            160,
+            586,
+            73,
+            90
+          ],
+          "area": 1755,
+          "crop": "doodles/doodle_025.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        160,
+        586,
+        73,
+        90
+      ]
+    },
+    {
+      "id": "group_026",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_026",
+          "layer": "doodle_refined",
+          "bbox": [
+            1389,
+            588,
+            43,
+            43
+          ],
+          "area": 1431,
+          "crop": "doodles/doodle_026.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        1389,
+        588,
+        43,
+        43
+      ]
+    },
+    {
+      "id": "group_027",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_027",
+          "layer": "doodle_refined",
+          "bbox": [
+            211,
+            592,
+            33,
+            47
+          ],
+          "area": 247,
+          "crop": "doodles/doodle_027.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        211,
+        592,
+        33,
+        47
+      ]
+    },
+    {
+      "id": "group_028",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_028",
+          "layer": "doodle_refined",
+          "bbox": [
+            58,
+            603,
+            66,
+            69
+          ],
+          "area": 3534,
+          "crop": "doodles/doodle_028.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        58,
+        603,
+        66,
+        69
+      ]
+    },
+    {
+      "id": "group_029",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_029",
+          "layer": "doodle_refined",
+          "bbox": [
+            173,
+            608,
+            62,
+            42
+          ],
+          "area": 1590,
+          "crop": "doodles/doodle_029.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        173,
+        608,
+        62,
+        42
+      ]
+    },
+    {
+      "id": "group_030",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_030",
+          "layer": "doodle_refined",
+          "bbox": [
+            249,
+            638,
+            33,
+            44
+          ],
+          "area": 1196,
+          "crop": "doodles/doodle_030.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        249,
+        638,
+        33,
+        44
+      ]
+    },
+    {
+      "id": "group_031",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_031",
+          "layer": "doodle_refined",
+          "bbox": [
+            1393,
+            719,
+            32,
+            39
+          ],
+          "area": 436,
+          "crop": "doodles/doodle_031.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        1393,
+        719,
+        32,
+        39
+      ]
+    },
+    {
+      "id": "group_032",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_032",
+          "layer": "doodle_refined",
+          "bbox": [
+            1159,
+            729,
+            103,
+            115
+          ],
+          "area": 5572,
+          "crop": "doodles/doodle_032.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        1159,
+        729,
+        103,
+        115
+      ]
+    },
+    {
+      "id": "group_033",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_033",
+          "layer": "doodle_refined",
+          "bbox": [
+            302,
+            735,
+            55,
+            74
+          ],
+          "area": 484,
+          "crop": "doodles/doodle_033.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        302,
+        735,
+        55,
+        74
+      ]
+    },
+    {
+      "id": "group_036",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_036",
+          "layer": "doodle_refined",
+          "bbox": [
+            214,
+            756,
+            17,
+            25
+          ],
+          "area": 273,
+          "crop": "doodles/doodle_036.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        214,
+        756,
+        17,
+        25
+      ]
+    },
+    {
+      "id": "group_038",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_038",
+          "layer": "doodle_refined",
+          "bbox": [
+            1287,
+            783,
+            47,
+            48
+          ],
+          "area": 1570,
+          "crop": "doodles/doodle_038.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        1287,
+        783,
+        47,
+        48
+      ]
+    },
+    {
+      "id": "group_039",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_039",
+          "layer": "doodle_refined",
+          "bbox": [
+            214,
+            792,
+            16,
+            25
+          ],
+          "area": 263,
+          "crop": "doodles/doodle_039.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        214,
+        792,
+        16,
+        25
+      ]
+    },
+    {
+      "id": "group_040",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_040",
+          "layer": "doodle_refined",
+          "bbox": [
+            371,
+            807,
+            40,
+            39
+          ],
+          "area": 398,
+          "crop": "doodles/doodle_040.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        371,
+        807,
+        40,
+        39
+      ]
+    },
+    {
+      "id": "group_041",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_041",
+          "layer": "doodle_refined",
+          "bbox": [
+            738,
+            824,
+            79,
+            78
+          ],
+          "area": 4164,
+          "crop": "doodles/doodle_041.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        738,
+        824,
+        79,
+        78
+      ]
+    },
+    {
+      "id": "group_043",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_043",
+          "layer": "doodle_refined",
+          "bbox": [
+            523,
+            867,
+            89,
+            61
+          ],
+          "area": 2395,
+          "crop": "doodles/doodle_043.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        523,
+        867,
+        89,
+        61
+      ]
+    },
+    {
+      "id": "group_044",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_044",
+          "layer": "doodle_refined",
+          "bbox": [
+            827,
+            867,
+            45,
+            42
+          ],
+          "area": 464,
+          "crop": "doodles/doodle_044.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        827,
+        867,
+        45,
+        42
+      ]
+    },
+    {
+      "id": "group_045",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_045",
+          "layer": "doodle_refined",
+          "bbox": [
+            113,
+            886,
+            33,
+            33
+          ],
+          "area": 735,
+          "crop": "doodles/doodle_045.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        113,
+        886,
+        33,
+        33
+      ]
+    },
+    {
+      "id": "group_046",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_046",
+          "layer": "doodle_refined",
+          "bbox": [
+            1411,
+            910,
+            37,
+            36
+          ],
+          "area": 360,
+          "crop": "doodles/doodle_046.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        1411,
+        910,
+        37,
+        36
+      ]
+    },
+    {
+      "id": "group_048",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_048",
+          "layer": "doodle_refined",
+          "bbox": [
+            1196,
+            956,
+            131,
+            104
+          ],
+          "area": 5645,
+          "crop": "doodles/doodle_048.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        1196,
+        956,
+        131,
+        104
+      ]
+    },
+    {
+      "id": "group_050",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_050",
+          "layer": "doodle_refined",
+          "bbox": [
+            315,
+            971,
+            69,
+            77
+          ],
+          "area": 4287,
+          "crop": "doodles/doodle_050.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        315,
+        971,
+        69,
+        77
+      ]
+    },
+    {
+      "id": "group_051",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_051",
+          "layer": "doodle_refined",
+          "bbox": [
+            583,
+            977,
+            69,
+            60
+          ],
+          "area": 1861,
+          "crop": "doodles/doodle_051.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        583,
+        977,
+        69,
+        60
+      ]
+    },
+    {
+      "id": "group_053",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_053",
+          "layer": "doodle_refined",
+          "bbox": [
+            1366,
+            993,
+            39,
+            38
+          ],
+          "area": 722,
+          "crop": "doodles/doodle_053.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        1366,
+        993,
+        39,
+        38
+      ]
+    },
+    {
+      "id": "group_054",
+      "kind": "doodle",
+      "doodles": [
+        {
+          "id": "doodle_054",
+          "layer": "doodle_refined",
+          "bbox": [
+            810,
+            995,
+            54,
+            52
+          ],
+          "area": 2168,
+          "crop": "doodles/doodle_054.png"
+        }
+      ],
+      "doodle_text": [],
+      "bbox": [
+        810,
+        995,
+        54,
+        52
+      ]
+    }
+  ],
+  "map_text": [
+    {
+      "id": "text_ocr_001",
+      "bbox": [
+        474,
+        6,
+        554,
+        53
+      ],
+      "text": "How Anthropic's Product Team Moves",
+      "score": 0.978210985660553
+    },
+    {
+      "id": "text_ocr_002",
+      "bbox": [
+        58,
+        58,
+        132,
+        49
+      ],
+      "text": "研究预览",
+      "score": 0.9987767934799194
+    },
+    {
+      "id": "text_ocr_003",
+      "bbox": [
+        1222,
+        59,
+        134,
+        38
+      ],
+      "text": "☆洞察深刻",
+      "score": 0.9494103193283081
+    },
+    {
+      "id": "text_ocr_005",
+      "bbox": [
+        915,
+        98,
+        119,
+        55
+      ],
+      "text": "产品品味",
+      "score": 0.9878857135772705
+    },
+    {
+      "id": "text_ocr_006",
+      "bbox": [
+        1225,
+        97,
+        130,
+        34
+      ],
+      "text": "☆判断取舍",
+      "score": 0.9875179529190063
+    },
+    {
+      "id": "text_ocr_007",
+      "bbox": [
+        1225,
+        132,
+        133,
+        37
+      ],
+      "text": "★简洁优雅",
+      "score": 0.941912829875946
+    },
+    {
+      "id": "text_ocr_008",
+      "bbox": [
+        389,
+        146,
+        196,
+        103
+      ],
+      "text": "1.极速交付",
+      "score": 0.9987165927886963
+    },
+    {
+      "id": "text_ocr_009",
+      "bbox": [
+        742,
+        163,
+        175,
+        102
+      ],
+      "text": "2.PM角色",
+      "score": 0.9263420701026917
+    },
+    {
+      "id": "text_ocr_010",
+      "bbox": [
+        996,
+        239,
+        130,
+        53
+      ],
+      "text": "角色融合",
+      "score": 0.9996100664138794
+    },
+    {
+      "id": "text_ocr_018",
+      "bbox": [
+        1160,
+        392,
+        174,
+        38
+      ],
+      "text": "CLI·Desktop",
+      "score": 0.960524320602417
+    },
+    {
+      "id": "text_ocr_021",
+      "bbox": [
+        917,
+        430,
+        181,
+        76
+      ],
+      "text": "3.产品矩阵",
+      "score": 0.9971112608909607
+    },
+    {
+      "id": "text_ocr_022",
+      "bbox": [
+        256,
+        506,
+        183,
+        59
+      ],
+      "text": "4.使命聚焦",
+      "score": 0.9984293580055237
+    },
+    {
+      "id": "text_ocr_024",
+      "bbox": [
+        36,
+        540,
+        120,
+        50
+      ],
+      "text": "安全AGI",
+      "score": 0.9989274144172668
+    },
+    {
+      "id": "text_ocr_025",
+      "bbox": [
+        1162,
+        555,
+        92,
+        46
+      ],
+      "text": "Mobile",
+      "score": 0.9985052943229675
+    },
+    {
+      "id": "text_ocr_026",
+      "bbox": [
+        860,
+        691,
+        167,
+        118
+      ],
+      "text": "6.AI实践",
+      "score": 0.9914187788963318
+    },
+    {
+      "id": "text_ocr_029",
+      "bbox": [
+        455,
+        651,
+        173,
+        138
+      ],
+      "text": "5.团队文化",
+      "score": 0.9975008964538574
+    },
+    {
+      "id": "text_ocr_030",
+      "bbox": [
+        1052,
+        751,
+        100,
+        45
+      ],
+      "text": "自动化",
+      "score": 0.9994616508483887
+    },
+    {
+      "id": "text_ocr_034",
+      "bbox": [
+        456,
+        816,
+        123,
+        43
+      ],
+      "text": "偏向行动",
+      "score": 0.999390184879303
+    },
+    {
+      "id": "text_ocr_037",
+      "bbox": [
+        1296,
+        890,
+        89,
+        32
+      ],
+      "text": "量化评估",
+      "score": 0.9993230104446411
+    },
+    {
+      "id": "text_ocr_038",
+      "bbox": [
+        275,
+        912,
+        138,
+        42
+      ],
+      "text": "移除旧功能",
+      "score": 0.9983747601509094
+    }
+  ],
+  "doodle_text": [
+    {
+      "id": "text_ocr_004",
+      "bbox": [
+        293,
+        97,
+        73,
+        39
+      ],
+      "text": "预览版",
+      "score": 0.9977307319641113
+    },
+    {
+      "id": "text_ocr_011",
+      "bbox": [
+        1170,
+        245,
+        44,
+        31
+      ],
+      "text": "用户",
+      "score": 0.9976826906204224
+    },
+    {
+      "id": "text_ocr_012",
+      "bbox": [
+        1249,
+        241,
+        48,
+        28
+      ],
+      "text": "工程",
+      "score": 0.9998803734779358
+    },
+    {
+      "id": "text_ocr_013",
+      "bbox": [
+        1167,
+        272,
+        50,
+        30
+      ],
+      "text": "洞察",
+      "score": 0.997201144695282
+    },
+    {
+      "id": "text_ocr_014",
+      "bbox": [
+        1252,
+        268,
+        47,
+        26
+      ],
+      "text": "思维",
+      "score": 0.999384880065918
+    },
+    {
+      "id": "text_ocr_016",
+      "bbox": [
+        1199,
+        320,
+        81,
+        36
+      ],
+      "text": "商业视角",
+      "score": 0.9966471791267395
+    },
+    {
+      "id": "text_ocr_015",
+      "bbox": [
+        55,
+        283,
+        98,
+        40
+      ],
+      "text": "跨职能",
+      "score": 0.9995819926261902
+    },
+    {
+      "id": "text_ocr_017",
+      "bbox": [
+        75,
+        338,
+        42,
+        28
+      ],
+      "text": "</>",
+      "score": 0.91316819190979
+    },
+    {
+      "id": "text_ocr_019",
+      "bbox": [
+        593,
+        444,
+        200,
+        59
+      ],
+      "text": "Anthropic",
+      "score": 0.9987012147903442
+    },
+    {
+      "id": "text_ocr_023",
+      "bbox": [
+        590,
+        497,
+        209,
+        73
+      ],
+      "text": "产品之道",
+      "score": 0.9972745776176453
+    },
+    {
+      "id": "text_ocr_020",
+      "bbox": [
+        1370,
+        442,
+        18,
+        8
+      ],
+      "text": "。0",
+      "score": 0.541338324546814
+    },
+    {
+      "id": "text_ocr_027",
+      "bbox": [
+        42,
+        701,
+        120,
+        42
+      ],
+      "text": "组织优先",
+      "score": 0.9989330768585205
+    },
+    {
+      "id": "text_ocr_028",
+      "bbox": [
+        241,
+        748,
+        87,
+        35
+      ],
+      "text": "长期思考",
+      "score": 0.9986577033996582
+    },
+    {
+      "id": "text_ocr_031",
+      "bbox": [
+        241,
+        786,
+        92,
+        32
+      ],
+      "text": "稳健推进",
+      "score": 0.9978165030479431
+    },
+    {
+      "id": "text_ocr_033",
+      "bbox": [
+        241,
+        823,
+        107,
+        36
+      ],
+      "text": "可持续成长",
+      "score": 0.9997432827949524
+    },
+    {
+      "id": "text_ocr_032",
+      "bbox": [
+        1371,
+        806,
+        31,
+        24
+      ],
+      "text": "00",
+      "score": 0.5813136100769043
+    },
+    {
+      "id": "text_ocr_035",
+      "bbox": [
+        610,
+        816,
+        107,
+        34
+      ],
+      "text": "先做起来！",
+      "score": 0.9725538492202759
+    },
+    {
+      "id": "text_ocr_036",
+      "bbox": [
+        1036,
+        882,
+        103,
+        36
+      ],
+      "text": "EVALS",
+      "score": 0.9969921112060547
+    },
+    {
+      "id": "text_ocr_040",
+      "bbox": [
+        1063,
+        966,
+        14,
+        15
+      ],
+      "text": "V",
+      "score": 0.6787881851196289
+    },
+    {
+      "id": "text_ocr_043",
+      "bbox": [
+        1061,
+        1015,
+        18,
+        20
+      ],
+      "text": "M",
+      "score": 0.623348593711853
+    },
+    {
+      "id": "text_ocr_039",
+      "bbox": [
+        1295,
+        921,
+        91,
+        31
+      ],
+      "text": "持续改进",
+      "score": 0.9994089603424072
+    },
+    {
+      "id": "text_ocr_041",
+      "bbox": [
+        531,
+        991,
+        31,
+        33
+      ],
+      "text": "X",
+      "score": 0.8567343950271606
+    },
+    {
+      "id": "text_ocr_042",
+      "bbox": [
+        699,
+        984,
+        94,
+        37
+      ],
+      "text": "少即是多",
+      "score": 0.9993805885314941
+    }
+  ],
+  "unassigned_text": [],
+  "outputs": {
+    "map_text_mask": "map_text_mask.png",
+    "doodle_text_mask": "doodle_text_mask.png",
+    "unassigned_text_mask": "unassigned_text_mask.png",
+    "group_preview": "group_preview.png"
+  }
+}

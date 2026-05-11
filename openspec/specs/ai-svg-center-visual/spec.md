@@ -38,23 +38,23 @@ The CLI SHALL NOT fetch, sanitize, cache, inline, allowlist-filter, or wrap cent
 - **THEN** preview startup does not wait for a network image request and does not decide whether the URL is visually usable
 
 ### Requirement: Browser SVG loading and guard
-The browser preview SHALL asynchronously load allowlisted center SVG URLs and SHALL apply lightweight safety checks before rendering.
+The browser preview SHALL resolve `OrganicTree.center.svgUrl` through a unified safety pipeline: URL allowlist gate, bounded fetch with timeout and size checks, DOMParser-based SVG element and attribute whitelist validation, and deterministic built-in fallback on any rejection or failure.
 
 #### Scenario: Safe SVG response is loaded
-- **WHEN** the browser loads an allowlisted SVG response that passes lightweight safety checks
-- **THEN** the renderer displays the SVG as the center visual
+- **WHEN** the browser loads an allowlisted SVG response that passes all safety checks (size, timeout, content-type, parse, and whitelist)
+- **THEN** Web passes the resolved safe inline SVG content to the renderer for display as the center visual
 
 #### Scenario: Unsafe SVG response is loaded
 - **WHEN** the SVG response contains script, foreignObject, event handler attributes, external references, CSS URL references, or embedded raster data URLs
-- **THEN** the browser rejects the response and uses deterministic built-in fallback
+- **THEN** the browser rejects the response and uses the deterministic built-in center fallback
 
 #### Scenario: SVG request fails
 - **WHEN** the browser SVG request fails, times out, exceeds 64KB, or returns non-SVG content
-- **THEN** the browser uses deterministic built-in fallback without blocking the preview page
+- **THEN** the browser uses the deterministic built-in center fallback without blocking the preview page
 
 #### Scenario: SVG request exceeds timeout
 - **WHEN** controlled SVG loading exceeds 10 seconds
-- **THEN** the browser aborts the request and uses deterministic built-in fallback
+- **THEN** the browser aborts the request and uses the deterministic built-in center fallback
 
 #### Scenario: SVG safety is evaluated
 - **WHEN** the browser receives SVG text from an allowlisted center SVG URL
@@ -62,7 +62,7 @@ The browser preview SHALL asynchronously load allowlisted center SVG URLs and SH
 
 #### Scenario: SVG contains non-allowlisted element or attribute
 - **WHEN** parsed SVG contains an element or attribute outside the allowlist
-- **THEN** the browser rejects the SVG and uses deterministic built-in fallback
+- **THEN** the browser rejects the SVG and uses the deterministic built-in center fallback
 
 ### Requirement: Controlled SVG rendering priority
 The browser renderer SHALL prioritize a successfully loaded and safety-checked controlled center SVG over built-in center visual fallback.

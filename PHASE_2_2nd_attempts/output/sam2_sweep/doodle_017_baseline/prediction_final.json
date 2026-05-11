@@ -1,0 +1,48 @@
+{
+  "id": "xzh21kb3zxrmy0cy2nz8yafyqm",
+  "model": "meta/sam-2",
+  "version": "b88dc2ea8f814e5f4af2bac79f2414079800b5035b065d4eab99c857ab67e125",
+  "input": {
+    "image": "data:image/png;base64,...",
+    "points_per_side": 32,
+    "pred_iou_thresh": 0.88,
+    "stability_score_thresh": 0.95,
+    "use_m2m": true
+  },
+  "logs": "",
+  "output": {
+    "combined_mask": "https://replicate.delivery/xezq/Y0mfbndJla2DFiEysd8hxbcQfaK6754XjgPhZSv1gGofQjHtA/combined_mask.png",
+    "individual_masks": [
+      "https://replicate.delivery/xezq/C3dcsbYekfsveIXHEgjnGk7PfxKX4i7M5lD1bHTd7ZueDNeoF/mask_0.png",
+      "https://replicate.delivery/xezq/99b3NojMwnYKEVtToE5w20D6Mbpt7kXYd08H22qTkz7Ha8oF/mask_1.png",
+      "https://replicate.delivery/xezq/vyffd1yabeF7LpP7Md9lxAY5kwpN117tYxJ2adYxITbfhGPaB/mask_2.png",
+      "https://replicate.delivery/xezq/f2byLgFqzp2LEKw0f54oZIfortXmOfOoQI7bBRksUqL9hGPaB/mask_3.png",
+      "https://replicate.delivery/xezq/TV4tc2chSDLSDVzJkf1AtKORZ1rk5ndYNsEE3XH3FpkP04RLA/mask_4.png",
+      "https://replicate.delivery/xezq/eDvXvakmPORqOapuM9GQe7lyV4wx9Yo7k4aw9hbNZXgfQjHtA/mask_5.png",
+      "https://replicate.delivery/xezq/EzwndeafW2kSjkEtzPXCPS2dUNrpmbYsaxbFh7bqu2CfQjHtA/mask_6.png",
+      "https://replicate.delivery/xezq/l91ldcHNpnZeNiM2GEresRYfSLC7P6BmzKA04ADCJVOfhGPaB/mask_7.png",
+      "https://replicate.delivery/xezq/sr3bZsNezoWraSvfGq8wXG1fmG6NBbTOYuRI6pzH9hGehGPaB/mask_8.png",
+      "https://replicate.delivery/xezq/LLpzWDO4FMJeZqzpmyCRlQjqyqMpOOVrzkYKQQkADimP04RLA/mask_9.png",
+      "https://replicate.delivery/xezq/7UepDTqfz1sVIkYum3yZvrSFwMiOJ3d2M9lJW2mrYDTfQjHtA/mask_10.png",
+      "https://replicate.delivery/xezq/zHJvXUS4bULGI5YCwtZlcoAG4qIBeaVdBuXOO0rFfecehGPaB/mask_11.png",
+      "https://replicate.delivery/xezq/YyCRXPbL3569C1X9ubuOE64lrehXJ9xeUeZWr99oc7ofhGPaB/mask_12.png",
+      "https://replicate.delivery/xezq/lfo8ihOGDXQFJ6uec6je2IHWP9elMXj254cR4rWvuUbeDNeoF/mask_13.png"
+    ]
+  },
+  "data_removed": false,
+  "error": null,
+  "source": "api",
+  "status": "succeeded",
+  "created_at": "2026-05-11T05:24:25.215Z",
+  "started_at": "2026-05-11T05:24:43.88232544Z",
+  "completed_at": "2026-05-11T05:24:47.831660444Z",
+  "urls": {
+    "cancel": "https://api.replicate.com/v1/predictions/xzh21kb3zxrmy0cy2nz8yafyqm/cancel",
+    "get": "https://api.replicate.com/v1/predictions/xzh21kb3zxrmy0cy2nz8yafyqm",
+    "web": "https://replicate.com/p/xzh21kb3zxrmy0cy2nz8yafyqm"
+  },
+  "metrics": {
+    "predict_time": 3.949335004,
+    "total_time": 22.616660444
+  }
+}

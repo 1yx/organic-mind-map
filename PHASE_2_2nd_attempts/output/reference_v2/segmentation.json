@@ -1,0 +1,453 @@
+{
+  "input": "input/reference.png",
+  "image": {
+    "width": 1448,
+    "height": 1086
+  },
+  "ocr": "none",
+  "text_boxes": [],
+  "components": [
+    {
+      "id": "doodle_001",
+      "layer": "doodle",
+      "bbox": [
+        677,
+        52,
+        351,
+        10
+      ],
+      "area": 1926,
+      "crop": "doodles/doodle_001.png"
+    },
+    {
+      "id": "doodle_002",
+      "layer": "doodle",
+      "bbox": [
+        247,
+        62,
+        125,
+        98
+      ],
+      "area": 3123,
+      "crop": "doodles/doodle_002.png"
+    },
+    {
+      "id": "doodle_003",
+      "layer": "doodle",
+      "bbox": [
+        383,
+        64,
+        43,
+        35
+      ],
+      "area": 343,
+      "crop": "doodles/doodle_003.png"
+    },
+    {
+      "id": "doodle_004",
+      "layer": "doodle",
+      "bbox": [
+        1039,
+        86,
+        84,
+        126
+      ],
+      "area": 6370,
+      "crop": "doodles/doodle_004.png"
+    },
+    {
+      "id": "doodle_005",
+      "layer": "doodle",
+      "bbox": [
+        963,
+        146,
+        43,
+        23
+      ],
+      "area": 325,
+      "crop": "doodles/doodle_005.png"
+    },
+    {
+      "id": "doodle_006",
+      "layer": "doodle",
+      "bbox": [
+        931,
+        176,
+        25,
+        34
+      ],
+      "area": 229,
+      "crop": "doodles/doodle_006.png"
+    },
+    {
+      "id": "doodle_007",
+      "layer": "doodle",
+      "bbox": [
+        1222,
+        191,
+        143,
+        15
+      ],
+      "area": 1041,
+      "crop": "doodles/doodle_007.png"
+    },
+    {
+      "id": "doodle_008",
+      "layer": "doodle",
+      "bbox": [
+        58,
+        207,
+        60,
+        14
+      ],
+      "area": 226,
+      "crop": "doodles/doodle_008.png"
+    },
+    {
+      "id": "doodle_009",
+      "layer": "doodle",
+      "bbox": [
+        1130,
+        208,
+        49,
+        27
+      ],
+      "area": 319,
+      "crop": "doodles/doodle_009.png"
+    },
+    {
+      "id": "doodle_010",
+      "layer": "doodle",
+      "bbox": [
+        165,
+        219,
+        986,
+        719
+      ],
+      "area": 71943,
+      "crop": "doodles/doodle_010.png"
+    },
+    {
+      "id": "doodle_011",
+      "layer": "doodle",
+      "bbox": [
+        954,
+        228,
+        26,
+        37
+      ],
+      "area": 261,
+      "crop": "doodles/doodle_011.png"
+    },
+    {
+      "id": "doodle_012",
+      "layer": "doodle",
+      "bbox": [
+        1152,
+        230,
+        163,
+        143
+      ],
+      "area": 11246,
+      "crop": "doodles/doodle_012.png"
+    },
+    {
+      "id": "doodle_013",
+      "layer": "doodle",
+      "bbox": [
+        983,
+        272,
+        157,
+        30
+      ],
+      "area": 1084,
+      "crop": "doodles/doodle_013.png"
+    },
+    {
+      "id": "doodle_014",
+      "layer": "doodle",
+      "bbox": [
+        77,
+        377,
+        197,
+        108
+      ],
+      "area": 12293,
+      "crop": "doodles/doodle_014.png"
+    },
+    {
+      "id": "doodle_015",
+      "layer": "doodle",
+      "bbox": [
+        1284,
+        437,
+        125,
+        110
+      ],
+      "area": 4290,
+      "crop": "doodles/doodle_015.png"
+    },
+    {
+      "id": "doodle_016",
+      "layer": "doodle",
+      "bbox": [
+        1164,
+        440,
+        97,
+        86
+      ],
+      "area": 7917,
+      "crop": "doodles/doodle_016.png"
+    },
+    {
+      "id": "doodle_017",
+      "layer": "doodle",
+      "bbox": [
+        1111,
+        504,
+        143,
+        109
+      ],
+      "area": 1349,
+      "crop": "doodles/doodle_017.png"
+    },
+    {
+      "id": "doodle_018",
+      "layer": "doodle",
+      "bbox": [
+        1268,
+        558,
+        97,
+        122
+      ],
+      "area": 5042,
+      "crop": "doodles/doodle_018.png"
+    },
+    {
+      "id": "doodle_019",
+      "layer": "doodle",
+      "bbox": [
+        1309,
+        575,
+        31,
+        22
+      ],
+      "area": 526,
+      "crop": "doodles/doodle_019.png"
+    },
+    {
+      "id": "doodle_020",
+      "layer": "doodle",
+      "bbox": [
+        1402,
+        594,
+        23,
+        30
+      ],
+      "area": 238,
+      "crop": "doodles/doodle_020.png"
+    },
+    {
+      "id": "doodle_021",
+      "layer": "doodle",
+      "bbox": [
+        72,
+        610,
+        30,
+        22
+      ],
+      "area": 350,
+      "crop": "doodles/doodle_021.png"
+    },
+    {
+      "id": "doodle_022",
+      "layer": "doodle",
+      "bbox": [
+        174,
+        615,
+        48,
+        30
+      ],
+      "area": 1265,
+      "crop": "doodles/doodle_022.png"
+    },
+    {
+      "id": "doodle_023",
+      "layer": "doodle",
+      "bbox": [
+        76,
+        630,
+        34,
+        28
+      ],
+      "area": 250,
+      "crop": "doodles/doodle_023.png"
+    },
+    {
+      "id": "doodle_024",
+      "layer": "doodle",
+      "bbox": [
+        183,
+        657,
+        30,
+        12
+      ],
+      "area": 250,
+      "crop": "doodles/doodle_024.png"
+    },
+    {
+      "id": "doodle_025",
+      "layer": "doodle",
+      "bbox": [
+        1153,
+        729,
+        109,
+        115
+      ],
+      "area": 4776,
+      "crop": "doodles/doodle_025.png"
+    },
+    {
+      "id": "doodle_026",
+      "layer": "doodle",
+      "bbox": [
+        195,
+        735,
+        166,
+        145
+      ],
+      "area": 2371,
+      "crop": "doodles/doodle_026.png"
+    },
+    {
+      "id": "doodle_027",
+      "layer": "doodle",
+      "bbox": [
+        26,
+        748,
+        148,
+        131
+      ],
+      "area": 12029,
+      "crop": "doodles/doodle_027.png"
+    },
+    {
+      "id": "doodle_028",
+      "layer": "doodle",
+      "bbox": [
+        1281,
+        877,
+        125,
+        104
+      ],
+      "area": 1414,
+      "crop": "doodles/doodle_028.png"
+    },
+    {
+      "id": "doodle_029",
+      "layer": "doodle",
+      "bbox": [
+        1037,
+        923,
+        108,
+        140
+      ],
+      "area": 4990,
+      "crop": "doodles/doodle_029.png"
+    },
+    {
+      "id": "doodle_030",
+      "layer": "doodle",
+      "bbox": [
+        1196,
+        956,
+        131,
+        104
+      ],
+      "area": 4510,
+      "crop": "doodles/doodle_030.png"
+    },
+    {
+      "id": "doodle_031",
+      "layer": "doodle",
+      "bbox": [
+        528,
+        987,
+        39,
+        43
+      ],
+      "area": 1019,
+      "crop": "doodles/doodle_031.png"
+    },
+    {
+      "id": "doodle_032",
+      "layer": "doodle",
+      "bbox": [
+        324,
+        992,
+        17,
+        48
+      ],
+      "area": 544,
+      "crop": "doodles/doodle_032.png"
+    },
+    {
+      "id": "doodle_033",
+      "layer": "doodle",
+      "bbox": [
+        817,
+        1001,
+        40,
+        40
+      ],
+      "area": 887,
+      "crop": "doodles/doodle_033.png"
+    },
+    {
+      "id": "doodle_034",
+      "layer": "doodle",
+      "bbox": [
+        1278,
+        1010,
+        21,
+        21
+      ],
+      "area": 348,
+      "crop": "doodles/doodle_034.png"
+    },
+    {
+      "id": "branch_001",
+      "layer": "branch",
+      "bbox": [
+        169,
+        162,
+        478,
+        258
+      ],
+      "area": 12912,
+      "crop": null
+    },
+    {
+      "id": "branch_002",
+      "layer": "branch",
+      "bbox": [
+        428,
+        594,
+        364,
+        353
+      ],
+      "area": 11163,
+      "crop": null
+    }
+  ],
+  "outputs": {
+    "foreground_mask": "foreground_mask.png",
+    "branches_mask": "branches_mask.png",
+    "text_mask": "text_mask.png",
+    "doodles_mask": "doodles_mask.png",
+    "branches_rgba": "branches_rgba.png",
+    "text_rgba": "text_rgba.png",
+    "doodles_rgba": "doodles_rgba.png",
+    "debug_overlay": "debug_overlay.png"
+  }
+}

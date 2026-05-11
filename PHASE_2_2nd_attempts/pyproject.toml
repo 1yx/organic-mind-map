@@ -1,0 +1,10 @@
+[project]
+name = "omm-phase-2-cv-extraction"
+version = "0.0.1"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+  "numpy>=1.26",
+  "opencv-python-headless>=4.9",
+  "paddleocr>=3.4.1",
+  "paddlepaddle>=3.3.1",
+]

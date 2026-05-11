@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Editable Handdraw Canvas Demo</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: #17202a;
+        background: #f1f2ee;
+      }
+
+      main {
+        width: min(1360px, calc(100vw - 32px));
+        margin: 0 auto;
+        padding: 18px 0 24px;
+      }
+
+      header {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+
+      button,
+      input {
+        border: 1px solid #b8c0cc;
+        border-radius: 6px;
+        padding: 8px 10px;
+        font: inherit;
+        background: #fff;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      button[aria-pressed="true"] {
+        color: #fff;
+        border-color: #243b53;
+        background: #243b53;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 300px;
+        gap: 12px;
+        align-items: start;
+      }
+
+      .surface {
+        overflow: hidden;
+        border: 1px solid #d3d7df;
+        border-radius: 8px;
+        background: #fffefa;
+        box-shadow: 0 12px 26px rgb(15 23 42 / 12%);
+      }
+
+      svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        touch-action: none;
+        user-select: none;
+      }
+
+      .panel {
+        border: 1px solid #d3d7df;
+        border-radius: 8px;
+        padding: 12px;
+        background: #fff;
+      }
+
+      .panel label {
+        display: block;
+        margin: 0 0 6px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #52606d;
+      }
+
+      .panel input,
+      .panel textarea {
+        width: 100%;
+        margin-bottom: 10px;
+      }
+
+      .panel textarea {
+        min-height: 220px;
+        resize: vertical;
+        border: 1px solid #b8c0cc;
+        border-radius: 6px;
+        padding: 8px;
+        font:
+          12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", monospace;
+      }
+
+      .object {
+        cursor: grab;
+      }
+
+      .object:active {
+        cursor: grabbing;
+      }
+
+      .branch path {
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .branch .sketch {
+        opacity: 0.38;
+      }
+
+      .label {
+        font-family:
+          "Comic Sans MS", "Marker Felt", "Segoe Print", ui-sans-serif,
+          sans-serif;
+        font-weight: 700;
+        letter-spacing: 0;
+        fill: #111827;
+      }
+
+      .doodle {
+        fill: #fffdf7;
+        stroke: #111827;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .selected-outline {
+        display: none;
+        fill: none;
+        stroke: #2563eb;
+        stroke-dasharray: 6 4;
+        stroke-width: 2;
+        pointer-events: none;
+      }
+
+      .object.selected .selected-outline {
+        display: block;
+      }
+
+      .reference {
+        opacity: 0.28;
+        pointer-events: none;
+      }
+
+      @media (max-width: 980px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        header {
+          grid-template-columns: 1fr;
+        }
+
+        .toolbar {
+          justify-content: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Editable Handdraw Canvas Demo</h1>
+        <div class="toolbar">
+          <button type="button" id="toggle-reference" aria-pressed="true">
+            Reference
+          </button>
+          <button type="button" id="export-state">Export JSON</button>
+          <button type="button" id="import-state">Import JSON</button>
+          <button type="button" id="reset-state">Reset</button>
+        </div>
+      </header>
+
+      <div class="workspace">
+        <div class="surface">
+          <svg
+            id="canvas"
+            viewBox="0 0 1536 1024"
+            role="img"
+            aria-label="Editable reconstruction of handdraw mind map"
+          ></svg>
+        </div>
+
+        <aside class="panel">
+          <label for="selected-id">Selected object</label>
+          <input id="selected-id" readonly value="none" />
+
+          <label for="label-editor">Text</label>
+          <input id="label-editor" placeholder="Select a label or card" />
+
+          <label for="state-json">Canvas JSON</label>
+          <textarea id="state-json" spellcheck="false"></textarea>
+        </aside>
+      </div>
+    </main>
+
+    <script type="application/json" id="fixture-data">
+      {
+        "title": "How Anthropic's Product Team Moves",
+        "center": "Anthropic 产品之道",
+        "branches": [
+          { "concept": "极速交付", "children": ["研究预览", "跨职能"] },
+          { "concept": "PM 角色", "children": ["产品品味", "角色融合"] },
+          { "concept": "产品矩阵", "children": ["CLI·Desktop", "Mobile"] },
+          { "concept": "使命聚焦", "children": ["安全AGI", "组织优先"] },
+          { "concept": "团队文化", "children": ["偏向行动", "移除旧功能"] },
+          { "concept": "AI 实践", "children": ["自动化", "EVALS"] }
+        ]
+      }
+    </script>
+
+    <script>
+      const NS = "http://www.w3.org/2000/svg";
+      const svg = document.querySelector("#canvas");
+      const selectedIdInput = document.querySelector("#selected-id");
+      const labelEditor = document.querySelector("#label-editor");
+      const stateJson = document.querySelector("#state-json");
+      const referenceButton = document.querySelector("#toggle-reference");
+      const fixture = JSON.parse(document.querySelector("#fixture-data").textContent);
+
+      const center = { x: 730, y: 512 };
+      const branchSpecs = [
+        {
+          id: "b1",
+          sourceIndex: 0,
+          color: "#f28c00",
+          width: 34,
+          path: "M690 505 C650 390 530 275 420 220 C350 188 292 174 214 174",
+          label: { x: 430, y: 244, rotate: 15, size: 34 },
+          children: [
+            { textIndex: 0, x: 76, y: 96, icon: "research" },
+            { textIndex: 1, x: 78, y: 378, icon: "team" },
+          ],
+        },
+        {
+          id: "b2",
+          sourceIndex: 1,
+          color: "#7e4cc2",
+          width: 32,
+          path: "M792 496 C825 370 914 265 1034 220 C1134 184 1290 164 1435 180",
+          label: { x: 840, y: 242, rotate: -22, size: 31 },
+          children: [
+            { textIndex: 0, x: 1010, y: 116, icon: "person" },
+            { textIndex: 1, x: 1082, y: 268, icon: "venn" },
+          ],
+        },
+        {
+          id: "b3",
+          sourceIndex: 2,
+          color: "#e91e63",
+          width: 31,
+          path: "M868 525 C1005 520 1138 492 1222 448 C1294 410 1380 392 1496 404",
+          label: { x: 1010, y: 472, rotate: -11, size: 32 },
+          children: [
+            { textIndex: 0, x: 1236, y: 410, icon: "desktop" },
+            { textIndex: 1, x: 1238, y: 596, icon: "mobile" },
+          ],
+        },
+        {
+          id: "b4",
+          sourceIndex: 3,
+          color: "#41ad34",
+          width: 30,
+          path: "M666 554 C545 595 426 612 286 600 C178 590 120 600 55 624",
+          label: { x: 260, y: 575, rotate: 4, size: 32 },
+          children: [
+            { textIndex: 0, x: 52, y: 688, icon: "shield" },
+            { textIndex: 1, x: 54, y: 826, icon: "group" },
+          ],
+        },
+        {
+          id: "b5",
+          sourceIndex: 4,
+          color: "#0878c9",
+          width: 30,
+          path: "M728 614 C690 734 590 792 502 872 C430 938 354 990 250 980",
+          label: { x: 506, y: 790, rotate: -36, size: 32 },
+          children: [
+            { textIndex: 0, x: 500, y: 888, icon: "runner" },
+            { textIndex: 1, x: 330, y: 1000, icon: "trash" },
+          ],
+        },
+        {
+          id: "b6",
+          sourceIndex: 5,
+          color: "#19b9c5",
+          width: 30,
+          path: "M820 618 C844 760 940 842 1070 850 C1182 858 1248 815 1315 812",
+          label: { x: 908, y: 794, rotate: 25, size: 32 },
+          children: [
+            { textIndex: 0, x: 1180, y: 790, icon: "bot" },
+            { textIndex: 1, x: 1106, y: 965, icon: "chart" },
+          ],
+        },
+      ];
+
+      const initialObjects = [
+        {
+          id: "title",
+          type: "label",
+          text: fixture.title,
+          x: 505,
+          y: 42,
+          fontSize: 35,
+          rotate: 0,
+        },
+        {
+          id: "center-card",
+          type: "card",
+          text: fixture.center,
+          x: 582,
+          y: 430,
+          width: 294,
+          height: 178,
+        },
+        ...branchSpecs.flatMap((branch, index) => {
+          const source = fixture.branches[branch.sourceIndex];
+          return [
+            {
+              id: branch.id,
+              type: "branch",
+              color: branch.color,
+              width: branch.width,
+              path: branch.path,
+              x: 0,
+              y: 0,
+            },
+            {
+              id: `${branch.id}-label`,
+              type: "label",
+              text: `${index + 1}. ${source.concept}`,
+              x: branch.label.x,
+              y: branch.label.y,
+              rotate: branch.label.rotate,
+              fontSize: branch.label.size,
+            },
+            ...branch.children.map((child, childIndex) => ({
+              id: `${branch.id}-child-${childIndex + 1}`,
+              type: "doodle",
+              text: source.children[child.textIndex],
+              icon: child.icon,
+              x: child.x,
+              y: child.y,
+              rotate: 0,
+            })),
+          ];
+        }),
+      ];
+
+      let state = structuredClone(initialObjects);
+      let selectedId = null;
+      let referenceVisible = true;
+      let drag = null;
+
+      function createEl(name, attrs = {}) {
+        const el = document.createElementNS(NS, name);
+        for (const [key, value] of Object.entries(attrs)) {
+          el.setAttribute(key, String(value));
+        }
+        return el;
+      }
+
+      function objectTransform(object) {
+        return `translate(${object.x ?? 0} ${object.y ?? 0}) rotate(${object.rotate ?? 0})`;
+      }
+
+      function render() {
+        svg.replaceChildren();
+
+        const reference = createEl("image", {
+          href: "../fixtures/handdraw/mindmap-6.png",
+          x: 0,
+          y: 0,
+          width: 1536,
+          height: 1024,
+          class: "reference",
+          "data-reference": "true",
+          visibility: referenceVisible ? "visible" : "hidden",
+        });
+        svg.append(reference);
+
+        const paper = createEl("rect", {
+          x: 0,
+          y: 0,
+          width: 1536,
+          height: 1024,
+          fill: "rgba(255,255,255,0.72)",
+          "pointer-events": "none",
+        });
+        svg.append(paper);
+
+        for (const object of state.filter((item) => item.type === "branch")) {
+          renderBranch(object);
+        }
+        for (const object of state.filter((item) => item.type !== "branch")) {
+          if (object.type === "card") renderCard(object);
+          if (object.type === "label") renderLabel(object);
+          if (object.type === "doodle") renderDoodle(object);
+        }
+        syncPanel();
+      }
+
+      function attachObject(group, object) {
+        group.classList.add("object");
+        group.dataset.objectId = object.id;
+        group.dataset.objectType = object.type;
+        if (object.id === selectedId) group.classList.add("selected");
+        group.addEventListener("pointerdown", onPointerDown);
+        group.addEventListener("click", (event) => {
+          event.stopPropagation();
+          selectObject(object.id);
+        });
+      }
+
+      function renderBranch(object) {
+        const group = createEl("g", {
+          class: "branch",
+          transform: objectTransform(object),
+          "data-editable-object": "true",
+        });
+        attachObject(group, object);
+        group.append(
+          createEl("path", {
+            d: object.path,
+            stroke: object.color,
+            "stroke-width": object.width,
+          }),
+          createEl("path", {
+            d: object.path,
+            stroke: "#ffffff",
+            "stroke-width": Math.max(2, object.width * 0.06),
+            class: "sketch",
+          }),
+          createEl("rect", {
+            x: 0,
+            y: 0,
+            width: 1536,
+            height: 1024,
+            class: "selected-outline",
+          }),
+        );
+        svg.append(group);
+      }
+
+      function renderCard(object) {
+        const group = createEl("g", {
+          transform: objectTransform(object),
+          "data-editable-object": "true",
+        });
+        attachObject(group, object);
+        group.append(
+          createEl("rect", {
+            x: 0,
+            y: 0,
+            width: object.width,
+            height: object.height,
+            rx: 4,
+            fill: "#ffe951",
+            stroke: "#111827",
+            "stroke-width": 6,
+          }),
+          createEl("rect", {
+            x: -8,
+            y: -8,
+            width: object.width + 16,
+            height: object.height + 16,
+            class: "selected-outline",
+          }),
+        );
+        const lines = object.text.split(" ");
+        lines.forEach((line, index) => {
+          group.append(
+            createEl("text", {
+              x: object.width / 2,
+              y: 64 + index * 54,
+              "text-anchor": "middle",
+              class: "label",
+              "font-size": 42,
+            }),
+          );
+          group.lastElementChild.textContent = line;
+        });
+        svg.append(group);
+      }
+
+      function renderLabel(object) {
+        const group = createEl("g", {
+          transform: objectTransform(object),
+          "data-editable-object": "true",
+        });
+        attachObject(group, object);
+        const text = createEl("text", {
+          x: 0,
+          y: 0,
+          class: "label",
+          "font-size": object.fontSize,
+        });
+        text.textContent = object.text;
+        group.append(
+          text,
+          createEl("rect", {
+            x: -12,
+            y: -object.fontSize,
+            width: Math.max(160, object.text.length * object.fontSize * 0.7),
+            height: object.fontSize + 18,
+            class: "selected-outline",
+          }),
+        );
+        svg.append(group);
+      }
+
+      function renderDoodle(object) {
+        const group = createEl("g", {
+          transform: objectTransform(object),
+          "data-editable-object": "true",
+        });
+        attachObject(group, object);
+        drawIcon(group, object.icon);
+        const text = createEl("text", {
+          x: 0,
+          y: -10,
+          class: "label",
+          "font-size": 28,
+        });
+        text.textContent = object.text;
+        group.append(
+          text,
+          createEl("rect", {
+            x: -12,
+            y: -42,
+            width: 220,
+            height: 138,
+            class: "selected-outline",
+          }),
+        );
+        svg.append(group);
+      }
+
+      function drawIcon(group, icon) {
+        const y = 24;
+        if (icon === "research") {
+          group.append(
+            createEl("rect", { x: 0, y, width: 74, height: 74, class: "doodle" }),
+            createEl("circle", { cx: 34, cy: y + 34, r: 18, class: "doodle" }),
+            createEl("path", { d: `M48 ${y + 48} L70 ${y + 70}`, class: "doodle", "stroke-width": 5 }),
+          );
+          return;
+        }
+        if (icon === "team" || icon === "group") {
+          for (let i = 0; i < 3; i += 1) {
+            group.append(
+              createEl("circle", { cx: 28 + i * 38, cy: y + 22, r: 16, class: "doodle" }),
+              createEl("path", { d: `M${10 + i * 38} ${y + 70} Q${28 + i * 38} ${y + 44} ${46 + i * 38} ${y + 70}`, class: "doodle", "stroke-width": 5 }),
+            );
+          }
+          return;
+        }
+        if (icon === "venn") {
+          ["#c8b6ff", "#ffd166", "#90dbf4"].forEach((fill, i) => {
+            group.append(createEl("circle", { cx: 42 + i * 30, cy: y + 46, r: 34, fill, stroke: "#111827", "stroke-width": 3, opacity: 0.75 }));
+          });
+          return;
+        }
+        if (icon === "desktop") {
+          group.append(createEl("rect", { x: 0, y, width: 92, height: 58, class: "doodle" }));
+          group.append(createEl("path", { d: `M14 ${y + 20} L32 ${y + 34} L14 ${y + 48}`, class: "doodle", "stroke-width": 5 }));
+          return;
+        }
+        if (icon === "mobile") {
+          group.append(createEl("rect", { x: 20, y, width: 58, height: 92, rx: 8, class: "doodle" }));
+          group.append(createEl("rect", { x: 32, y: y + 18, width: 34, height: 42, fill: "#dbeafe", stroke: "#111827", "stroke-width": 3 }));
+          return;
+        }
+        if (icon === "shield") {
+          group.append(createEl("path", { d: `M52 ${y} L96 ${y + 18} Q90 ${y + 74} 52 ${y + 96} Q14 ${y + 74} 8 ${y + 18} Z`, fill: "#31b84b", stroke: "#111827", "stroke-width": 5 }));
+          group.append(createEl("path", { d: `M30 ${y + 48} L48 ${y + 66} L78 ${y + 28}`, fill: "none", stroke: "#fff", "stroke-width": 8 }));
+          return;
+        }
+        if (icon === "runner") {
+          group.append(createEl("circle", { cx: 58, cy: y + 14, r: 14, fill: "#ffd6a5", stroke: "#111827", "stroke-width": 4 }));
+          group.append(createEl("path", { d: `M55 ${y + 32} L40 ${y + 58} L76 ${y + 62} M48 ${y + 44} L18 ${y + 54} M72 ${y + 62} L108 ${y + 88} M42 ${y + 60} L18 ${y + 92}`, class: "doodle", "stroke-width": 7 }));
+          return;
+        }
+        if (icon === "trash") {
+          group.append(createEl("path", { d: `M24 ${y + 24} L96 ${y + 24} L88 ${y + 94} L32 ${y + 94} Z M38 ${y + 24} L40 ${y + 10} L80 ${y + 10} L82 ${y + 24}`, class: "doodle", "stroke-width": 5 }));
+          return;
+        }
+        if (icon === "bot") {
+          group.append(createEl("rect", { x: 18, y: y + 22, width: 84, height: 58, rx: 16, fill: "#f8fafc", stroke: "#111827", "stroke-width": 5 }));
+          group.append(createEl("circle", { cx: 45, cy: y + 50, r: 7, fill: "#00b4d8" }));
+          group.append(createEl("circle", { cx: 76, cy: y + 50, r: 7, fill: "#00b4d8" }));
+          group.append(createEl("path", { d: `M60 ${y + 20} L60 ${y} M50 ${y} L70 ${y}`, class: "doodle", "stroke-width": 4 }));
+          return;
+        }
+        if (icon === "chart") {
+          group.append(createEl("rect", { x: 8, y, width: 76, height: 92, class: "doodle" }));
+          group.append(createEl("path", { d: `M110 ${y + 82} L138 ${y + 110}`, class: "doodle", "stroke-width": 6 }));
+          group.append(createEl("circle", { cx: 102, cy: y + 74, r: 24, fill: "none", stroke: "#111827", "stroke-width": 5 }));
+          return;
+        }
+        group.append(createEl("circle", { cx: 48, cy: y + 48, r: 34, class: "doodle" }));
+      }
+
+      function selectObject(id) {
+        selectedId = id;
+        render();
+      }
+
+      function syncPanel() {
+        const selected = state.find((object) => object.id === selectedId);
+        selectedIdInput.value = selected?.id ?? "none";
+        labelEditor.value = selected && "text" in selected ? selected.text : "";
+        labelEditor.disabled = !(selected && "text" in selected);
+        stateJson.value = JSON.stringify({ version: 1, fixture: "mindmap-6", objects: state }, null, 2);
+      }
+
+      function onPointerDown(event) {
+        const id = event.currentTarget.dataset.objectId;
+        const object = state.find((item) => item.id === id);
+        if (!object) return;
+        selectObject(id);
+        const point = toSvgPoint(event);
+        drag = {
+          id,
+          pointerId: event.pointerId,
+          startX: point.x,
+          startY: point.y,
+          objectX: object.x ?? 0,
+          objectY: object.y ?? 0,
+        };
+        if (event.currentTarget.hasPointerCapture?.(event.pointerId) === false) {
+          try {
+            event.currentTarget.setPointerCapture(event.pointerId);
+          } catch {
+            // Pointer capture is an interaction enhancement; dragging also works
+            // through the SVG-level pointer listeners used by this prototype.
+          }
+        }
+        event.preventDefault();
+      }
+
+      function toSvgPoint(event) {
+        const point = svg.createSVGPoint();
+        point.x = event.clientX;
+        point.y = event.clientY;
+        return point.matrixTransform(svg.getScreenCTM().inverse());
+      }
+
+      svg.addEventListener("pointermove", (event) => {
+        if (!drag) return;
+        const object = state.find((item) => item.id === drag.id);
+        if (!object) return;
+        const point = toSvgPoint(event);
+        object.x = drag.objectX + point.x - drag.startX;
+        object.y = drag.objectY + point.y - drag.startY;
+        render();
+      });
+
+      svg.addEventListener("pointerup", () => {
+        drag = null;
+      });
+
+      svg.addEventListener("pointercancel", () => {
+        drag = null;
+      });
+
+      svg.addEventListener("click", () => {
+        selectedId = null;
+        render();
+      });
+
+      labelEditor.addEventListener("input", () => {
+        const selected = state.find((object) => object.id === selectedId);
+        if (!selected || !("text" in selected)) return;
+        selected.text = labelEditor.value;
+        render();
+      });
+
+      referenceButton.addEventListener("click", () => {
+        referenceVisible = !referenceVisible;
+        referenceButton.setAttribute("aria-pressed", String(referenceVisible));
+        render();
+      });
+
+      document.querySelector("#export-state").addEventListener("click", () => {
+        syncPanel();
+        stateJson.select();
+      });
+
+      document.querySelector("#import-state").addEventListener("click", () => {
+        const parsed = JSON.parse(stateJson.value);
+        if (!Array.isArray(parsed.objects)) {
+          throw new Error("Imported state must contain an objects array.");
+        }
+        state = parsed.objects;
+        selectedId = null;
+        render();
+      });
+
+      document.querySelector("#reset-state").addEventListener("click", () => {
+        state = structuredClone(initialObjects);
+        selectedId = null;
+        referenceVisible = true;
+        referenceButton.setAttribute("aria-pressed", "true");
+        render();
+      });
+
+      window.__editableHanddrawCanvasDemo = {
+        getState: () => structuredClone(state),
+        getFixture: () => structuredClone(fixture),
+      };
+
+      render();
+    </script>
+  </body>
+</html>

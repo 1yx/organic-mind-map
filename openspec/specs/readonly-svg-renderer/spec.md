@@ -78,6 +78,18 @@ The renderer SHALL include basic bounding-box collision detection and local spac
 - **WHEN** a branch path envelope or text box crosses another occupied region
 - **THEN** the renderer reports a collision or crossing diagnostic
 
+#### Scenario: Adjacent main branches diverge from center
+- **WHEN** two main branch path envelopes have overlapping AABBs because they originate near the same center point and diverge radially
+- **THEN** the renderer suppresses the collision diagnostic because the overlap is explained by shared-origin radial divergence
+
+#### Scenario: Same-side child branches diverge
+- **WHEN** child branches on the same side of the center have overlapping AABBs near their shared origin region
+- **THEN** the renderer suppresses the collision diagnostic because the overlap is explained by valid same-side radial divergence
+
+#### Scenario: Genuine overlap remains diagnostic
+- **WHEN** branch path envelopes or text boxes overlap outside the shared-origin radial divergence region
+- **THEN** the renderer reports the collision or crossing diagnostic normally
+
 ### Requirement: Center visual rendering
 The renderer SHALL render a compliant center visual before considering the map complete.
 
@@ -143,3 +155,44 @@ The renderer SHALL use a single fixed MVP OrganicTree preview surface ratio name
 #### Scenario: Future ratio preset is needed
 - **WHEN** later phases add another bounded ratio such as `16:9`
 - **THEN** it is introduced as a render/Web surface preset rather than as an OrganicTree semantic field
+
+### Requirement: English concepts render uppercase by default
+The renderer SHALL display English-only branch concept labels in uppercase while preserving the semantic concept text in input data.
+
+#### Scenario: English concept renders
+- **WHEN** an OrganicTree branch concept is English-only text
+- **THEN** the branch text emitted in SVG is uppercase
+
+#### Scenario: Measurement uses rendered label
+- **WHEN** the renderer measures an English-only concept for branch length
+- **THEN** it measures the uppercase display label that will be emitted in SVG
+
+#### Scenario: Mixed concept renders
+- **WHEN** an OrganicTree branch concept contains mixed-language text
+- **THEN** the renderer preserves the concept casing rather than applying an English-only uppercase transform
+
+### Requirement: Branch visual hints render as lightweight built-in markers
+The renderer SHALL render supported branch `visualHint` values as deterministic built-in markers near the branch concept text without using external image assets.
+
+#### Scenario: Supported visual hint renders
+- **WHEN** a branch concept includes a supported `visualHint`
+- **THEN** the rendered SVG includes a small built-in visual marker associated with that hint
+
+#### Scenario: Unsupported visual hint is present
+- **WHEN** a branch concept includes an unsupported `visualHint`
+- **THEN** the renderer omits the marker and still renders the branch concept normally
+
+#### Scenario: Marker participates in spacing
+- **WHEN** a supported marker is rendered near branch text
+- **THEN** renderer spacing and collision checks account for the marker bounds
+
+### Requirement: Renderer rejects legacy preview payload input
+The renderer SHALL expose active render inputs for `organic-tree` and `omm-document` only; the `preview-payload` discriminator SHALL NOT exist in `RenderInput`.
+
+#### Scenario: OrganicTree input renders
+- **WHEN** a caller invokes `render({ kind: "organic-tree", tree })`
+- **THEN** the renderer computes preview layout and returns a render result
+
+#### Scenario: Legacy input is attempted
+- **WHEN** active TypeScript code attempts to pass `kind: "preview-payload"` to the renderer
+- **THEN** TypeScript compilation fails because the discriminator is not part of `RenderInput`

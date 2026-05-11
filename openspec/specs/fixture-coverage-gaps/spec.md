@@ -60,6 +60,17 @@ Fixture names, directories, tests, and documentation SHALL use `OrganicTree` ter
 - **WHEN** new fixtures are added for this change
 - **THEN** their filenames use `stress-*`, `poison-*`, `invalid-*`, or `valid-*` prefixes to communicate test intent
 
+### Requirement: Anthropic product team fixture renders without false collision diagnostics
+The project SHALL ensure the `fixtures/organic-tree/anthropic-product-team.json` fixture renders with zero collision diagnostics in the renderer output.
+
+#### Scenario: Anthropic fixture renders cleanly
+- **WHEN** the renderer processes `fixtures/organic-tree/anthropic-product-team.json` as a valid OrganicTree
+- **THEN** the renderer returns a non-empty SVG result with zero unresolved collision diagnostics
+
+#### Scenario: Web preview displays no diagnostics for fixture
+- **WHEN** the Web preview loads the Anthropic product team fixture
+- **THEN** no Diagnostics section is shown and the SVG renders with valid content
+
 ### Requirement: Lightweight verification boundary
 The fixture coverage gap tests SHALL remain lightweight and SHALL NOT introduce pixel-perfect visual regression or CLI browser automation for PNG export.
 

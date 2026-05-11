@@ -1,0 +1,39 @@
+{
+  "id": "w02zmvmn29rmt0cy2p1sn7m95w",
+  "model": "meta/sam-2",
+  "version": "b88dc2ea8f814e5f4af2bac79f2414079800b5035b065d4eab99c857ab67e125",
+  "input": {
+    "image": "data:image/png;base64,...",
+    "points_per_side": 32,
+    "pred_iou_thresh": 0.92,
+    "stability_score_thresh": 0.97,
+    "use_m2m": true
+  },
+  "logs": "",
+  "output": {
+    "combined_mask": "https://replicate.delivery/xezq/vzuBgnUrqJ4zKFP5y2fBYaYqMcWeZeoOfc19mK4tYfePYb8oF/combined_mask.png",
+    "individual_masks": [
+      "https://replicate.delivery/xezq/eInMJ0hZRYRjECh9oSvI8xApzb58Q9y44WOTnofdeWRAbjHtA/mask_0.png",
+      "https://replicate.delivery/xezq/eN3GAdLXNgVgKiu0heeLOl1DP74ANerIYUhytVGqp4MC2GPaB/mask_1.png",
+      "https://replicate.delivery/xezq/qQaMjW5ZwoKxHJTAtuoU7g7o3miVcYiRen2bsneDsnmgtxjWA/mask_2.png",
+      "https://replicate.delivery/xezq/lnsjljDero2VWiyO82fqIpiDLva343mOassllIuQmidgtxjWA/mask_3.png",
+      "https://replicate.delivery/xezq/G5YT0y6vt2q4KNaSBqLQBPeNwVtVTMZO2IWxJmnOSpPw24RLA/mask_4.png"
+    ]
+  },
+  "data_removed": false,
+  "error": null,
+  "source": "api",
+  "status": "succeeded",
+  "created_at": "2026-05-11T05:30:05.458Z",
+  "started_at": "2026-05-11T05:30:05.479050945Z",
+  "completed_at": "2026-05-11T05:30:08.389982728Z",
+  "urls": {
+    "cancel": "https://api.replicate.com/v1/predictions/w02zmvmn29rmt0cy2p1sn7m95w/cancel",
+    "get": "https://api.replicate.com/v1/predictions/w02zmvmn29rmt0cy2p1sn7m95w",
+    "web": "https://replicate.com/p/w02zmvmn29rmt0cy2p1sn7m95w"
+  },
+  "metrics": {
+    "predict_time": 2.9109317839999997,
+    "total_time": 2.931982728
+  }
+}

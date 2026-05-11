@@ -1,0 +1,138 @@
+{
+  "input": "input/synthetic_reference.png",
+  "image": {
+    "width": 1080,
+    "height": 720
+  },
+  "ocr": "none",
+  "text_boxes": [],
+  "components": [
+    {
+      "id": "doodle_001",
+      "layer": "doodle",
+      "bbox": [
+        121,
+        191,
+        108,
+        108
+      ],
+      "area": 1707,
+      "crop": "doodles/doodle_001.png"
+    },
+    {
+      "id": "doodle_002",
+      "layer": "doodle",
+      "bbox": [
+        146,
+        216,
+        39,
+        39
+      ],
+      "area": 1129,
+      "crop": "doodles/doodle_002.png"
+    },
+    {
+      "id": "doodle_003",
+      "layer": "doodle",
+      "bbox": [
+        466,
+        297,
+        140,
+        4
+      ],
+      "area": 546,
+      "crop": "doodles/doodle_003.png"
+    },
+    {
+      "id": "doodle_004",
+      "layer": "doodle",
+      "bbox": [
+        872,
+        297,
+        47,
+        7
+      ],
+      "area": 305,
+      "crop": "doodles/doodle_004.png"
+    },
+    {
+      "id": "doodle_005",
+      "layer": "doodle",
+      "bbox": [
+        407,
+        318,
+        4,
+        88
+      ],
+      "area": 342,
+      "crop": "doodles/doodle_005.png"
+    },
+    {
+      "id": "doodle_006",
+      "layer": "doodle",
+      "bbox": [
+        660,
+        324,
+        4,
+        87
+      ],
+      "area": 338,
+      "crop": "doodles/doodle_006.png"
+    },
+    {
+      "id": "doodle_007",
+      "layer": "doodle",
+      "bbox": [
+        833,
+        403,
+        100,
+        130
+      ],
+      "area": 1858,
+      "crop": "doodles/doodle_007.png"
+    },
+    {
+      "id": "doodle_008",
+      "layer": "doodle",
+      "bbox": [
+        128,
+        418,
+        105,
+        105
+      ],
+      "area": 7462,
+      "crop": "doodles/doodle_008.png"
+    },
+    {
+      "id": "doodle_009",
+      "layer": "doodle",
+      "bbox": [
+        462,
+        420,
+        131,
+        4
+      ],
+      "area": 510,
+      "crop": "doodles/doodle_009.png"
+    },
+    {
+      "id": "branch_001",
+      "layer": "branch",
+      "bbox": [
+        221,
+        161,
+        649,
+        397
+      ],
+      "area": 64897,
+      "crop": null
+    }
+  ],
+  "outputs": {
+    "foreground_mask": "foreground_mask.png",
+    "branches_mask": "branches_mask.png",
+    "text_mask": "text_mask.png",
+    "doodles_mask": "doodles_mask.png",
+    "debug_overlay": "debug_overlay.png"
+  }
+}

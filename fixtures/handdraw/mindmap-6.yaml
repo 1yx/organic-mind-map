@@ -1,0 +1,33 @@
+title: "How Anthropic's Product Team Moves"
+center: "Anthropic 产品之道"
+
+branches:
+  - concept: "极速交付"
+    children:
+      - "研究预览"
+      - "跨职能"
+
+  - concept: "PM 角色"
+    children:
+      - "产品品味"
+      - "角色融合"
+
+  - concept: "产品矩阵"
+    children:
+      - "CLI·Desktop"
+      - "Mobile"
+
+  - concept: "使命聚焦"
+    children:
+      - "安全AGI"
+      - "组织优先"
+
+  - concept: "团队文化"
+    children:
+      - "偏向行动"
+      - "移除旧功能"
+
+  - concept: "AI 实践"
+    children:
+      - "自动化"
+      - "EVALS"
