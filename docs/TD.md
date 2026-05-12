@@ -2,16 +2,20 @@
 
 ## Scope
 
-This technical design covers the Phase 2 experimental pipeline:
+This technical design covers the Phase 2 SaaS architecture, transitioning the experimental pipeline into a production web service:
 
 ```text
-AI visual reference image
-  -> CV layer extraction
-  -> OCR and source-structure text classification
-  -> doodle/text visual groups
-  -> editable branch curve extraction
-  -> Paper.js correction prototype
+Frontend (Web Canvas) <-> API Backend <-> External Models (LLM, GPT-Image-2)
+                                      <-> Python CV Workers
 ```
+
+The pipeline covers:
+
+- Text-to-structure (LLM) or Simple YAML Parsing
+- Structure-to-image (GPT-Image-2)
+- CV layer extraction (Python backend)
+- Excalidraw-like Web UI (Paper.js / React / etc.)
+- SSO (Google/OpenAI) and Payments (Stripe)
 
 It does not replace Phase 1 production packages yet. Phase 2 work currently lives in:
 
@@ -31,388 +35,114 @@ OpenCV
 NumPy
 PaddleOCR
 PaddlePaddle
+PyYAML (for simple outline parsing)
 ```
 
-Frontend prototype:
+Frontend:
 
 ```text
+React / Next.js
 Paper.js 0.12.18
-HTML canvas
-SVG import/export
+Stripe SDK
+NextAuth.js (for SSO)
 ```
 
-Current root Python version:
+## Platform Architecture
+
+### 1. Web Application (`@omm/web`)
+
+- **Landing Page/App:** The home route `/` serves the full Excalidraw-like canvas loaded with an onboarding mind map.
+- **Input Interface:** Supports both natural language prompts and a code editor for simple YAML outlines.
+- **Auth:** Google & OpenAI SSO integration via NextAuth.
+- **Payments:** Subscription/Quota gating via Stripe.
+- **Canvas:** Paper.js integrated into the React frontend for pen-tool correction and visual group manipulation.
+
+### 2. Backend API Service (`@omm/api`)
+
+- **Orchestrator:** Receives text/YAML, validates auth and quotas.
+- **Outline Handler:** 
+  - If text: calls LLM to generate JSON structure.
+  - If YAML: parses simple indentation-based format into standard JSON structure.
+- **Image Generation:** Calls GPT-Image-2 using the prompt and structure to get `reference.png`.
+
+### 3. CV Extraction Pipeline (Python Workers)
 
 ```text
-.python-version -> 3.11
-```
-
-## Pipeline Architecture
-
-```text
-reference.png
-source_structure.json
+reference.png + source_structure.json
   |
   v
-extract_layers.py
-  -> foreground_mask.png
-  -> branches_mask.png
-  -> text_mask.png
-  -> doodles_mask.png
-  -> segmentation.json
+extract_layers.py (Foreground, Branches, Text, Doodles)
   |
   v
-refine_doodles.py
-  -> doodles_refined_mask.png
-  -> doodles_refined_rgba.png
-  -> refined doodle crops
+refine_doodles.py (Repair and crop)
   |
   v
-build_groups.py
-  -> groups.json
-  -> title/center/branch/child/doodle/unassigned text masks
-  -> group_preview.png
+build_groups.py (OCR text classification, Figma-like groups)
   |
   v
-extract_editable_branches.py
-  -> editable_branches.svg
-  -> editable_branches.json
-  -> branch_skeleton_debug.png
-  -> branch_overlay_debug.png
+extract_editable_branches.py (Centerlines and width profiles)
   |
   v
-editable_canvas.html
-  -> Paper.js pen-tool correction
-  -> edited_branches.svg
+JSON / SVG Artifacts returned to Web Frontend
 ```
 
-## Source Structure
+## Source Structure (Simple YAML Parsing)
 
-The source structure is required for reliable text classification.
+The system supports a field-less YAML format.
 
-Path:
+Parser Logic:
+- Level 1 (indent 0): `center`
+- Level 2 (indent 1): `branches`
+- Level 3+ (indent 2+): `subbranches`
 
-```text
-PHASE_2_2nd_attempts/source_structure.json
+Example Input:
+```yaml
+Project Center
+  Phase 1
+    Task A
+    Task B
+  Phase 2
 ```
 
-It contains:
-
-```text
-title
-center
-branches[].concept
-branches[].children[]
-```
-
-OCR text is matched against this structure before spatial heuristics are applied.
-
-## Layer Extraction
-
-Script:
-
-```text
-PHASE_2_2nd_attempts/extract_layers.py
-```
-
-### Foreground
-
-Foreground is extracted from white/off-white background using grayscale darkness and HSV saturation.
-
-### Branches
-
-Branches are extracted using HSV saturation/value thresholds with yellow exclusion for center cards, stars, and smileys.
-
-Connected components and geometry filters keep long branch-like regions.
-
-Outputs:
-
-```text
-branches_mask.png
-branches_rgba.png
-```
-
-### Text
-
-PaddleOCR is the preferred mode:
-
-```bash
---ocr paddle
-```
-
-The script configures PaddleOCR without document orientation, unwarping, or textline orientation models to reduce model downloads and runtime:
-
-```text
-use_doc_orientation_classify=False
-use_doc_unwarping=False
-use_textline_orientation=False
-```
-
-Text output includes:
-
-```text
-id
-bbox
-text
-score
-```
-
-### Doodles
-
-Doodles are extracted as residual foreground after removing branch and text masks.
-
-This is intentionally coarse. Later grouping and local repair improve usability.
-
-## Doodle Refinement
-
-Script:
-
-```text
-PHASE_2_2nd_attempts/refine_doodles.py
-```
-
-Purpose:
-
-- repair hollow faces and body interiors
-- close small gaps
-- fill enclosed holes
-- regenerate transparent crops
-
-This is the current preferred doodle refinement path.
-
-## Visual Grouping
-
-Script:
-
-```text
-PHASE_2_2nd_attempts/build_groups.py
-```
-
-Inputs:
-
-```text
-segmentation.json
-text_mask.png
-refined_doodles.json
-source_structure.json
-reference.png
-```
-
-Classification order:
-
-1. match OCR text against source `title`
-2. match against source `center`
-3. match against branch concepts
-4. match against child labels
-5. assign remaining nearby text to doodle groups
-6. place unresolved text in `unassigned_text`
-
-Outputs:
-
-```text
-groups.json
-title_text_mask.png
-center_text_mask.png
-branch_text_mask.png
-child_text_mask.png
-doodle_text_mask.png
-unassigned_text_mask.png
-map_text_mask.png
-group_preview.png
-```
-
-Group semantics:
-
-```text
-visual_group
-  -> doodle component(s)
-  -> doodle_text OCR component(s)
-```
-
-This mirrors Figma group behavior while keeping masks separate.
-
-## Editable Branch Extraction
-
-Scripts:
-
-```text
-PHASE_2_3rd_attampts/extract_editable_branches.py
-PHASE_2_3rd_attampts/render_branch_overlay.py
-```
-
-Input:
-
-```text
-reference.png
-branches_mask.png
-```
-
-Design:
-
-1. extract or reuse branch mask
-2. skeletonize branch strokes
-3. trace skeleton graph into segments
-4. simplify and smooth centerline points
-5. estimate stroke width with distance transform
-6. sample branch color from source image
-7. emit editable SVG paths and JSON metadata
-
-Outputs:
-
-```text
-editable_branches.svg
-editable_branches_outline.svg
-editable_branches.json
-branch_skeleton_debug.png
-branch_overlay_debug.png
-coverage_diff.png
-editable_canvas.html
-```
-
-## Paper.js Selection
-
-Paper.js is selected for the Phase 2 branch editing prototype because it provides:
-
-- canvas-based vector editing
-- SVG import/export
-- path, segment, and handle primitives
-- hit testing on strokes and handles
-- interactive tools for selection and pen-like editing
-- enough structure to prototype Figma-like curve correction without building a full editor
-
-The current prototype:
-
-```text
-PHASE_2_3rd_attampts/output/editable_canvas.html
-```
-
-Capabilities:
-
-- display source raster as a reference layer
-- display variable-width outline as a non-editable reference
-- display editable centerline paths
-- select paths and segments
-- move segment points and handles
-- delete selected points
-- extend paths or create new paths in pen mode
-- toggle handles/source/outline
-- adjust editable path opacity
-- reset path edits
-- export edited SVG
-
-This is a prototype technology choice, not yet a production UI commitment.
-
-## SAM2 Decision
-
-Replicate `meta/sam-2` automatic mask generation was evaluated and rejected as the main doodle refinement path.
-
-Reason:
-
-- automatic masks split doodles into local pieces
-- parameter tuning changes proposal density, not grouping intent
-- no tested setting produced a whole doodle-group mask
-
-Current preference:
-
-```text
-OpenCV + PaddleOCR + local doodle repair
-```
-
-Future candidate:
-
-```text
-promptable SAM2 with box/point prompts
-```
-
-See:
-
-```text
-PHASE_2_2nd_attempts/TECH_DECISIONS.md
-```
-
-## Artifact Schema Direction
-
-Phase 2 should converge on a single artifact schema:
-
+Internal JSON representation:
 ```json
 {
-  "sourceImage": "reference.png",
-  "sourceStructure": {},
-  "imageSize": { "width": 1448, "height": 1086 },
-  "layers": {
-    "branches": {},
-    "text": {},
-    "doodles": {}
-  },
-  "groups": [],
-  "editableBranches": []
+  "center": "Project Center",
+  "branches": [
+    {
+      "concept": "Phase 1",
+      "children": ["Task A", "Task B"]
+    },
+    {
+      "concept": "Phase 2",
+      "children": []
+    }
+  ]
 }
 ```
 
-Important object types:
+## Layer Extraction
 
-- `branch_curve`
-- `title_text`
-- `center_text`
-- `branch_text`
-- `child_text`
-- `doodle_text`
-- `doodle_asset`
-- `visual_group`
-- `unassigned_text`
+Script: `PHASE_2_2nd_attempts/extract_layers.py`
+(Remains largely the same, but packaged for worker execution).
 
 ## Integration Plan
 
-### Stage 1: Stabilize Experiments
+### Stage 1: Stabilize CV Workers
+Migrate `PHASE_2_*_attempts` into a stable backend Python worker service (`@omm/cv-worker`).
 
-Keep code under `PHASE_2_*_attempts` until output schemas and quality gates settle.
+### Stage 2: Frontend App Foundation
+Build `@omm/web` as an Excalidraw-like app. The homepage loads an onboarding map artifact. Implement Google/OpenAI SSO.
 
-### Stage 2: Package CLI
+### Stage 3: Generation Orchestration
+Implement the backend API to handle text/YAML input, coordinate LLM and GPT-Image-2 calls, and dispatch extraction tasks to the CV workers.
 
-Create a local CLI:
-
-```bash
-omm-cv extract input.png --structure source_structure.json --out output/
-omm-cv branches input.png --branches-mask branches_mask.png --out output/
-```
-
-### Stage 3: Review UI
-
-Build a local review UI that can inspect:
-
-- source image
-- masks
-- groups
-- editable branch curves
-- text classification
-
-### Stage 4: Production Integration
-
-Only after the CLI and schemas stabilize should Phase 2 integrate into the pnpm workspace packages.
-
-Potential package boundaries:
-
-- `@omm/cv` or scripts for local Python pipeline wrappers
-- `@omm/web` for review/correction UI
-- `@omm/core` for shared artifact schemas
+### Stage 4: Payments and Production Integration
+Integrate Stripe for quota management. Deploy the frontend, API, and CV workers as a unified SaaS platform.
 
 ## Engineering Constraints
 
-- Keep Phase 2 local-first.
-- Keep hosted APIs optional.
-- Keep generated artifacts inspectable.
-- Preserve source images and debug overlays.
-- Do not require a CV service before the CLI is stable.
-- Do not allow Phase 2 editing work to blur the product into a generic whiteboard.
-
-## Verification
-
-A Phase 2 run should be considered valid when:
-
-- branch mask extracts the six main branches
-- OCR detects source-structure text with acceptable confidence
-- map text and doodle text are classified separately
-- visual groups are generated and previewed
-- editable branch curves align with the source image
-- Paper.js editor can modify and export branch paths
-
+- Deliver a seamless SaaS web experience.
+- The landing page must be the app itself.
+- Keep intermediate artifacts inspectable via the web UI.
+- Do not allow Phase 2 editing work to blur the product into a generic whiteboard; keep strictly to the Buzan-style organic mind map identity.

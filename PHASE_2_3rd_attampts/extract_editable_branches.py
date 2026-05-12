@@ -493,6 +493,38 @@ def simplify_segment(points, rdp_epsilon=4.0, smooth_passes=1):
     return simplified
 
 
+def align_dense_points_to_edit_points(dense_points, edit_points):
+    """Align raw traced points to simplified edit endpoints.
+
+    RDP can reduce a gently curved branch to two edit points. For Bezier
+    fitting we still want the original skeleton rhythm, but the fitted path
+    must start/end at the editable endpoints, including any later endpoint
+    adjustment such as orphan-root extension.
+    """
+    if len(dense_points) < 2 or len(edit_points) < 2:
+        return [(float(x), float(y)) for x, y in dense_points]
+
+    dense = [(float(x), float(y)) for x, y in dense_points]
+    start = (float(edit_points[0][0]), float(edit_points[0][1]))
+    end = (float(edit_points[-1][0]), float(edit_points[-1][1]))
+
+    same_order = (
+        math.hypot(dense[0][0] - start[0], dense[0][1] - start[1])
+        + math.hypot(dense[-1][0] - end[0], dense[-1][1] - end[1])
+    )
+    reverse_order = (
+        math.hypot(dense[-1][0] - start[0], dense[-1][1] - start[1])
+        + math.hypot(dense[0][0] - end[0], dense[0][1] - end[1])
+    )
+
+    if reverse_order < same_order:
+        dense = list(reversed(dense))
+
+    dense[0] = start
+    dense[-1] = end
+    return dense
+
+
 # ---------------------------------------------------------------------------
 # 4. Estimate stroke width via distance transform
 # ---------------------------------------------------------------------------
@@ -638,6 +670,66 @@ def fit_single_bezier(dense_points):
     return f"M {p0[0]:.1f} {p0[1]:.1f} C {cp1[0]:.1f} {cp1[1]:.1f} {cp2[0]:.1f} {cp2[1]:.1f} {p3[0]:.1f} {p3[1]:.1f}"
 
 
+def midpoint_bezier_controls(start, end, dense_points):
+    """Return cubic controls for a curve through the original local midpoint."""
+    p0 = (float(start[0]), float(start[1]))
+    p3 = (float(end[0]), float(end[1]))
+
+    if len(dense_points) < 3:
+        c1 = (p0[0] + (p3[0] - p0[0]) / 3.0, p0[1] + (p3[1] - p0[1]) / 3.0)
+        c2 = (p0[0] + 2.0 * (p3[0] - p0[0]) / 3.0, p0[1] + 2.0 * (p3[1] - p0[1]) / 3.0)
+        return c1, c2
+
+    mid = dense_points[len(dense_points) // 2]
+    # Convert a quadratic Bezier through mid at t=0.5 to cubic controls.
+    q = (
+        2.0 * mid[0] - 0.5 * (p0[0] + p3[0]),
+        2.0 * mid[1] - 0.5 * (p0[1] + p3[1]),
+    )
+    c1 = (p0[0] + (2.0 / 3.0) * (q[0] - p0[0]), p0[1] + (2.0 / 3.0) * (q[1] - p0[1]))
+    c2 = (p3[0] + (2.0 / 3.0) * (q[0] - p3[0]), p3[1] + (2.0 / 3.0) * (q[1] - p3[1]))
+    return c1, c2
+
+
+def fit_midpoint_bezier(start, end, dense_points):
+    """Fit a stable cubic through the original curve midpoint.
+
+    This is intentionally more conservative than least squares for paths that
+    RDP simplified to two editable points. It preserves gentle organic bend
+    without allowing short segments or adjusted endpoints to create looping
+    control handles.
+    """
+    p0 = (float(start[0]), float(start[1]))
+    p3 = (float(end[0]), float(end[1]))
+    c1, c2 = midpoint_bezier_controls(p0, p3, dense_points)
+
+    return f"M {p0[0]:.1f} {p0[1]:.1f} C {c1[0]:.1f} {c1[1]:.1f} {c2[0]:.1f} {c2[1]:.1f} {p3[0]:.1f} {p3[1]:.1f}"
+
+
+def nearest_dense_indices_for_edit_points(edit_points, dense_points):
+    """Map each editable point to a monotonic nearest index in dense points."""
+    if not dense_points:
+        return []
+
+    indices = []
+    start_idx = 0
+    last_idx = len(dense_points) - 1
+    for point in edit_points:
+        px, py = point
+        best_idx = start_idx
+        best_dist = float("inf")
+        for i in range(start_idx, len(dense_points)):
+            dx = dense_points[i][0] - px
+            dy = dense_points[i][1] - py
+            dist = dx * dx + dy * dy
+            if dist < best_dist:
+                best_idx = i
+                best_dist = dist
+        indices.append(best_idx)
+        start_idx = min(best_idx, last_idx)
+    return indices
+
+
 def points_to_cubic_bezier(points, dense_points=None):
     """Convert points to cubic Bezier SVG path using Catmull-Rom interpolation.
 
@@ -647,10 +739,27 @@ def points_to_cubic_bezier(points, dense_points=None):
         return ""
     if len(points) == 2:
         if dense_points and len(dense_points) >= 3:
-            return fit_single_bezier(dense_points)
+            return fit_midpoint_bezier(points[0], points[1], dense_points)
         return f"M {points[0][0]:.1f} {points[0][1]:.1f} L {points[1][0]:.1f} {points[1][1]:.1f}"
 
     parts = [f"M {points[0][0]:.1f} {points[0][1]:.1f}"]
+
+    if dense_points and len(dense_points) >= 3:
+        dense_indices = nearest_dense_indices_for_edit_points(points, dense_points)
+        for i in range(len(points) - 1):
+            p1 = points[i]
+            p2 = points[i + 1]
+            start_idx = dense_indices[i]
+            end_idx = dense_indices[i + 1]
+            if end_idx <= start_idx:
+                local_dense = [p1, p2]
+            else:
+                local_dense = list(dense_points[start_idx:end_idx + 1])
+                local_dense[0] = p1
+                local_dense[-1] = p2
+            cp1, cp2 = midpoint_bezier_controls(p1, p2, local_dense)
+            parts.append(f"C {cp1[0]:.1f} {cp1[1]:.1f} {cp2[0]:.1f} {cp2[1]:.1f} {p2[0]:.1f} {p2[1]:.1f}")
+        return " ".join(parts)
 
     for i in range(len(points) - 1):
         p0 = points[max(0, i - 1)]
@@ -1225,7 +1334,8 @@ def run(image_path: Path, mask_path: Path | None, out_dir: Path,
 
         # Generate centerline SVG path
         if bezier:
-            path_d = points_to_cubic_bezier(smooth_pts, dense_points=resampled)
+            fit_points = align_dense_points_to_edit_points(seg.points, smooth_pts)
+            path_d = points_to_cubic_bezier(smooth_pts, dense_points=fit_points)
         else:
             path_d = points_to_svg_path(smooth_pts)
 

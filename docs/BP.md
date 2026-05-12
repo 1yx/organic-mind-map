@@ -2,26 +2,28 @@
 
 ## Positioning
 
-Organic Mind Map is a toolchain for turning AI-generated organic mind map reference images into editable, structured mind map assets.
+Organic Mind Map is a SaaS product for turning text prompts or simple YAML outlines into editable, structured organic mind map assets.
 
-Phase 1 proved the validated preview/export path. Phase 2 changes the product center of gravity:
+Phase 1 proved the validated preview/export path. Phase 2 changes the product center of gravity to a full web application:
 
 ```text
-content structure + AI visual reference
-  -> CV layer extraction
+user text or simple YAML input
+  -> LLM structure generation (if text)
+  -> GPT-Image-2 visual reference generation
+  -> backend CV layer extraction
   -> semantic text alignment
   -> editable doodle/text/branch groups
-  -> human-correctable editable reconstruction
+  -> web-based human-correctable canvas
 ```
 
-The goal is not a generic whiteboard. The product remains focused on Buzan-style organic mind maps: center visual, thick organic colored branches, concise keywords, doodle illustrations, and spatial memory anchors.
+The goal is not a generic whiteboard. The product remains focused on Buzan-style organic mind maps: center visual, thick organic colored branches, concise keywords, doodle illustrations, and spatial memory anchors. The final product is an interactive web app, similar to Excalidraw, where the landing page itself is the functional canvas.
 
 ## Phase 1 Archive
 
 The previous Phase 1 documentation has been moved to:
 
 ```text
-docs_old/
+archives/phase1/docs_old/
 ```
 
 Treat it as the historical MVP backup. New documents under `docs/` describe Phase 2.
@@ -46,53 +48,23 @@ Primary users:
 - agent workflow users who can provide a structured outline and visual reference
 - designers or technical creators who can inspect masks/groups and correct them
 
-Secondary users:
+## SaaS Business Model & Auth
 
-- developers evaluating an image-to-editable-mind-map pipeline
-- teams building custom mind map generation flows
+Because the generation pipeline requires LLM API calls and GPT-Image-2 inference, the product is fundamentally a paid SaaS service with hard compute costs.
 
-## Value Proposition
+Capabilities:
 
-Phase 2 is valuable if it reduces the gap between "great AI-generated image" and "editable structured design asset".
-
-Users should be able to:
-
-- keep the visual quality of the best GPT Image 2 reference
-- split branches, text, and doodles into usable layers
-- bind doodle text with doodles like a Figma group
-- recover semantic map text from the original source structure
-- edit branch curves with a pen-tool-like workflow
-- export intermediate artifacts for later reconstruction
-
-## Community vs Plus Boundary
-
-Community/free capabilities should include:
-
-- local reference image ingestion
-- local OpenCV branch extraction
-- local PaddleOCR text extraction when dependencies are installed
-- local grouping against source structure
-- local refined doodle masks
-- local editable branch SVG/Paper.js prototype
-- transparent artifact export
-
-Potential Plus capabilities may include:
-
-- hosted batch processing
-- managed GPU/CV workers
-- hosted promptable SAM2 or future segmentation services
-- AI-generated doodle/icon variants
-- cloud project storage and team collaboration
-- high-quality design review or auto-correction workflows
-
-Do not make Plus the only way to get a valid editable map. Plus should improve speed, convenience, or quality, not replace the local path.
+- **App-First Landing Page:** The website homepage is the fully functional canvas (similar to Excalidraw). The default canvas displays an editable mind map introducing the website's features.
+- **SSO Authentication:** Google and OpenAI SSO integration.
+- **Free Trial:** Logged-in users receive a limited quota/trial to experience the text-to-map generation and editing features.
+- **Paid Tier:** Users must pay (e.g., via Stripe) to unlock full generation quota, advanced export, and continued use after the trial.
 
 ## Business Constraints
 
-- Keep the core pipeline local-first and reproducible.
-- Do not depend on one hosted CV provider for the base workflow.
-- Do not require a remote account for basic extraction.
-- Keep intermediate artifacts inspectable: masks, JSON, SVG, debug overlays.
+- The product is a hosted web application; the local CV pipeline serves as the backend worker architecture.
+- Must provide a seamless transition from the landing page (app) to authentication to generation.
+- Must handle payment gating gracefully when the trial quota is exhausted.
+- Keep intermediate artifacts inspectable in the web UI for debugging and correction.
 - Preserve the strict organic mind map identity.
 
 ## Phase 2 Success
@@ -100,22 +72,18 @@ Do not make Plus the only way to get a valid editable map. Plus should improve s
 Phase 2 succeeds when a user can start from:
 
 ```text
-source structure + AI visual reference image
+natural language text input OR simple YAML outline
 ```
 
-and produce:
+and the system automatically coordinates LLMs, GPT-Image-2, and backend CV extraction to produce a fully rendered, editable map in the browser with:
 
 ```text
-branches_mask
-semantic text masks
-doodle masks
-visual groups
+semantic structure
+visual groups (doodles + text)
 editable branch curves
-debug previews
-structured JSON
 ```
 
-with enough quality that a designer/developer can correct the result rather than recreate it manually.
+ready for the user to correct, edit, or export.
 
 ## Current Technical Decisions
 
@@ -130,10 +98,9 @@ with enough quality that a designer/developer can correct the result rather than
 
 ## Near-Term Roadmap
 
-1. Stabilize `PHASE_2_2nd_attempts` into an `omm-cv extract` prototype.
-2. Stabilize `PHASE_2_3rd_attampts` into an editable branch curve prototype.
-3. Define a shared Phase 2 artifact schema.
-4. Combine extracted doodle/text groups with editable branch curves.
-5. Build an inspect-and-correct UI.
-6. Decide whether the UI remains a standalone prototype or becomes part of `@omm/web`.
-
+1. Package the CV extraction prototypes into backend worker services.
+2. Build the Excalidraw-like app frontend (`@omm/web`), integrating Paper.js branch editing and visual groups.
+3. Create the text-to-map orchestration layer (LLM -> GPT-Image-2 -> CV extraction).
+4. Implement Google/OpenAI SSO authentication and trial quotas.
+5. Integrate payment gateway (e.g., Stripe) for paid quotas.
+6. Design the onboarding map (app landing page) to introduce the tool's features.

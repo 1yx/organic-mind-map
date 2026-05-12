@@ -76,9 +76,9 @@ export default [
       // Local scratch/reference checkouts.
       ".tmp/**",
       // Standalone browser demo verification script, intentionally outside TS packages.
-      "handdraw-branch-demo/verify.mjs",
+      "archives/phase1/handdraw-branch-demo/verify.mjs",
       // Standalone editable browser demo verification script, intentionally outside TS packages.
-      "editable-handdraw-canvas-demo/verify.mjs",
+      "archives/phase1/editable-handdraw-canvas-demo/verify.mjs",
       // Common build output directories.
       "**/dist/**",
       // Test coverage output.
