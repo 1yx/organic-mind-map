@@ -464,17 +464,17 @@ def extend_orphan_roots(simplified_segments, image_center, junction_thresh=30.0,
             result.append((seg, pts))
             continue
 
-        # Extend the closer endpoint toward the parent
+        # Move the closer endpoint to the parent path point
         d_first = math.hypot(pts[0][0] - best_point[0], pts[0][1] - best_point[1])
         d_last = math.hypot(pts[-1][0] - best_point[0], pts[-1][1] - best_point[1])
 
         new_pts = list(pts)
         if d_first <= d_last:
-            new_pts.insert(0, best_point)
+            new_pts[0] = best_point
         else:
-            new_pts.append(best_point)
+            new_pts[-1] = best_point
 
-        print(f"  {seg.id}: extended root to ({best_point[0]:.0f},{best_point[1]:.0f}), gap={best_dist:.0f}px")
+        print(f"  {seg.id}: moved root to ({best_point[0]:.0f},{best_point[1]:.0f}), gap={best_dist:.0f}px")
         result.append((seg, new_pts))
 
     return result
