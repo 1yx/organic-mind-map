@@ -341,7 +341,10 @@ window.onload = function() {{
       if (p.selected) p.fullySelected = showHandles;
       else p.fullySelected = false;
     }}
-    document.getElementById('info').textContent = editPaths.length + ' curves | ' + W + 'x' + H;
+    // Show selected branch info
+    const sel = editPaths.find(p => p.selected);
+    const selInfo = sel ? (sel.name || '(unnamed)') + ' | ' + sel.length.toFixed(0) + 'px' : '';
+    document.getElementById('info').textContent = editPaths.length + ' curves | ' + W + 'x' + H + (selInfo ? ' | ' + selInfo : '');
     paper.view.update();
   }}
   draw();

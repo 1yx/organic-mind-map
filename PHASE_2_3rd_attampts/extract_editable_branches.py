@@ -180,6 +180,63 @@ class Segment:
     end_type: str
 
 
+def simplify_junctions(np, cv2, skeleton):
+    """Collapse clusters of adjacent junction pixels into single representative points.
+
+    When the skeleton has thick/blurry junctions, thinning produces many adjacent
+    junction pixels (degree>=3). This confuses segment tracing into producing
+    many tiny fragments. We collapse each connected cluster of junction pixels
+    into its centroid, keeping only that single pixel and removing the rest.
+    """
+    skel = skeleton.copy()
+    h, w = skel.shape
+
+    # Find all 8-connected neighbor counts
+    kernel = np.array([[1,1,1],[0,0,0],[1,1,1]], dtype=np.uint8)
+    # Count neighbors for each pixel
+    neighbor_count = np.zeros_like(skel, dtype=np.int32)
+    for dr in range(-1, 2):
+        for dc in range(-1, 2):
+            if dr == 0 and dc == 0:
+                continue
+            shifted = np.zeros_like(skel)
+            src_r = slice(max(0, dr), min(h, h + dr))
+            src_c = slice(max(0, dc), min(w, w + dc))
+            dst_r = slice(max(0, -dr), min(h, h - dr))
+            dst_c = slice(max(0, -dc), min(w, w - dc))
+            shifted[dst_r, dst_c] = skel[src_r, src_c]
+            neighbor_count += shifted
+
+    # Junction pixels: degree >= 3
+    junction_mask = (skel > 0) & (neighbor_count >= 3 * 255)
+
+    if not np.any(junction_mask):
+        return skel
+
+    # Find connected components of junction pixels using cv2
+    junction_uint8 = junction_mask.astype(np.uint8) * 255
+    num_features, labeled = cv2.connectedComponents(junction_uint8, connectivity=8)
+
+    removed = 0
+    for label_id in range(1, num_features + 1):
+        cluster = np.argwhere(labeled == label_id)  # (row, col)
+        if len(cluster) < 2:
+            continue
+        # Compute centroid
+        cy = int(round(cluster[:, 0].mean()))
+        cx = int(round(cluster[:, 1].mean()))
+        # Remove all cluster pixels except centroid
+        for r, c in cluster:
+            skel[r, c] = 0
+        # Keep the centroid
+        skel[cy, cx] = 255
+        removed += len(cluster) - 1
+
+    if removed > 0:
+        print(f"  Simplified {removed} junction pixels into {num_features} nodes")
+    return skel
+
+
 def build_skeleton_graph(np, skeleton):
     """Build adjacency from skeleton pixels. Returns degree map and neighbor dict."""
     h, w = skeleton.shape
@@ -333,6 +390,94 @@ def chaikin_smooth(points, iterations=1):
         new.append(points[-1])
         points = new
     return points
+
+
+def extend_orphan_roots(simplified_segments, image_center, junction_thresh=30.0,
+                        max_gap=200.0, primary_dist=250.0):
+    """Extend orphan segment roots toward the nearest parent branch path.
+
+    Only extends small fragments whose root is far from center (not primary
+    branches). Finds the closest point on any other segment's path and adds
+    a straight-line extension to bridge the gap.
+    """
+    if len(simplified_segments) < 2:
+        return simplified_segments
+
+    cx, cy = image_center
+
+    # Find which segments have junction neighbors (endpoint within threshold)
+    has_junction = {}
+    for i, (seg_a, pts_a) in enumerate(simplified_segments):
+        has_junction[seg_a.id] = False
+        for j, (seg_b, pts_b) in enumerate(simplified_segments):
+            if i == j:
+                continue
+            for pa in [pts_a[0], pts_a[-1]]:
+                for pb in [pts_b[0], pts_b[-1]]:
+                    if math.hypot(pa[0] - pb[0], pa[1] - pb[1]) < junction_thresh:
+                        has_junction[seg_a.id] = True
+                        break
+                if has_junction[seg_a.id]:
+                    break
+            if has_junction[seg_a.id]:
+                break
+
+    result = []
+    for seg, pts in simplified_segments:
+        if has_junction.get(seg.id, True):
+            result.append((seg, pts))
+            continue
+
+        # Skip primary branches (root near center)
+        d0 = math.hypot(pts[0][0] - cx, pts[0][1] - cy)
+        d1 = math.hypot(pts[-1][0] - cx, pts[-1][1] - cy)
+        if min(d0, d1) < primary_dist:
+            result.append((seg, pts))
+            continue
+
+        # Find closest point on any other segment's path
+        best_dist = float("inf")
+        best_point = None
+        for other_seg, other_pts in simplified_segments:
+            if other_seg.id == seg.id:
+                continue
+            for i in range(len(other_pts) - 1):
+                # Point-to-segment distance for orphan endpoints
+                for ep in [pts[0], pts[-1]]:
+                    # Project ep onto segment (other_pts[i], other_pts[i+1])
+                    ax, ay = other_pts[i]
+                    bx, by = other_pts[i + 1]
+                    dx, dy = bx - ax, by - ay
+                    len_sq = dx * dx + dy * dy
+                    if len_sq == 0:
+                        d = math.hypot(ep[0] - ax, ep[1] - ay)
+                        proj = (ax, ay)
+                    else:
+                        t = max(0, min(1, ((ep[0] - ax) * dx + (ep[1] - ay) * dy) / len_sq))
+                        proj = (ax + t * dx, ay + t * dy)
+                        d = math.hypot(ep[0] - proj[0], ep[1] - proj[1])
+                    if d < best_dist:
+                        best_dist = d
+                        best_point = proj
+
+        if best_dist > max_gap or best_point is None:
+            result.append((seg, pts))
+            continue
+
+        # Extend the closer endpoint toward the parent
+        d_first = math.hypot(pts[0][0] - best_point[0], pts[0][1] - best_point[1])
+        d_last = math.hypot(pts[-1][0] - best_point[0], pts[-1][1] - best_point[1])
+
+        new_pts = list(pts)
+        if d_first <= d_last:
+            new_pts.insert(0, best_point)
+        else:
+            new_pts.append(best_point)
+
+        print(f"  {seg.id}: extended root to ({best_point[0]:.0f},{best_point[1]:.0f}), gap={best_dist:.0f}px")
+        result.append((seg, new_pts))
+
+    return result
 
 
 def simplify_segment(points, rdp_epsilon=4.0, smooth_passes=1):
@@ -574,6 +719,31 @@ def build_branch_tree(simplified_segments, image_center):
                                 seg_info[id_a]["level"] = seg_info[id_b]["level"] + 1
                                 seg_info[id_a]["parent_id"] = id_b
 
+    # Assign orphans (no junction, root far from center) to nearest branch endpoint
+    seg_map = {seg.id: pts for seg, pts in simplified_segments}
+    orphan_thresh = 150.0
+    primary_dist = 250.0  # segments with root this close to center are primary branches
+    for sid, info in seg_info.items():
+        if info["parent_id"] is not None:
+            continue
+        if info["root_dist"] < primary_dist:
+            continue
+        pts = seg_map[sid]
+        best_dist = float("inf")
+        best_id = None
+        for other_id, other_pts in seg_map.items():
+            if other_id == sid:
+                continue
+            for pa in [pts[0], pts[-1]]:
+                for pb in [other_pts[0], other_pts[-1]]:
+                    d = math.hypot(pa[0] - pb[0], pa[1] - pb[1])
+                    if d < best_dist:
+                        best_dist = d
+                        best_id = other_id
+        if best_id and best_dist < orphan_thresh:
+            info["parent_id"] = best_id
+            info["level"] = seg_info[best_id]["level"] + 1
+
     return seg_info
 
 
@@ -712,6 +882,60 @@ def generate_outline_path(centerline, widths, min_width=4.0, width_scale=1.15):
 # ---------------------------------------------------------------------------
 # 8. Merge collinear segments
 # ---------------------------------------------------------------------------
+
+def attach_fragments_to_path(segments, proximity=60):
+    """Attach small segments whose endpoint is near another segment's mid-path.
+
+    Unlike merge_adjacent_segments (endpoint-to-endpoint), this handles the case
+    where a sub-branch sprouts from the middle of a parent branch. The fragment
+    is attached by inserting a junction point at the nearest path position.
+    """
+    if len(segments) < 2:
+        return segments
+
+    def seg_length(seg):
+        pts = seg.points
+        return sum(math.hypot(pts[i+1][0]-pts[i][0], pts[i+1][1]-pts[i][1])
+                   for i in range(len(pts)-1))
+
+    # Identify fragments: short segments (likely noise from junction clusters)
+    # that have an endpoint close to another segment's path (not just endpoints)
+    merged_ids = set()
+    for frag in segments:
+        if seg_length(frag) > 200:
+            continue
+        # Find nearest point on any other segment's path
+        best_dist = float("inf")
+        best_seg = None
+        best_idx = None
+        best_frag_end = None
+
+        for other in segments:
+            if other.id == frag.id or other.id in merged_ids:
+                continue
+            for frag_end, frag_pt in [("start", frag.points[0]), ("end", frag.points[-1])]:
+                for i, op in enumerate(other.points):
+                    d = math.hypot(frag_pt[0]-op[0], frag_pt[1]-op[1])
+                    if d < best_dist:
+                        best_dist = d
+                        best_seg = other
+                        best_idx = i
+                        best_frag_end = frag_end
+
+        if best_dist < proximity and best_seg is not None:
+            # Attach: insert a branch point into the parent path
+            frag_pt = frag.points[0] if best_frag_end == "start" else frag.points[-1]
+            best_seg.points.insert(best_idx + 1, frag_pt)
+            # Add fragment points to parent
+            if best_frag_end == "end":
+                best_seg.points.extend(frag.points[1:])
+            else:
+                frag_reversed = list(reversed(frag.points))
+                best_seg.points.extend(frag_reversed[1:])
+            merged_ids.add(frag.id)
+
+    return [s for s in segments if s.id not in merged_ids]
+
 
 def merge_adjacent_segments(segments, angle_thresh_deg=40, proximity=15):
     """Merge segments with close endpoints and similar direction.
@@ -892,7 +1116,7 @@ def run(image_path: Path, mask_path: Path | None, out_dir: Path,
     skel_debug[skeleton > 0] = (255, 255, 255)
     cv2.imwrite(str(out_dir / "branch_skeleton_debug.png"), skel_debug)
 
-    # Step 2: Trace graph segments
+    # Step 2: Trace graph segments (keep all, filter after merge)
     print("Tracing skeleton graph...")
     raw_segments = trace_segments(np, skeleton, min_length=min_seg_length)
     print(f"  Raw segments: {len(raw_segments)}")
@@ -914,10 +1138,16 @@ def run(image_path: Path, mask_path: Path | None, out_dir: Path,
             simplified_segments.append((seg, smooth_pts))
     print(f"  Segments after simplification: {len(simplified_segments)}")
 
+    # Step 4b: Extend orphan roots to nearest parent path point
+    simplified_segments = extend_orphan_roots(simplified_segments, (w / 2, h / 2))
+
     # Step 5-6: Parametric taper width + color estimation
     print("Building branch tree and computing taper widths...")
     tree = build_branch_tree(simplified_segments, (w / 2, h / 2))
-    max_root_dist = max(info["root_dist"] for info in tree.values()) if tree else 1.0
+
+    # Step 5-6: Parametric taper width + color estimation
+    max_root_dist = max(info["root_dist"] for sid, info in tree.items()
+                        if sid in {s[0].id for s in simplified_segments}) if simplified_segments else 1.0
 
     taper_params = {
         "base_width": 30.0, "dist_power": 0.5,
