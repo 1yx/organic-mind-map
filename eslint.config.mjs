@@ -75,6 +75,8 @@ export default [
       "**/.venv/**",
       // Local scratch/reference checkouts.
       ".tmp/**",
+      // Agent-created worktrees are separate workspaces and should not be linted from this root.
+      ".claude/worktrees/**",
       // Standalone browser demo verification script, intentionally outside TS packages.
       "archives/phase1/handdraw-branch-demo/verify.mjs",
       // Standalone editable browser demo verification script, intentionally outside TS packages.

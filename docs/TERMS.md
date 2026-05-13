@@ -39,7 +39,7 @@ Each concept may include a `doodlePrompt` or equivalent visual hint in the canon
 
 ## content-outline-text
 
-`content-outline-text` is the constrained, field-less, indentation-based plain text outline format used by Phase 2 for manual source outline editing.
+`Content Outline Text` (`content-outline-text`) is the constrained, field-less, indentation-based plain text outline format used by Phase 2 for manual source outline editing.
 
 It is intentionally not YAML. It does not use `-` list prefixes, key/value syntax, or general YAML parsing.
 
@@ -143,7 +143,55 @@ An OMM document may store:
 - embedded or referenced assets needed to reopen the document
 - optional masks, debug references, correction records, or provenance depending on the producer and audience
 
+User-facing `.omm` files saved from the editor should not include masks by default. Masks are internal extraction, correction, debug, and training data, not normal user-facing canvas objects.
+
 PNG and SVG exports should be rendered from an OMM document.
+
+## Artifact
+
+`artifact` is a storage-layer file or blob reference managed by the backend.
+
+Artifacts are job outputs, uploads, exports, debug files, or persisted document files. They exist outside or around the OMM document as stored resources with ownership, MIME type, byte size, lifecycle, and access control.
+
+Examples:
+
+- `reference_image`
+- `content_outline`
+- `prediction_omm`
+- `user_omm`
+- `correction_omm`
+- `mask`
+- `debug_overlay`
+- `png_export`
+- `svg_export`
+- `debug_bundle`
+
+API endpoints should use `artifact` when referring to stored files, downloadable blobs, generated outputs, or server-managed references.
+
+An artifact may contain an OMM document, a PNG image, an SVG export, a mask, or a debug bundle. It is not itself a canvas object.
+
+## Asset
+
+`asset` is a business-layer OMM canvas object representing visual material inside a mind map.
+
+Assets are part of the `.omm` document model. They represent doodles, symbols, icons, illustrations, imported visual material, or the center visual. They have OMM object IDs, geometry, role, source references, grouping relationships, masks, and renderer behavior.
+
+Examples:
+
+- center visual asset
+- doodle illustration asset
+- imported image asset
+- icon/symbol asset
+- extracted visual component attached to a branch or subbranch
+
+Schema and renderer code should use `asset` when referring to visual objects inside the editable mind map.
+
+Do not use `artifact` for OMM canvas objects. Do not use `asset` for storage-layer files. The boundary is:
+
+```text
+artifact = stored file/blob/reference
+asset    = OMM document object on the canvas
+```
 
 ## prediction_omm
 

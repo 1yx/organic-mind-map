@@ -132,8 +132,8 @@ OMM documents SHALL support independent nonlinear association lines between exis
 `prediction_omm` SHALL reference generated image artifacts by path or URI.
 
 #### Scenario: Masks are produced
-- **WHEN** extraction produces branch, text, doodle, or instance masks
-- **THEN** `prediction_omm` records their file references and associated object IDs
+- **WHEN** extraction produces branch-system, branch-segment, asset, asset-group, text, or unassigned text masks
+- **THEN** `prediction_omm` records their explicit mask classes, file references, and associated object IDs
 
 #### Scenario: Debug overlays are produced
 - **WHEN** extraction produces contact sheets, overlays, skeleton previews, group previews, or coverage diffs

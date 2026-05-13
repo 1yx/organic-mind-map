@@ -49,12 +49,15 @@ The Phase 3 model should optimize for the layers and relationships the editor ac
 
 Primary segmentation targets:
 
-- `branch_mask`
+- `branch_system_mask`
 - `branch_segment_mask`
-- `center_visual_mask`
-- `doodle_group_mask`
+- `center_asset_mask`
 - `doodle_asset_mask`
-- `map_text_mask`
+- `asset_group_mask`
+- `map_title_mask`
+- `center_text_mask`
+- `branch_text_mask`
+- `subbranch_text_mask`
 - `doodle_text_mask`
 - `unassigned_text_mask`
 

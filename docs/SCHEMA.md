@@ -172,6 +172,15 @@ admin_correction
 import
 ```
 
+Producer profile rules:
+
+- `user_editor`: user-facing saved `.omm`. It should contain editable business objects and must not include `masks` by default.
+- `prediction_cv`: machine extraction output. It may include prediction masks, OCR evidence, debug references, and extractor diagnostics.
+- `admin_correction`: internal correction output. It may include corrected masks, correction operations, and Phase 3 training labels.
+- `import`: imported external data. It should be normalized before becoming a user-facing saved `.omm`.
+
+If a user-facing `.omm` is exported for debugging or Phase 3 dataset preparation, that should be an explicit export profile such as `debug_bundle` or `phase3_dataset_seed`, not the default save behavior.
+
 ## Surface
 
 Phase 2 surface size primarily follows the GPT-Image-2 reference image size.
@@ -422,12 +431,14 @@ Association lines do not mutate branch/subbranch hierarchy.
 
 ## Mask
 
-Masks are mostly present in `prediction_omm` and `correction_omm`.
+Masks are internal extraction, correction, and training data. They are mostly present in `prediction_omm` and `correction_omm`.
+
+User-saved `.omm` documents with `producer.kind: "user_editor"` must not include `masks` by default. The user-facing editor should save editable business objects such as branches, subbranches, texts, assets, asset groups, cloud boundaries, and association lines. Mask data should stay in server-retained `prediction_omm`, internal `correction_omm`, debug bundles, or Phase 3 dataset exports.
 
 ```json
 {
   "id": "mask_asset_preview",
-  "class": "asset_mask",
+  "class": "doodle_asset_mask",
   "objectId": "asset_preview",
   "source": {
     "type": "file",
@@ -442,17 +453,45 @@ Masks are mostly present in `prediction_omm` and `correction_omm`.
 Mask classes:
 
 ```text
-branch_mask
-branch_instance_mask
+branch_system_mask
+branch_segment_mask
 center_asset_mask
+doodle_asset_mask
 asset_group_mask
-asset_mask
-map_text_mask
+map_title_mask
+center_text_mask
+branch_text_mask
+subbranch_text_mask
 doodle_text_mask
 unassigned_text_mask
 ```
 
-The `doodle_*` mask names may appear in legacy Phase 2 outputs, but the stable schema should prefer `asset_*` naming.
+Mask class meanings:
+
+- `branch_system_mask`: the complete same-color branch system rooted at one top-level `branch`.
+- `branch_segment_mask`: one editable branch or subbranch stroke segment.
+- `center_asset_mask`: the visual center asset.
+- `doodle_asset_mask`: one doodle/icon/illustration/imported visual object inside the map.
+- `asset_group_mask`: a grouped visual chunk, often one or more assets plus related doodle-local text.
+- `map_title_mask`: text mask for the optional external map title.
+- `center_text_mask`: text mask for center text inside or near the center visual.
+- `branch_text_mask`: text mask for top-level branch concept text.
+- `subbranch_text_mask`: text mask for descendant subbranch concept text.
+- `doodle_text_mask`: text that belongs visually inside or next to a doodle/asset group.
+- `unassigned_text_mask`: OCR text with no reliable semantic or visual owner.
+
+Legacy aliases may appear in early Phase 2 outputs:
+
+```text
+branch_mask -> branch_system_mask
+branch_instance_mask -> branch_segment_mask
+center_visual_mask -> center_asset_mask
+doodle_group_mask -> asset_group_mask
+asset_mask -> doodle_asset_mask or center_asset_mask depending on object role
+map_text_mask -> map_title_mask | center_text_mask | branch_text_mask | subbranch_text_mask
+```
+
+Stable OMM documents should prefer the explicit mask classes above so Phase 3 training data has unambiguous labels.
 
 ## Diagnostics
 

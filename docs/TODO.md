@@ -17,8 +17,8 @@ Recommended execution order:
    - blank branches with optional concept text
    - cloud boundary objects for branch chunks
 
-3. **Define backend API contracts.**
-   Create `docs/API.md` for:
+3. **Done: Define backend API contracts.**
+   Created `docs/API.md` for:
    - generation job creation
    - job status
    - artifact fetch
@@ -212,12 +212,15 @@ metadata
 
 Minimum training targets:
 
-- `branch_mask`
-- `branch_instance_mask`
-- `center_visual_mask`
-- `doodle_group_mask`
+- `branch_system_mask`
+- `branch_segment_mask`
+- `center_asset_mask`
 - `doodle_asset_mask`
-- `map_text_mask`
+- `asset_group_mask`
+- `map_title_mask`
+- `center_text_mask`
+- `branch_text_mask`
+- `subbranch_text_mask`
 - `doodle_text_mask`
 - `unassigned_text_mask`
 

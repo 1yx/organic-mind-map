@@ -36,7 +36,7 @@ Phase 2 should use each capability where it is strong:
 
 - AI image model: full visual reference, organic rhythm, doodle style, composition.
 - OpenCV/OCR/CV pipeline: layer extraction and asset segmentation.
-- Source structure: semantic truth for title, center, branches, and children.
+- Source structure: semantic truth for center, branches, and subbranches.
 - Paper.js / vector tooling: editable branch curves and pen-tool correction.
 - Human review: final quality control where automated grouping is uncertain.
 

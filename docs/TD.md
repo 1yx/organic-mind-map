@@ -59,12 +59,15 @@ Vue 3
 Vite
 TypeScript
 Composition API with <script setup>
+Tailwind CSS for app chrome and standard UI surfaces
 Paper.js 0.12.18
 Stripe SDK
 Backend-mediated Google/OpenAI SSO
 ```
 
 Phase 2 uses the existing `@omm/web` Vue/Vite direction rather than introducing a separate React/Next.js application. This keeps the frontend aligned with the current monorepo package, existing tests, and repository-wide Vue standards.
+
+Tailwind CSS is allowed for the Vue application shell: toolbars, panels, inspectors, dialogs, auth/payment screens, job status views, and debug controls. Tailwind must not become the source of truth for OMM document rendering, canvas object styling, organic branch geometry, or PNG/SVG export output. Those remain controlled by `.omm` schema, Paper.js/SVG rendering logic, and explicit export code.
 
 ## Platform Architecture
 
@@ -75,6 +78,7 @@ Phase 2 uses the existing `@omm/web` Vue/Vite direction rather than introducing 
 - **Auth:** Google & OpenAI SSO integration through the backend API/session layer.
 - **Payments:** Subscription/Quota gating via Stripe.
 - **Canvas:** Paper.js integrated into Vue components/composables for pen-tool correction and visual group manipulation.
+- **Styling Boundary:** Tailwind styles the surrounding app UI; OMM canvas/rendered document state is styled through schema-backed renderer data, not utility classes.
 
 ## Mind Map Creation Logic
 
@@ -135,7 +139,7 @@ User input
 
 Key rules:
 
-- `content_outline.json` is the semantic truth for title, center, branch, and subbranch text, and it also carries doodle prompts / visual hints for image generation.
+- `content_outline.json` is the semantic truth for center, branch, and subbranch text, and it also carries doodle prompts / visual hints for image generation. The optional map title is external metadata and may initialize a `map_title` text object, but it is not part of the branch hierarchy.
 - Doodle prompts disambiguate short concepts before GPT-Image-2 generation; they are visual intent, not final extracted doodle geometry.
 - `reference.png` is visual evidence and style/layout input, not final editable truth.
 - `.omm` is the single JSON-backed Organic Mind Map document format, similar in spirit to `.excalidraw`.
@@ -250,4 +254,5 @@ Implement Google/OpenAI SSO, integrate Stripe for quota management, and deploy t
 - Keep CV/image-processing logic in Python workers.
 - Communicate between backend and workers through stable schemas and artifact references, not ad hoc process output.
 - Keep intermediate artifacts inspectable via the web UI.
+- Use Tailwind only for application chrome and ordinary UI. Do not encode OMM branch colors, taper, text placement, asset grouping, or export appearance in Tailwind classes.
 - Do not allow Phase 2 editing work to blur the product into a generic whiteboard; keep strictly to the Buzan-style organic mind map identity.
