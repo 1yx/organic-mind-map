@@ -5,7 +5,7 @@ The system SHALL provide a backend-oriented CV worker interface for extracting e
 
 #### Scenario: Worker receives image and outline
 - **WHEN** the worker is invoked with `reference.png`, a content outline, and an output directory
-- **THEN** it runs the Phase 2 extraction pipeline and writes the prediction artifact plus referenced masks, crops, SVGs, and debug previews
+- **THEN** it runs the Phase 2 extraction pipeline and writes `prediction_omm` plus referenced masks, crops, SVGs, and debug previews
 
 #### Scenario: Worker uses default profile
 - **WHEN** the user-facing Phase 2 product runs extraction
@@ -58,4 +58,3 @@ The Phase 2 worker SHALL NOT depend on hosted automatic SAM2 masks as the baseli
 #### Scenario: Promptable segmentation is evaluated
 - **WHEN** promptable SAM2 or a similar model is evaluated
 - **THEN** it is treated as an optional adapter, not the canonical Phase 2 extraction dependency
-

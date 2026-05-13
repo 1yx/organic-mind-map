@@ -2,12 +2,12 @@
 
 ## Overview
 
-Phase 2 builds a full SaaS web application that turns natural language text or simple YAML outlines into editable, structured organic mind map assets.
+Phase 2 builds a full SaaS web application that turns natural language text or `content-outline-text` into editable, structured organic mind map assets.
 
 The user provides:
 
 - natural language text prompt (for AI generation)
-- OR a simple YAML outline (for manual structure)
+- OR `content-outline-text` (for manual structure)
 
 The system automatically orchestrates:
 
@@ -62,7 +62,7 @@ Use deterministic tooling for:
 1. User lands on the website homepage, which is a fully functional Excalidraw-like canvas.
 2. The default canvas displays an editable mind map introducing the product's features.
 3. User clicks to generate a new map and is prompted to log in via Google/OpenAI SSO.
-4. Logged-in user enters a natural language text prompt OR uploads/edits a simple YAML outline.
+4. Logged-in user enters a natural language text prompt OR uploads/edits `content-outline-text`.
 5. Backend LLM generates the source structure (if text prompt was provided).
 6. Backend GPT-Image-2 generates the visual reference image.
 7. Backend CV system extracts branches, text, and doodles, running OCR and grouping.
@@ -71,13 +71,15 @@ Use deterministic tooling for:
 10. User exhausts trial quota and upgrades via payment gateway (e.g., Stripe) to continue generation.
 ```
 
-## Source Structure (Simple YAML)
+## Source Structure (content-outline-text)
 
-The source structure is the semantic truth. Users can provide this directly using a simple, field-less YAML format based on indentation. Title is optional and not part of the main hierarchy.
+The source structure is the semantic truth. Users can provide this directly using `content-outline-text`, a constrained field-less indentation-based plain text format. Title is optional and not part of the main hierarchy.
+
+The normalized `content_outline.json` also carries doodle prompts / visual hints for concepts. These hints are used before GPT-Image-2 generation to avoid ambiguous drawings from short or multi-meaning keywords. For example, a concept like "预览" should not rely on the image model guessing the intended visual; it should be paired with a visual instruction such as "magnifying glass inspecting a preview window, no text".
 
 Example:
 
-```yaml
+```text
 Anthropic 产品之道
   极速交付
     研究预览
@@ -92,6 +94,16 @@ The system parses this as:
 - Level 2 (indent 1): Main Branches
 - Level 3+ (indent 2+): Subbranches
 
+The normalized internal representation can enrich each parsed concept with:
+
+```text
+id
+class
+concept
+doodlePrompt
+children
+```
+
 OCR is used to locate and read visual text, but source structure decides whether recognized text is:
 
 - center text
@@ -105,11 +117,11 @@ OCR is used to locate and read visual text, but source structure decides whether
 
 ### R1: Flexible Structure Input
 
-The system shall accept either a natural language text input or a simple YAML outline from the user.
+The system shall accept either a natural language text input or `content-outline-text` from the user.
 
 For text input, the backend shall orchestrate an LLM to produce the structured outline.
 
-For YAML input, the system shall parse the indentation-based hierarchy directly.
+For `content-outline-text` input, the system shall parse the indentation-based hierarchy directly.
 
 ### R2: Reference Image Generation
 

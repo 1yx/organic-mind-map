@@ -6,16 +6,16 @@ Current goal: turn the Phase 2 experiments into a SaaS web app while preserving 
 
 Recommended execution order:
 
-1. **Unify frontend technical direction.**
-   Decide whether Phase 2 uses the existing `@omm/web` Vue/Vite direction or the newer React/Next.js direction in `docs/TD.md`. Do this before implementation to avoid split architecture.
+1. **Done: Unify frontend technical direction.**
+   Phase 2 uses the existing `@omm/web` Vue 3 + Vite direction, with Paper.js integrated through Vue components/composables. React/Next.js is not the Phase 2 frontend path. Authentication remains Google/OpenAI SSO, but it is handled through the backend API/session layer rather than NextAuth.js.
 
-2. **Define stable product schemas.**
-   Create `docs/SCHEMA.md` for:
+2. **Done: Define stable product schemas.**
+   Created `docs/SCHEMA.md` for:
    - `content_outline.json`
-   - `prediction_artifact.json`
-   - `correction_artifact.json`
-   - `omm_editable_document.json`
+   - unified `.omm` schema, including user-saved OMM, `prediction_omm`, and `correction_omm` instances
    - canonical `branch` / `subbranch` data
+   - blank branches with optional concept text
+   - cloud boundary objects for branch chunks
 
 3. **Define backend API contracts.**
    Create `docs/API.md` for:
@@ -38,6 +38,7 @@ Recommended execution order:
 5. **Build the web canvas against static artifacts first.**
    Before wiring model generation, make the frontend load existing artifacts and support:
    - source/reference visibility
+   - left-bottom `content-outline-text` display/editing without live canvas reflow in Phase 2
    - editable branch centerlines
    - generated branch outlines
    - doodle/text groups
@@ -47,7 +48,7 @@ Recommended execution order:
    Wire the backend flow:
 
    ```text
-   text or simple YAML
+   text or content-outline-text
      -> LLM structure generation if needed
      -> GPT-Image-2 visual reference
      -> CV worker extraction
@@ -58,27 +59,33 @@ Recommended execution order:
    Implement SSO, trial quota, paid quota, and payment gating after the core generation/editing loop is functional.
 
 8. **Export Phase 3 dataset seeds.**
-   Add a dataset export command that turns prediction artifacts plus correction artifacts into training/evaluation samples for the future OMM-specific segmentation and reconstruction system.
+   Add a dataset export command that turns `prediction_omm` plus `correction_omm` into training/evaluation samples for the future OMM-specific segmentation and reconstruction system.
 
 ## Phase 2 To Phase 3 Data Preparation
 
-Goal: make every Phase 2 extraction and manual correction reusable as future Phase 3 training data.
+Goal: make every Phase 2 extraction and internal/admin correction reusable as future Phase 3 training data.
 
 The important idea:
 
 ```text
-artifact schema = model/CV prediction
-correction schema = human correction and final truth
-prediction + correction = training sample
+prediction_omm = model/CV prediction
+correction_omm = internal/admin correction and final training truth
+prediction_omm + correction_omm = training sample
 ```
 
-This is not only for model training. The same data also supports editor save/load, debugging, replay, quality comparison, and future benchmark evaluation.
+This is not only for model training. The same internal data also supports debugging, replay, quality comparison, and future benchmark evaluation. User-facing save/load should use `.omm`.
 
-## Artifact Schema TODO
+## OMM Schema TODO
 
-Define a stable schema for the output of the current CV pipeline.
+Define a stable unified `.omm` schema that can represent user-saved OMM documents, `prediction_omm`, and `correction_omm` instances.
 
-Each extraction should record:
+Before finalizing the schema, enforce these Buzan constraints from `docs/GUIDELINES.md`:
+
+- Branch/subbranch concept text is optional so blank branches can exist.
+- Cloud boundaries are first-class visual/grouping objects, not generic cards or boxed nodes.
+- Nonlinear association lines are first-class objects and must not mutate the branch/subbranch hierarchy.
+
+Each `prediction_omm` extraction should record:
 
 - source image path and image size
 - source structure path or embedded source structure
@@ -125,7 +132,7 @@ Target example:
 }
 ```
 
-## Correction Schema TODO
+## correction_omm Data TODO
 
 Define a stable schema for what the user changes in the inspect-and-correct UI.
 
@@ -181,14 +188,14 @@ Target example:
 
 ## Training Dataset TODO
 
-Build a dataset exporter after artifact and correction schemas are stable.
+Build a dataset exporter after the unified `.omm` schema can represent both `prediction_omm` and `correction_omm`.
 
 The exporter should convert:
 
 ```text
 raw source image
-prediction artifact
-human correction artifact
+prediction_omm
+correction_omm
 ```
 
 into:

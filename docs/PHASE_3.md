@@ -210,7 +210,7 @@ Success criteria:
 
 ### P3.5 Continuous Improvement Loop
 
-Turn user corrections into future training data.
+Turn internal/admin corrections into future training data.
 
 Success criteria:
 
@@ -230,7 +230,7 @@ Success criteria:
 
 Phase 2 should prepare for Phase 3 by adding:
 
-- stable artifact schema for masks, groups, and branch curves
+- stable `prediction_omm` schema for masks, groups, and branch curves
 - correction export from the inspect-and-correct UI
 - confidence fields for extractor outputs
 - explicit labels for `doodle_text` and `unassigned_text`

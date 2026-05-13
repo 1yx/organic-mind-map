@@ -2,12 +2,12 @@
 
 ## Positioning
 
-Organic Mind Map is a SaaS product for turning text prompts or simple YAML outlines into editable, structured organic mind map assets.
+Organic Mind Map is a SaaS product for turning text prompts or `content-outline-text` into editable, structured organic mind map assets.
 
 Phase 1 proved the validated preview/export path. Phase 2 changes the product center of gravity to a full web application:
 
 ```text
-user text or simple YAML input
+user text or content-outline-text input
   -> LLM structure generation (if text)
   -> GPT-Image-2 visual reference generation
   -> backend CV layer extraction
@@ -72,7 +72,7 @@ Capabilities:
 Phase 2 succeeds when a user can start from:
 
 ```text
-natural language text input OR simple YAML outline
+natural language text input OR content-outline-text
 ```
 
 and the system automatically coordinates LLMs, GPT-Image-2, and backend CV extraction to produce a fully rendered, editable map in the browser with:

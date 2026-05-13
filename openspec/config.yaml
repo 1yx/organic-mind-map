@@ -1,13 +1,12 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  Product: Organic Mind Map, a strict Buzan-style organic mind map SaaS.
+  Phase 2 goal: text or content-outline-text -> GPT-Image-2 reference -> Python CV extraction -> editable web canvas.
+  Frontend: @omm/web uses Vue 3, Vite, TypeScript, Composition API, and Paper.js for editable branch curves.
+  Backend: API service orchestrates auth, quota, LLM outlining, GPT-Image-2 calls, and Python CV workers.
+  Python: Python 3.11 with uv, OpenCV, NumPy, PaddleOCR/PaddlePaddle, and a custom indentation parser for content-outline-text.
+  Product constraint: do not drift into a generic whiteboard; preserve center visual, colored tapered organic branches, concise keywords, doodles, and readable whitespace.
 
 # Per-artifact rules (optional)
 # Add custom rules for specific artifacts.

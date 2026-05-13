@@ -3,8 +3,8 @@
 ### Requirement: Generation job orchestration
 The backend SHALL orchestrate the full text-or-outline to editable-artifact generation job.
 
-#### Scenario: User submits YAML outline
-- **WHEN** an authenticated user submits a simple YAML outline
+#### Scenario: User submits content-outline-text
+- **WHEN** an authenticated user submits `content-outline-text`
 - **THEN** the backend parses and validates the content outline before visual reference generation
 
 #### Scenario: User submits natural language
@@ -24,7 +24,7 @@ Generation jobs SHALL return artifacts rather than only a flat generated image.
 
 #### Scenario: Job succeeds
 - **WHEN** generation and extraction complete
-- **THEN** the job result includes the content outline, reference image, prediction artifact, and editable canvas artifact references
+- **THEN** the job result includes the content outline, reference image, `prediction_omm`, and editable canvas artifact references
 
 #### Scenario: Job fails during extraction
 - **WHEN** the CV worker fails or produces incomplete output
@@ -47,4 +47,3 @@ The backend SHALL NOT treat GPT-Image-2 output as final editable truth.
 #### Scenario: Reference image is generated
 - **WHEN** GPT-Image-2 produces a visually strong mind map
 - **THEN** the system still runs deterministic extraction, alignment, grouping, and branch reconstruction before showing editable output
-
