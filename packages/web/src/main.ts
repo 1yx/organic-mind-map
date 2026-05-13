@@ -4,7 +4,7 @@ import "./assets/main.css";
 async function boot() {
   let hasPreviewBackend = false;
   try {
-    const res = await fetch("/api/document", { method: "HEAD" });
+    const res = await fetch("/api/document");
     hasPreviewBackend = res.ok;
   } catch {
     hasPreviewBackend = false;

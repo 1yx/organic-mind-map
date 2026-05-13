@@ -2,8 +2,6 @@ import { ref, computed, onMounted, onUnmounted } from "vue";
 
 const TOOLBAR_MIN_H = 48;
 const SIDEBAR_MIN_W = 240;
-const TOOLBAR_SCALE = 0.06;
-const SIDEBAR_SCALE = 0.12;
 
 const getWindowSize = () => ({
   w: typeof window !== "undefined" ? window.innerWidth : 1280,
@@ -24,12 +22,22 @@ export function usePanelSizing() {
   onMounted(() => window.addEventListener("resize", onResize));
   onUnmounted(() => window.removeEventListener("resize", onResize));
 
+  // aspect > 1 (wide): sidebar grows, toolbar stays near min
+  // aspect < 1 (tall): toolbar grows, sidebar stays near min
+  const aspect = computed(() => viewportW.value / viewportH.value);
+
   const toolbarHeight = computed(() =>
-    Math.max(TOOLBAR_MIN_H, Math.round(viewportH.value * TOOLBAR_SCALE)),
+    Math.max(
+      TOOLBAR_MIN_H,
+      Math.round(viewportH.value * 0.06 * Math.min(1, 1 / aspect.value)),
+    ),
   );
 
   const sidebarWidth = computed(() =>
-    Math.max(SIDEBAR_MIN_W, Math.round(viewportW.value * SIDEBAR_SCALE)),
+    Math.max(
+      SIDEBAR_MIN_W,
+      Math.round(viewportW.value * 0.12 * Math.min(1, aspect.value)),
+    ),
   );
 
   const canvasWidth = computed(() =>
