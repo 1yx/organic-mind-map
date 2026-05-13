@@ -17,8 +17,8 @@ import {
 defineProps<{ height: number }>();
 
 const tools = [
-  { name: "Hand", icon: Hand },
   { name: "Select", icon: MousePointer2 },
+  { name: "Hand", icon: Hand },
   { name: "Rectangle", icon: Square },
   { name: "Diamond", icon: Diamond },
   { name: "Ellipse", icon: Circle },

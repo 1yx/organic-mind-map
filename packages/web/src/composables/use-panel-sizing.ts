@@ -2,16 +2,23 @@ import { ref, computed, onMounted, onUnmounted } from "vue";
 
 const TOOLBAR_MIN_H = 48;
 const SIDEBAR_MIN_W = 240;
-const TOOLBAR_SCALE = 0.04;
-const SIDEBAR_SCALE = 0.08;
+const TOOLBAR_SCALE = 0.06;
+const SIDEBAR_SCALE = 0.12;
+
+const getWindowSize = () => ({
+  w: typeof window !== "undefined" ? window.innerWidth : 1280,
+  h: typeof window !== "undefined" ? window.innerHeight : 800,
+});
 
 export function usePanelSizing() {
-  const viewportW = ref(window.innerWidth);
-  const viewportH = ref(window.innerHeight);
+  const initial = getWindowSize();
+  const viewportW = ref(initial.w);
+  const viewportH = ref(initial.h);
 
   function onResize() {
-    viewportW.value = window.innerWidth;
-    viewportH.value = window.innerHeight;
+    const size = getWindowSize();
+    viewportW.value = size.w;
+    viewportH.value = size.h;
   }
 
   onMounted(() => window.addEventListener("resize", onResize));
@@ -25,8 +32,12 @@ export function usePanelSizing() {
     Math.max(SIDEBAR_MIN_W, Math.round(viewportW.value * SIDEBAR_SCALE)),
   );
 
-  const canvasWidth = computed(() => viewportW.value - sidebarWidth.value);
-  const canvasHeight = computed(() => viewportH.value - toolbarHeight.value);
+  const canvasWidth = computed(() =>
+    Math.max(1, viewportW.value - sidebarWidth.value),
+  );
+  const canvasHeight = computed(() =>
+    Math.max(1, viewportH.value - toolbarHeight.value),
+  );
 
   return { toolbarHeight, sidebarWidth, canvasWidth, canvasHeight };
 }
