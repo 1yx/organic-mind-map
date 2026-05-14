@@ -48,3 +48,21 @@ Generation job creation SHALL be authorization and quota aware.
 - **WHEN** a user requests generated artifacts
 - **THEN** the backend verifies that the user owns or is authorized to access those artifacts
 
+#### Scenario: Raw mask content is requested
+- **WHEN** a non-admin user requests raw mask artifact content
+- **THEN** the backend denies access even if `prediction_omm` metadata references that mask
+
+### Requirement: Stable API errors
+The backend SHALL normalize auth, quota, validation, cancellation, stale-save, provider, worker, and artifact failures into stable API error codes.
+
+#### Scenario: User exceeds quota
+- **WHEN** a user starts generation without available quota or entitlement
+- **THEN** the backend rejects the request with `quota_exhausted` or `rate_limited`
+
+#### Scenario: Save is based on stale artifact
+- **WHEN** a user saves user-saved-omm (`user_saved_omm`) with an outdated `baseArtifactId`
+- **THEN** the backend rejects the save with `stale_document`
+
+#### Scenario: User cancels generation
+- **WHEN** a queued or running generation job is canceled
+- **THEN** the backend records `job_canceled` without treating it as an internal provider or worker failure

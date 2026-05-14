@@ -14,6 +14,18 @@ The TypeScript API backend is the product control plane. It owns authentication,
 - PNG and SVG are rendered from an OMM document; they are not separate source-of-truth artifacts.
 - All user-facing artifact reads and writes are ownership-checked.
 
+## Excalidraw-Inspired Boundaries
+
+Excalidraw separates local scene editing, encrypted sharing, AI calls, file storage, and real-time collaboration into different surfaces. OMM Phase 2 should keep the same separation of concerns, but with a narrower backend API:
+
+- **Scene editing:** Browser-owned. The backend receives complete OMM snapshots only on explicit save/export, not high-frequency object patches.
+- **Generation:** Backend-owned. The browser never calls model or CV providers directly.
+- **Artifacts:** Stored and permissioned by the backend. Large binary content is referenced by artifact IDs or signed URLs.
+- **Collaboration:** Out of scope for Phase 2. No WebSocket scene sync, presence, cursor sync, or shared-room protocol.
+- **Public encrypted share links:** Out of scope for Phase 2. OMM uses authenticated document/artifact access first; client-held encryption keys in URL hashes can be revisited later for public sharing.
+- **AI streaming:** Optional later. Phase 2 keeps generation as asynchronous jobs with polling. If SSE is added later, it should stream job/stage events only, not mutate the editor scene directly.
+- **External URL import:** Not part of the baseline flow. Any future URL import must use allowlists, size limits, content-type checks, and backend-side validation.
+
 ## API Shape
 
 Phase 2 should use JSON over HTTPS.
@@ -25,6 +37,8 @@ Content-Type: application/json
 ```
 
 Large files such as images, masks, `.omm`, PNG, and SVG should be referenced by stable artifact IDs and downloaded through artifact endpoints or signed URLs, not embedded in normal API responses.
+
+Binary artifact content should be cacheable when immutable. The backend may attach `cache-control`, content hash, byte size, and MIME type metadata to artifact records so the frontend can cache reference images, asset blobs, exports, and previews safely.
 
 Common response envelope:
 
@@ -49,6 +63,37 @@ Common error envelope:
   },
   "requestId": "req_01h..."
 }
+```
+
+Common error codes:
+
+```text
+unauthorized
+forbidden
+not_found
+quota_exhausted
+rate_limited
+payload_too_large
+validation_failed
+stale_document
+job_canceled
+provider_failed
+worker_failed
+artifact_unavailable
+```
+
+Recommended HTTP mappings:
+
+```text
+401 unauthorized
+403 forbidden
+404 not_found
+409 stale_document
+413 payload_too_large
+422 validation_failed
+429 quota_exhausted / rate_limited
+499 job_canceled or client-aborted request
+5xx provider_failed / worker_failed / artifact_unavailable
 ```
 
 ## Core Types
@@ -98,7 +143,7 @@ Allowed artifact kinds:
 reference_image
 content_outline
 prediction_omm
-user_omm
+user_saved_omm
 correction_omm
 mask
 debug_overlay
@@ -106,6 +151,47 @@ png_export
 svg_export
 debug_bundle
 ```
+
+### Product Document
+
+A `document` is the product-layer container for one generated or saved mind map. It is not itself an OMM file and is not a storage artifact.
+
+A document owns or references the artifacts created during the map lifecycle:
+
+```json
+{
+  "id": "doc_01h...",
+  "name": "Anthropic 产品之道",
+  "ownerUserId": "user_01h...",
+  "generationJobId": "job_01h...",
+  "lifecycle": "generated",
+  "artifacts": {
+    "contentOutline": "artifact_content_outline",
+    "referenceImage": "artifact_reference",
+    "predictionOmm": "artifact_prediction_omm",
+    "userSavedOmm": null,
+    "correctionOmm": null
+  },
+  "currentEditableSource": {
+    "kind": "prediction_omm",
+    "artifactId": "artifact_prediction_omm"
+  }
+}
+```
+
+`currentEditableSource` resolves to the user-saved-omm artifact kind (`user_saved_omm`) when the user has saved editor state. Otherwise it resolves to `prediction_omm`, allowing the frontend to open a generated result before any user save exists.
+
+Document lifecycle values for Phase 2:
+
+```text
+generated
+saved
+archived
+```
+
+`generated` means the document has a `prediction_omm` but may not have a user-saved-omm yet. `saved` means the user has explicitly saved editor state as user-saved-omm. `archived` means the document is hidden from normal document lists without deleting its artifacts.
+
+Admin-only `correction_omm` operations must not change the user-visible document lifecycle. Corrections are internal data-preparation artifacts and should not affect the user's current OMM unless a separate explicit user-facing operation is introduced later.
 
 ## Auth And Session
 
@@ -237,6 +323,9 @@ Backend behavior:
 - Generate `reference_image`.
 - Dispatch the CV worker with `reference_image`, `content_outline.json`, extraction profile, and output location.
 - Store `prediction_omm` and related artifacts when extraction completes.
+- Create or attach a product `document` for the completed generation job and link the content outline, reference image, and `prediction_omm` artifacts.
+
+If generation fails before a valid `prediction_omm` is assembled, the backend should not create a product `document`. Failed jobs may retain partial artifacts for admin/debug inspection, but those partial artifacts should not appear as ordinary user documents.
 
 ### GET /api/generation-jobs/:jobId
 
@@ -266,6 +355,7 @@ Response:
       "referenceImage": "artifact_reference",
       "predictionOmm": "artifact_prediction_omm"
     },
+    "documentId": "doc_01h...",
     "diagnostics": []
   }
 }
@@ -309,27 +399,38 @@ Allowed browser-readable artifacts include:
 - `content_outline`
 - `reference_image`
 - `prediction_omm`
-- `user_omm`
+- `user_saved_omm`
 - `png_export`
 - `svg_export`
 
-Internal-only artifacts such as raw masks, debug overlays, and `correction_omm` require admin/operator authorization unless explicitly exposed through debug mode.
+`prediction_omm` is frontend-readable as a complete extraction working document and may include masks, debug references, OCR evidence, and provenance. Normal editor UI should not present masks as user-facing canvas objects, and saves/exports to user-saved-omm (`user_saved_omm`) must strip internal extraction evidence by default.
 
-## OMM Documents
+Internal-only artifact content such as standalone raw mask files, debug overlays, and `correction_omm` requires admin/operator authorization.
+
+Mask references inside `prediction_omm` may be visible to the frontend as metadata, but raw mask artifact content is admin-only by default. Normal users should not be able to download raw mask images through `/api/artifacts/:artifactId/content`.
+
+## Documents
 
 ### POST /api/documents
 
-Creates a user-owned `.omm` document from a `prediction_omm` or from an uploaded/imported OMM document.
+Creates a product `document` from a frontend-submitted user-saved-omm (`user_saved_omm`) document. This endpoint is for imported, manually created, or copied maps.
+
+Generation jobs normally create the product `document` automatically when extraction completes. In that flow, the frontend opens `/api/documents/:documentId`, reads `currentEditableSource`, and saves the first edited user-saved-omm with `PUT /api/documents/:documentId/current-omm`.
 
 Request:
 
 ```json
 {
-  "source": {
-    "kind": "prediction_omm",
-    "artifactId": "artifact_prediction_omm"
-  },
-  "name": "Anthropic 产品之道"
+  "name": "Anthropic 产品之道",
+  "omm": {
+    "schema": "omm.document",
+    "version": 1,
+    "producer": {
+      "kind": "user_editor",
+      "name": "omm-web",
+      "version": "phase2"
+    }
+  }
 }
 ```
 
@@ -340,18 +441,49 @@ Response:
   "ok": true,
   "data": {
     "documentId": "doc_01h...",
-    "artifactId": "artifact_user_omm"
+    "artifactId": "artifact_user_saved_omm",
+    "currentEditableSource": {
+      "kind": "user_saved_omm",
+      "artifactId": "artifact_user_saved_omm"
+    }
   }
 }
 ```
 
 ### GET /api/documents/:documentId
 
-Returns document metadata and the current user-facing OMM artifact reference.
+Returns product document metadata, artifact references, and the current editable source.
+
+Response:
+
+```json
+{
+  "ok": true,
+  "data": {
+    "id": "doc_01h...",
+    "name": "Anthropic 产品之道",
+    "lifecycle": "generated",
+    "generationJobId": "job_01h...",
+    "artifacts": {
+      "contentOutline": "artifact_content_outline",
+      "referenceImage": "artifact_reference",
+      "predictionOmm": "artifact_prediction_omm",
+      "userSavedOmm": null,
+      "correctionOmm": null
+    },
+    "currentEditableSource": {
+      "kind": "prediction_omm",
+      "artifactId": "artifact_prediction_omm"
+    }
+  }
+}
+```
 
 ### PUT /api/documents/:documentId/current-omm
 
-Saves the current user-facing `.omm` state from the editor.
+Saves the current editor state as the document's latest user-saved-omm (`user_saved_omm`) artifact.
+
+If the document was created by a generation job and only has `prediction_omm`, this endpoint creates the first user-saved-omm. If a user-saved-omm already exists, it writes the next current-state snapshot.
 
 Request:
 
@@ -366,7 +498,7 @@ Request:
       "version": "phase2"
     }
   },
-  "baseArtifactId": "artifact_user_omm"
+  "baseArtifactId": "artifact_user_saved_omm"
 }
 ```
 
@@ -377,7 +509,11 @@ Response:
   "ok": true,
   "data": {
     "documentId": "doc_01h...",
-    "artifactId": "artifact_user_omm_v2",
+    "artifactId": "artifact_user_saved_omm_v2",
+    "currentEditableSource": {
+      "kind": "user_saved_omm",
+      "artifactId": "artifact_user_saved_omm_v2"
+    },
     "savedAt": "2026-05-13T10:10:00Z"
   }
 }
@@ -385,7 +521,35 @@ Response:
 
 The server should validate the OMM document schema before storing it. Validation failure should return actionable schema diagnostics.
 
-For normal user saves, the backend should reject or strip `masks` when `omm.producer.kind` is `"user_editor"`. Mask-bearing documents belong to `prediction_omm`, `correction_omm`, debug bundles, or Phase 3 dataset exports, not default user-saved `.omm` artifacts.
+For normal user saves, the backend should reject or strip `masks`, debug references, raw OCR evidence, and other internal extraction fields when `omm.producer.kind` is `"user_editor"`. Mask-bearing documents belong to `prediction_omm`, `correction_omm`, debug bundles, or Phase 3 dataset exports, not default user-saved-omm artifacts.
+
+User-saved-omm is a current-state snapshot. It must not contain embedded edit history, undo stacks, or document version history. The root `version` field is the OMM schema version only.
+
+`baseArtifactId` is server-side optimistic concurrency metadata. It lets the backend detect whether the user is saving on top of the latest known artifact. It is not stored as `.omm` document history.
+
+User document lifecycle:
+
+```text
+generation job
+  -> document + prediction_omm artifact
+  -> GET /api/documents/:documentId
+  -> currentEditableSource = prediction_omm
+  -> frontend edits in browser memory or local autosave
+  -> PUT /api/documents/:documentId/current-omm
+  -> currentEditableSource = user_saved_omm
+```
+
+Unsaved editor changes are browser-owned. The backend does not receive high-frequency canvas edits, branch drags, text moves, or per-object patches in Phase 2.
+
+The browser may keep a local recovery draft, for example:
+
+```text
+local draft key: omm:draft:<documentId>
+```
+
+That local draft may include the current in-memory OMM state, `baseArtifactId`, dirty flag, local asset cache references, and `lastLocalSavedAt`. It is not part of the `.omm` schema and is not a backend document revision.
+
+The backend receives editor state only on explicit save/export through `PUT /api/documents/:documentId/current-omm` or export endpoints.
 
 ## Corrections
 
@@ -399,6 +563,7 @@ Request:
 
 ```json
 {
+  "documentId": "doc_01h...",
   "predictionArtifactId": "artifact_prediction_omm",
   "correctionOmm": {
     "schema": "omm.document",
@@ -420,6 +585,7 @@ Response:
   "ok": true,
   "data": {
     "artifactId": "artifact_correction_omm",
+    "documentId": "doc_01h...",
     "predictionArtifactId": "artifact_prediction_omm"
   }
 }
@@ -429,7 +595,7 @@ Response:
 
 ### POST /api/exports
 
-Creates an export job from a user-facing OMM document.
+Creates an export job from a user-saved-omm (`user_saved_omm`) document.
 
 Request:
 
@@ -437,7 +603,7 @@ Request:
 {
   "documentId": "doc_01h...",
   "format": "png",
-  "sourceArtifactId": "artifact_user_omm_v2",
+  "sourceArtifactId": "artifact_user_saved_omm_v2",
   "options": {
     "scale": 2,
     "transparentBackground": false
@@ -488,7 +654,7 @@ Export rules:
 
 - `.omm` export may return the current JSON-backed OMM document directly.
 - PNG and SVG are rendered from the selected OMM artifact.
-- `debug_bundle` and `phase3_dataset_seed` require admin/operator authorization or paid/debug entitlement.
+- `debug_bundle` and `phase3_dataset_seed` are admin-only.
 - Export endpoints must verify document ownership and export entitlement.
 
 ## Payments
@@ -525,7 +691,9 @@ Webhook handling must verify provider signatures before changing quota, entitlem
 
 ## Internal Worker Boundary
 
-The browser must never call the worker directly. The TypeScript API dispatches worker jobs using an internal command or queue message.
+The browser must never call the worker directly. The TypeScript API dispatches worker jobs through a backend queue.
+
+Phase 2 should use queue-based worker dispatch as the baseline architecture rather than a synchronous request/response worker call. Local development may run a worker process on the same machine, but the API-to-worker contract is still a queued job with explicit input and output artifact locations.
 
 Target command shape:
 
@@ -565,7 +733,8 @@ The API backend imports worker output into managed artifacts, assigns artifact I
 
 - Authenticated generation is required before model or CV costs are incurred.
 - Artifact reads require owner access unless the artifact is explicitly public.
-- `prediction_omm` is user-readable for debugging and editor initialization.
+- `prediction_omm` is frontend-readable for debugging and editor initialization.
+- User-saved-omm (`user_saved_omm`) must not include masks, debug evidence, or raw OCR evidence by default.
 - `correction_omm` is internal/admin by default.
 - Payment webhooks must be signature verified.
 - Export requests must verify both ownership and entitlement.

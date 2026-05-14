@@ -1,9 +1,19 @@
 ## ADDED Requirements
 
 ### Requirement: Unified OMM document format
-The system SHALL use one JSON-backed `.omm` document format for user-saved, prediction-produced, and correction-produced Organic Mind Map documents.
+The system SHALL use one JSON-backed `.omm` document format for user-saved-omm (`user_saved_omm`), prediction-produced, and correction-produced Organic Mind Map documents.
 
-#### Scenario: User-saved OMM is written
+#### Scenario: Product document references OMM artifacts
+- **WHEN** the backend stores a generated or saved map
+- **THEN** it keeps the product `document` as a container record and stores `prediction_omm`, user-saved-omm (`user_saved_omm`), and `correction_omm` as artifact-backed OMM document instances
+- **AND** it does not treat `document`, `artifact`, and OMM JSON content as the same layer
+
+#### Scenario: Admin correction is stored
+- **WHEN** an admin creates or updates `correction_omm`
+- **THEN** the user-visible document lifecycle and current user-saved-omm remain unchanged
+- **AND** correction data remains internal/admin unless a later explicit user-facing workflow is introduced
+
+#### Scenario: user-saved-omm is written
 - **WHEN** the user saves or exports an editable map
 - **THEN** the system writes a JSON-backed `.omm` document instance using the shared OMM document schema
 
@@ -17,7 +27,7 @@ The system SHALL use one JSON-backed `.omm` document format for user-saved, pred
 
 #### Scenario: OMM producer differs
 - **WHEN** an OMM document is produced by the user editor, CV pipeline, or correction workflow
-- **THEN** the document records producer/provenance metadata so downstream systems can distinguish user-facing, prediction, and correction instances without treating them as different formats
+- **THEN** the OMM document records producer/provenance metadata so downstream systems can distinguish user-saved-omm, `prediction_omm`, and `correction_omm` instances without treating them as different formats
 
 ### Requirement: prediction_omm content
 The system SHALL produce a stable `prediction_omm` OMM document for every CV extraction run.

@@ -131,7 +131,11 @@ The editor should provide an independent association-line tool, separate from th
 
 `.omm` is the Organic Mind Map document file format. Like `.excalidraw`, it is a product-specific file extension backed by JSON.
 
-There is one OMM file format. Names such as `prediction_omm`, `correction_omm`, and user-facing `.omm` describe where an OMM document came from or what stage it represents; they are not separate file formats.
+There is one OMM file format. Names such as `prediction_omm`, `correction_omm`, and `user-saved-omm` describe where an OMM document came from or what stage it represents; they are not separate file formats.
+
+An `.omm` file is a current-state snapshot. It does not embed file modification history, undo/redo stacks, or document version history. Its root `version` means schema version only.
+
+If the backend keeps previous saves, revisions, or optimistic concurrency data, those belong to the artifact/storage layer, not inside the `.omm` file.
 
 An OMM document may store:
 - content outline
@@ -143,9 +147,44 @@ An OMM document may store:
 - embedded or referenced assets needed to reopen the document
 - optional masks, debug references, correction records, or provenance depending on the producer and audience
 
-User-facing `.omm` files saved from the editor should not include masks by default. Masks are internal extraction, correction, debug, and training data, not normal user-facing canvas objects.
+`user-saved-omm` files saved from the editor should not include masks by default. Masks are internal extraction, correction, debug, and training data, not normal user-facing canvas objects.
 
 PNG and SVG exports should be rendered from an OMM document.
+
+## Document
+
+`document` is the product-layer record/container for one generated or saved Organic Mind Map.
+
+It is not an `.omm` file and it is not a storage artifact. A document groups the lifecycle state and artifact references that belong to one map.
+
+A document may reference:
+
+- `content_outline` artifact
+- `reference_image` artifact
+- `prediction_omm` artifact
+- `user-saved-omm` artifact, after the user saves editor state
+- `correction_omm` artifact, for internal/admin correction
+- PNG/SVG/export artifacts
+
+Generation can create a document before a `user-saved-omm` exists. In that state, the document's current editable source is `prediction_omm`. After the user saves, the current editable source becomes `user-saved-omm`.
+
+Phase 2 document lifecycle values are:
+
+```text
+generated
+saved
+archived
+```
+
+Admin-only `correction_omm` does not change the user-visible document lifecycle and does not mutate the user's current `user-saved-omm`.
+
+Rule:
+
+```text
+document = product container / lifecycle record
+artifact = stored file/blob/reference
+OMM      = JSON-backed document content inside selected artifacts
+```
 
 ## Artifact
 
@@ -158,7 +197,7 @@ Examples:
 - `reference_image`
 - `content_outline`
 - `prediction_omm`
-- `user_omm`
+- `user-saved-omm`
 - `correction_omm`
 - `mask`
 - `debug_overlay`
@@ -205,7 +244,29 @@ It contains model and algorithm outputs such as:
 - confidence scores
 - extractor metadata and debug artifact references
 
-`prediction_omm` uses the same OMM JSON-backed document format, but its producer is the machine extraction pipeline. It is usually retained by the server for debugging, replay, quality comparison, and Phase 3 training data rather than exported as the user's final polished map.
+`prediction_omm` uses the same OMM JSON-backed document format, but its producer is the machine extraction pipeline. It is the complete extraction working document and may be read by the frontend to initialize the editor, including masks, debug references, OCR evidence, and provenance.
+
+The normal editor UI should not present masks as user-facing canvas objects. When the user saves, the result should become `user-saved-omm` and strip masks/debug/OCR internals by default.
+
+## user-saved-omm
+
+`user-saved-omm` is an OMM document instance saved or exported by the user-facing editor.
+
+Implementation note: backend API enum values use snake_case, so the artifact/document source kind for this product concept is `user_saved_omm`.
+
+It contains the clean current editable map state:
+
+- surface
+- content outline
+- center asset
+- branches and subbranches
+- texts
+- assets and asset groups
+- cloud boundaries
+- association lines
+- metadata needed to reopen the map
+
+It should not include masks, debug overlays, raw OCR evidence, extraction-only diagnostics, or Phase 3 training labels by default.
 
 ## correction_omm
 
@@ -228,7 +289,7 @@ The internal correction UI can derive corrected training truth from:
 prediction_omm + correction_omm
 ```
 
-User-facing OMM exports should generally contain the current editable map state and avoid full internal debug data by default. Server-side systems may still retain `prediction_omm` and `correction_omm` instances for internal quality and Phase 3 training.
+`user-saved-omm` exports should generally contain the current editable map state and avoid full internal debug data by default. Server-side systems may still retain `prediction_omm` and `correction_omm` instances for internal quality and Phase 3 training.
 
 ## Branch Schema
 

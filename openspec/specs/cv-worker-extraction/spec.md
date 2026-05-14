@@ -1,10 +1,10 @@
 ## ADDED Requirements
 
 ### Requirement: CV worker extraction command
-The system SHALL provide a backend-oriented CV worker interface for extracting editable map artifacts from a reference image and content outline.
+The system SHALL provide a queue-based backend CV worker interface for extracting editable map artifacts from a reference image and content outline.
 
 #### Scenario: Worker receives image and outline
-- **WHEN** the worker is invoked with `reference.png`, a content outline, and an output directory
+- **WHEN** the worker receives a queued extraction job with `reference.png`, a content outline, and an output directory
 - **THEN** it runs the Phase 2 extraction pipeline and writes `prediction_omm` plus referenced masks, crops, SVGs, and debug previews
 
 #### Scenario: Worker uses default profile

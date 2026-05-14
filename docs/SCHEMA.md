@@ -8,15 +8,40 @@ The schema is intentionally product-specific. OMM is not a generic whiteboard fo
 
 `.omm` is the single JSON-backed Organic Mind Map document format.
 
+An OMM document is a current-state snapshot, similar to an `.excalidraw` file. It stores the current editable map state, not embedded edit history.
+
+The root `version` field is the OMM schema version. It is not a user edit revision, file history counter, undo stack, or collaboration clock.
+
+Do not store document history inside `.omm`:
+
+```text
+history: []
+versions: []
+undoStack: []
+revisionLog: []
+```
+
+Server-side artifact storage may keep revisions, previous artifacts, audit records, or optimistic concurrency metadata. Those are storage/application concerns, not OMM document schema concerns.
+
 These names describe producer or lifecycle stage, not different file formats:
 
 ```text
-user-saved .omm   = OMM document saved by the user-facing editor
-prediction_omm    = OMM document produced by the CV/OCR extraction pipeline
-correction_omm    = OMM document produced by internal/admin correction workflow
+user-saved-omm = OMM document saved/exported by the user-facing editor
+prediction_omm = OMM document produced by the CV/OCR extraction pipeline
+correction_omm = OMM document produced by internal/admin correction workflow
 ```
 
 All three use the same OMM document schema. They differ by `producer`, provenance, and included internal/debug data.
+
+This schema defines OMM JSON content only. Product `document` records and `artifact` storage metadata are API/storage concepts around the OMM file; they should not be embedded as document history or storage records inside `.omm`.
+
+Layering rule:
+
+```text
+document = product container / lifecycle record
+artifact = stored file/blob/reference
+OMM      = JSON-backed document content inside selected artifacts
+```
 
 ## content_outline.json
 
@@ -174,12 +199,12 @@ import
 
 Producer profile rules:
 
-- `user_editor`: user-facing saved `.omm`. It should contain editable business objects and must not include `masks` by default.
+- `user_editor`: `user-saved-omm` (API artifact kind `user_saved_omm`). It should contain editable business objects and must not include `masks` by default.
 - `prediction_cv`: machine extraction output. It may include prediction masks, OCR evidence, debug references, and extractor diagnostics.
 - `admin_correction`: internal correction output. It may include corrected masks, correction operations, and Phase 3 training labels.
-- `import`: imported external data. It should be normalized before becoming a user-facing saved `.omm`.
+- `import`: imported external data. It should be normalized before becoming `user-saved-omm`.
 
-If a user-facing `.omm` is exported for debugging or Phase 3 dataset preparation, that should be an explicit export profile such as `debug_bundle` or `phase3_dataset_seed`, not the default save behavior.
+If a user wants to export debugging or Phase 3 dataset material, that should be an explicit export profile such as `debug_bundle` or `phase3_dataset_seed`, not default `user-saved-omm` behavior.
 
 ## Surface
 
@@ -433,7 +458,9 @@ Association lines do not mutate branch/subbranch hierarchy.
 
 Masks are internal extraction, correction, and training data. They are mostly present in `prediction_omm` and `correction_omm`.
 
-User-saved `.omm` documents with `producer.kind: "user_editor"` must not include `masks` by default. The user-facing editor should save editable business objects such as branches, subbranches, texts, assets, asset groups, cloud boundaries, and association lines. Mask data should stay in server-retained `prediction_omm`, internal `correction_omm`, debug bundles, or Phase 3 dataset exports.
+`prediction_omm` may be read by the frontend as a complete extraction working document, including masks, debug references, OCR evidence, and provenance. The normal editor UI should treat those fields as internal evidence, not as user-facing canvas objects.
+
+`user-saved-omm` documents with `producer.kind: "user_editor"` must not include `masks` by default. The user-facing editor should save editable business objects such as branches, subbranches, texts, assets, asset groups, cloud boundaries, and association lines. Mask data should stay in server-retained `prediction_omm`, internal `correction_omm`, debug bundles, or Phase 3 dataset exports.
 
 ```json
 {

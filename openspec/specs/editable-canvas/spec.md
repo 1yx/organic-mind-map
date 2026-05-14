@@ -15,12 +15,33 @@ The product SHALL present the Phase 2 web experience as an app-first editable ca
 - **WHEN** no user-generated artifact is selected
 - **THEN** the canvas still supports inspection and editing of the onboarding map artifact where allowed
 
+#### Scenario: Collaboration features are considered
+- **WHEN** Phase 2 canvas implementation begins
+- **THEN** it does not introduce WebSocket scene sync, shared-room presence, remote cursors, or collaborative merge protocols
+
 ### Requirement: prediction_omm rendering
-The canvas SHALL render `prediction_omm` into a user-editable map view and save user-facing work as `.omm`.
+The canvas SHALL load the product document's `currentEditableSource`, render `prediction_omm` into a user-editable map view when no user save exists, and save user work as user-saved-omm (`user_saved_omm`).
 
 #### Scenario: prediction_omm is loaded
-- **WHEN** the frontend receives a `prediction_omm`
+- **WHEN** the frontend opens a generated product document whose `currentEditableSource` is `prediction_omm`
 - **THEN** it displays the reference image, extracted branches, text layers, doodle groups, masks, and debug overlays through user-selectable visibility controls
+
+#### Scenario: user-saved-omm exists
+- **WHEN** the frontend opens a product document whose `currentEditableSource` is `user_saved_omm`
+- **THEN** it loads the saved editable map state instead of reinitializing from `prediction_omm`
+
+#### Scenario: User saves generated result
+- **WHEN** the user saves an editor state that was initialized from `prediction_omm`
+- **THEN** the backend stores a user-saved-omm (`user_saved_omm`) artifact and updates the product document's `currentEditableSource`
+
+#### Scenario: User edits before saving
+- **WHEN** the user edits branches, text, assets, or groups in the canvas
+- **THEN** the frontend keeps those unsaved changes in browser memory and optional browser local draft storage
+- **AND** the backend does not receive high-frequency per-object edit patches in Phase 2
+
+#### Scenario: Browser reloads with an unsaved draft
+- **WHEN** a local draft exists for the current product document
+- **THEN** the frontend may offer recovery from browser storage without treating that local draft as a backend document revision or `.omm` history
 
 #### Scenario: Corrections exist
 - **WHEN** a `correction_omm` is loaded with the `prediction_omm`

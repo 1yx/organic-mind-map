@@ -143,12 +143,23 @@ Key rules:
 - Doodle prompts disambiguate short concepts before GPT-Image-2 generation; they are visual intent, not final extracted doodle geometry.
 - `reference.png` is visual evidence and style/layout input, not final editable truth.
 - `.omm` is the single JSON-backed Organic Mind Map document format, similar in spirit to `.excalidraw`.
-- `prediction_omm`, `correction_omm`, and user-saved `.omm` are OMM document instances from different producers/stages, not different file formats.
+- `prediction_omm`, `correction_omm`, and `user-saved-omm` are OMM document instances from different producers/stages, not different file formats.
 - PNG and SVG are rendered/exported from an OMM document; they are not sibling outputs of `correction_omm`.
 - `prediction_omm` stores CV/OCR predictions, masks, groups, branch centerlines, and debug references inside the OMM format.
 - `correction_omm` stores internal/admin correction truth for Phase 3 data inside the OMM format.
-- The editable canvas should be able to reopen a user-saved OMM document without regenerating GPT-Image-2 or rerunning CV.
+- The editable canvas should be able to reopen a user-saved-omm document without regenerating GPT-Image-2 or rerunning CV.
+- Unsaved editor changes are browser-owned. The backend stores `user-saved-omm` only when the user explicitly saves or exports; it does not receive high-frequency canvas edits in Phase 2.
 - Phase 3 training data comes from `reference.png + prediction_omm + correction_omm`.
+
+Excalidraw API comparison informs these Phase 2 boundaries:
+
+- OMM keeps Excalidraw's local-first scene editing lesson, but does not copy its collaboration stack in Phase 2.
+- OMM does not introduce encrypted public share links in Phase 2; authenticated document/artifact access is the baseline.
+- OMM generation status uses asynchronous job polling first. SSE may be added later for stage progress, but not for direct scene mutation.
+- OMM stores large binary files as artifacts with cacheable metadata rather than embedding them in ordinary JSON API responses.
+- OMM treats external URL imports as a later security-sensitive feature that requires allowlists, content-type validation, and size limits.
+- OMM does not create a user-visible document for a failed generation unless a valid `prediction_omm` exists.
+- OMM treats raw mask content as admin-only even when `prediction_omm` metadata is readable by the frontend.
 
 ### 2. Backend API Service (`@omm/api`)
 
@@ -159,19 +170,21 @@ TypeScript API backend = SaaS/product control plane
 Python CV workers = image extraction execution plane
 ```
 
-The TypeScript API owns auth, session, quota, payments, generation jobs, artifact ownership, LLM calls, GPT-Image-2 calls, and worker orchestration. The Python worker owns CV extraction only. The boundary between them is stable JSON artifacts and file/blob references.
+The TypeScript API owns auth, session, quota, payments, generation jobs, artifact ownership, LLM calls, GPT-Image-2 calls, and worker orchestration. The Python worker owns CV extraction only. The boundary between them is stable queue messages, JSON artifacts, and file/blob references.
 
 - **Orchestrator:** Receives text/content-outline input, validates auth and quotas.
 - **Outline Handler:** 
   - If text: calls LLM to generate JSON structure.
   - If content-outline-text: parses the indentation-based plain text format into standard JSON structure.
 - **Image Generation:** Calls GPT-Image-2 using the prompt and structure to get `reference.png`.
-- **Worker Dispatch:** Sends `reference.png`, content outline, extraction profile, and output location to Python CV workers.
+- **Worker Dispatch:** Enqueues jobs that send `reference.png`, content outline, extraction profile, and output location to Python CV workers.
 - **Artifact Ownership:** Stores job state and artifact references for authenticated users.
+- **Error Boundary:** Normalizes provider, quota, validation, cancellation, stale-save, and worker failures into stable API error codes.
+- **Artifact Cache Metadata:** Records MIME type, byte size, content hash, and cache policy for immutable artifacts where useful.
 
 ### 3. CV Extraction Pipeline (Python Workers)
 
-Python CV workers are intentionally not the product backend. They should be callable locally during Phase 2 prototyping and later through a queue or worker service. They receive explicit inputs and return artifacts; they do not own auth, quotas, payments, user sessions, or model-generation policy.
+Python CV workers are intentionally not the product backend. They should run behind a queue-based worker interface in Phase 2. They receive explicit inputs and return artifacts; they do not own auth, quotas, payments, user sessions, or model-generation policy.
 
 ```text
 reference.png + source_structure.json
@@ -240,8 +253,25 @@ Migrate `PHASE_2_*_attempts` into a stable backend Python worker service (`@omm/
 ### Stage 2: Frontend App Foundation
 Build `@omm/web` as a Vue/Vite Excalidraw-like app. The homepage loads an onboarding map artifact.
 
+The editor should keep the complete current OMM scene in browser memory, with browser local recovery for unsaved work:
+
+```text
+localStorage:
+  small editor preferences
+  recent document metadata
+  draft pointers
+
+IndexedDB:
+  local OMM draft snapshots
+  reference image cache
+  asset/blob cache
+  rendered preview cache where useful
+```
+
+Local draft recovery is not part of the `.omm` schema. It is a browser storage concern that protects users from refreshes, crashes, or temporary network loss before explicit save.
+
 ### Stage 3: Generation Orchestration
-Implement the TypeScript backend API to handle text/content-outline input, coordinate LLM and GPT-Image-2 calls, and dispatch extraction tasks to the Python CV workers.
+Implement the TypeScript backend API to handle text/content-outline input, coordinate LLM and GPT-Image-2 calls, and enqueue extraction tasks for the Python CV workers.
 
 ### Stage 4: Payments and Production Integration
 Implement Google/OpenAI SSO, integrate Stripe for quota management, and deploy the frontend, TypeScript API, and Python CV workers as a unified SaaS platform.
@@ -252,7 +282,8 @@ Implement Google/OpenAI SSO, integrate Stripe for quota management, and deploy t
 - The landing page must be the app itself.
 - Keep SaaS control-plane logic in the TypeScript API backend.
 - Keep CV/image-processing logic in Python workers.
-- Communicate between backend and workers through stable schemas and artifact references, not ad hoc process output.
+- Communicate between backend and workers through stable queue messages, schemas, and artifact references, not ad hoc process output.
+- Keep high-frequency editor operations in the browser. Do not introduce per-object backend patch APIs in Phase 2.
 - Keep intermediate artifacts inspectable via the web UI.
 - Use Tailwind only for application chrome and ordinary UI. Do not encode OMM branch colors, taper, text placement, asset grouping, or export appearance in Tailwind classes.
 - Do not allow Phase 2 editing work to blur the product into a generic whiteboard; keep strictly to the Buzan-style organic mind map identity.

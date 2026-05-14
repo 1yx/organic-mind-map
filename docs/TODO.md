@@ -12,7 +12,7 @@ Recommended execution order:
 2. **Done: Define stable product schemas.**
    Created `docs/SCHEMA.md` for:
    - `content_outline.json`
-   - unified `.omm` schema, including user-saved OMM, `prediction_omm`, and `correction_omm` instances
+   - unified `.omm` schema, including user-saved-omm, `prediction_omm`, and `correction_omm` instances
    - canonical `branch` / `subbranch` data
    - blank branches with optional concept text
    - cloud boundary objects for branch chunks
@@ -77,7 +77,7 @@ This is not only for model training. The same internal data also supports debugg
 
 ## OMM Schema TODO
 
-Define a stable unified `.omm` schema that can represent user-saved OMM documents, `prediction_omm`, and `correction_omm` instances.
+Define a stable unified `.omm` schema that can represent user-saved-omm documents, `prediction_omm`, and `correction_omm` instances.
 
 Before finalizing the schema, enforce these Buzan constraints from `docs/GUIDELINES.md`:
 
