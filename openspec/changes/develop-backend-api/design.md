@@ -10,7 +10,7 @@ content-outline-text or text prompt
   -> queued Python CV extraction
   -> prediction_omm + artifacts
   -> Vue/Paper.js editable canvas
-  -> explicit user_saved_omm save/export
+  -> explicit user-saved-omm save/export
 ```
 
 The backend must be the product control plane. It owns authentication, sessions, quota, payment gating, generation job state, artifact ownership, model calls, queue dispatch, document records, exports, and admin correction access. Python workers are execution units only; the browser never calls them directly.
@@ -23,14 +23,16 @@ artifact = stored file/blob/reference
 OMM      = JSON-backed document content inside selected artifacts
 ```
 
+Product terminology keeps `user-saved-omm` for the lifecycle concept. Implementation-facing API enum values use snake_case, so artifact kinds and `currentEditableSource.kind` use `user_saved_omm`.
+
 ## Goals / Non-Goals
 
 **Goals:**
 
 - Implement a TypeScript backend API for Phase 2 generation, document, artifact, save, export, quota, and correction workflows.
-- Create product `document` records only when a valid generated result exists or when the frontend submits a valid `user_saved_omm`.
+- Create product `document` records only when a valid generated result exists or when the frontend submits a valid `user-saved-omm`.
 - Use queue-based Python CV worker dispatch with explicit input/output artifact locations.
-- Keep unsaved editor state browser-owned and save complete `user_saved_omm` snapshots only on explicit save/export.
+- Keep unsaved editor state browser-owned and save complete `user-saved-omm` snapshots only on explicit save/export.
 - Make `prediction_omm` frontend-readable for editor initialization while keeping raw mask content and `correction_omm` admin-only.
 - Normalize backend errors into stable codes that the frontend can handle predictably.
 
@@ -48,7 +50,7 @@ OMM      = JSON-backed document content inside selected artifacts
 
 ### Use Product Documents as Lifecycle Containers
 
-The backend stores a product `document` record that references artifacts such as `content_outline`, `reference_image`, `prediction_omm`, optional `user_saved_omm`, optional internal `correction_omm`, and exports.
+The backend stores a product `document` record that references artifacts such as `content_outline`, `reference_image`, `prediction_omm`, optional `user-saved-omm`, optional internal `correction_omm`, and exports.
 
 Document lifecycle is intentionally small in Phase 2:
 
@@ -58,9 +60,9 @@ saved
 archived
 ```
 
-Admin `correction_omm` must not change document lifecycle or mutate the user's `user_saved_omm`.
+Admin `correction_omm` must not change document lifecycle or mutate the user's `user-saved-omm`.
 
-Alternative considered: treating `prediction_omm` or `user_saved_omm` as the document itself. This was rejected because product lifecycle, ownership, generated artifacts, admin corrections, and exports need a container above individual OMM instances.
+Alternative considered: treating `prediction_omm` or `user-saved-omm` as the document itself. This was rejected because product lifecycle, ownership, generated artifacts, admin corrections, and exports need a container above individual OMM instances.
 
 ### Use `currentEditableSource`
 
@@ -75,7 +77,7 @@ The document API returns:
 }
 ```
 
-If a `user_saved_omm` exists, `currentEditableSource` points to it. Otherwise it points to `prediction_omm`. This lets the frontend open generated output before the user has saved.
+If a `user-saved-omm` exists, `currentEditableSource` points to it. Otherwise it points to `prediction_omm`. This lets the frontend open generated output before the user has saved.
 
 Alternative considered: separate `/jobs/:jobId/edit` and `/documents/:documentId` routes. This was rejected because generated results are still product documents once a valid `prediction_omm` exists.
 
@@ -93,7 +95,7 @@ Alternative considered: creating partial documents for failed jobs. This was rej
 
 ### Browser Owns Unsaved Editor State
 
-The browser owns high-frequency editing state and optional local draft recovery. The backend receives editor state only through explicit save/export APIs that store full `user_saved_omm` snapshots.
+The browser owns high-frequency editing state and optional local draft recovery. The backend receives editor state only through explicit save/export APIs that store full `user-saved-omm` snapshots.
 
 Alternative considered: backend per-object patches. This was rejected for Phase 2 because collaboration and server-side edit logs are out of scope.
 
