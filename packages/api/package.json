@@ -1,0 +1,29 @@
+{
+  "name": "@omm/api",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Phase 2 TypeScript API backend",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.14.0",
+    "@omm/core": "workspace:*",
+    "hono": "^4.7.0",
+    "replicate": "^1.4.0",
+    "temporal-polyfill": "^0.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

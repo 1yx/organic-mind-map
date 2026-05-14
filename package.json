@@ -12,7 +12,8 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "dev:web": "pnpm --filter @omm/web dev",
-    "dev:cli": "pnpm --filter @omm/cli dev"
+    "dev:cli": "pnpm --filter @omm/cli dev",
+    "dev:api": "pnpm --filter @omm/api dev"
   },
   "engines": {
     "node": ">=20",
