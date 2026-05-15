@@ -8,7 +8,7 @@ The backend SHALL return stable API error codes for auth, quota, validation, sta
 - **THEN** the backend rejects the request with `quota_exhausted` or `rate_limited`
 
 #### Scenario: Save is stale
-- **WHEN** a user saves `user_saved_omm` with an outdated `baseArtifactId`
+- **WHEN** a user saves user-saved-omm (`user_saved_omm`) with an outdated `baseArtifactId`
 - **THEN** the backend rejects the save with `stale_document`
 
 #### Scenario: Provider fails

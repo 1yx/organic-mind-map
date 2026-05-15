@@ -21,7 +21,7 @@ The frontend SHALL keep unsaved canvas edits in browser memory and optional brow
 
 #### Scenario: User saves
 - **WHEN** the user explicitly saves the map
-- **THEN** the frontend sends a complete `user_saved_omm` snapshot to `PUT /api/documents/:documentId/current-omm`
+- **THEN** the frontend sends a complete user-saved-omm (`user_saved_omm`) snapshot to `PUT /api/documents/:documentId/current-omm`
 
 #### Scenario: Browser reloads
 - **WHEN** a local draft exists for the current document

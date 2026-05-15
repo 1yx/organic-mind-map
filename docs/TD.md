@@ -45,6 +45,11 @@ Backend API:
 ```text
 TypeScript
 Node.js runtime
+Hono HTTP framework
+Local PostgreSQL for product/control-plane state
+PostgreSQL-backed job queue for Phase 2 worker dispatch
+Local artifact storage with a future S3-compatible abstraction
+Replicate provider adapter for LLM / image / model calls
 Auth/session layer for Google/OpenAI SSO
 Stripe SDK
 Job orchestration
@@ -171,6 +176,14 @@ Python CV workers = image extraction execution plane
 ```
 
 The TypeScript API owns auth, session, quota, payments, generation jobs, artifact ownership, LLM calls, GPT-Image-2 calls, and worker orchestration. The Python worker owns CV extraction only. The boundary between them is stable queue messages, JSON artifacts, and file/blob references.
+
+Default Phase 2 backend choices:
+
+- **HTTP Framework:** Use Hono for the TypeScript API service. Hono is lightweight, Web Standard-oriented, and sufficient for the API control plane: auth/session middleware, quota checks, generation-job routes, artifact metadata, and worker dispatch. The backend complexity should stay in orchestration and schema boundaries rather than in a heavy application framework.
+- **Database:** Use local PostgreSQL first for durable product/control-plane state: users, sessions, documents, artifacts, generation jobs, quota counters, payment state, and provider events.
+- **Queue:** Use PostgreSQL as the Phase 2 job queue backend. Workers claim pending jobs with row locking such as `FOR UPDATE SKIP LOCKED`, while `generation_jobs` remains the product state of record. External queues such as Redis/BullMQ, Temporal, Cloud Tasks, or SQS are later scaling options, not the Phase 2 baseline.
+- **Artifact Storage:** Store binary and JSON artifacts through an artifact storage abstraction. Phase 2 can use local filesystem storage, but the API should treat it like object storage so it can later move to S3-compatible storage without changing document/job semantics.
+- **Model Provider:** Use Replicate through a provider adapter for LLM, image, and model calls. Business code should depend on normalized provider requests/responses, not raw Replicate payloads, so future providers or direct OpenAI calls remain replaceable.
 
 - **Orchestrator:** Receives text/content-outline input, validates auth and quotas.
 - **Outline Handler:** 

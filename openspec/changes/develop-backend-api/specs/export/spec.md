@@ -10,7 +10,7 @@ The export API SHALL export from an OMM artifact that belongs to the requested p
 
 #### Scenario: User exports editable document
 - **WHEN** the user exports an editable `.omm`
-- **THEN** the backend exports `user_saved_omm` as the normal user-saved editable artifact format
+- **THEN** the backend exports user-saved-omm (`user_saved_omm`) as the normal user-saved editable artifact format
 
 ### Requirement: Admin-only debug and dataset exports
 The export API SHALL keep debug bundles and Phase 3 dataset seed exports admin-only.
