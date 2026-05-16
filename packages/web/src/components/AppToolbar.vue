@@ -12,9 +12,23 @@ import {
   Type,
   Image,
   Eraser,
+  Eye,
+  EyeOff,
+  Save,
 } from "lucide-vue-next";
 
-defineProps<{ height: number }>();
+defineProps<{
+  height: number;
+  canSave?: boolean;
+  saving?: boolean;
+  isAdmin?: boolean;
+  showInternals?: boolean;
+}>();
+
+const emit = defineEmits<{
+  save: [];
+  toggleInternals: [];
+}>();
 
 const tools = [
   { name: "Select", icon: MousePointer2 },
@@ -62,5 +76,36 @@ const tools = [
         <component :is="tool.icon" :size="height - 16" />
       </button>
     </div>
+
+    <!-- Spacer -->
+    <div class="flex-1" />
+
+    <!-- Admin debug toggle -->
+    <button
+      v-if="isAdmin"
+      :title="showInternals ? 'Hide internal fields' : 'Show internal fields'"
+      class="flex items-center justify-center rounded p-1.5 text-purple-600 hover:bg-purple-50 transition-colors mr-1"
+      :style="{ width: `${height - 12}px`, height: `${height - 12}px` }"
+      @click="emit('toggleInternals')"
+    >
+      <EyeOff v-if="showInternals" :size="height - 16" />
+      <Eye v-else :size="height - 16" />
+    </button>
+
+    <!-- Save button -->
+    <button
+      title="Save"
+      :disabled="!canSave || saving"
+      class="flex items-center gap-1 rounded px-2 py-1 text-sm font-medium transition-colors"
+      :class="
+        canSave && !saving
+          ? 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
+          : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+      "
+      @click="emit('save')"
+    >
+      <Save :size="14" />
+      {{ saving ? "Saving…" : "Save" }}
+    </button>
   </div>
 </template>
