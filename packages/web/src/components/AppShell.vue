@@ -20,7 +20,7 @@ const {
 </script>
 
 <template>
-  <div class="flex justify-center w-screen h-screen overflow-hidden">
+  <div class="flex justify-center w-screen h-screen overflow-hidden bg-surface">
     <div
       class="flex flex-col h-full"
       :style="{ maxWidth: `${contentMaxWidth}px` }"
