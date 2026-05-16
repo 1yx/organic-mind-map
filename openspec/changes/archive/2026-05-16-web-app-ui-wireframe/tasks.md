@@ -28,4 +28,4 @@
 ## 6. Integration
 
 - [x] 6.1 Wire AppShell, AppToolbar, OutlineSidebar, CanvasViewport into the app entry point
-- [ ] 6.2 Verify layout renders correctly at 1280x800, ultrawide (2560x1080), and portrait (800x1280), confirming proportional scaling above minimums
+- [x] 6.2 Verify layout renders correctly at 1280x800, ultrawide (2560x1080), and portrait (800x1280), confirming proportional scaling above minimums
