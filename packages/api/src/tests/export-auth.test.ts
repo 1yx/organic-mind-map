@@ -78,7 +78,7 @@ describe("Export job creation", () => {
       body: JSON.stringify({
         documentId: docA.documentId,
         sourceArtifactId: docB.sourceArtifactId,
-        format: "svg",
+        format: "png",
       }),
     });
     expect(res.status).toBe(422);
@@ -140,7 +140,7 @@ describe("Export job status", () => {
       headers: { ...harness.authHeaders, "Content-Type": "application/json" },
       body: JSON.stringify({
         documentId: doc.documentId,
-        format: "svg",
+        format: "png",
       }),
     });
     const created = await create.json();

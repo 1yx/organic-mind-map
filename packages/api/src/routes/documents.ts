@@ -9,6 +9,9 @@ import type { ArtifactRecord, EditableSource } from "../models/index";
 import { contentHash, createId } from "../services/ids";
 import { nowIso } from "../temporal";
 
+const MAX_USER_SAVED_OMM_BYTES = 1024 * 1024;
+const saveLocks = new Map<string, Promise<void>>();
+
 function validateUserSavedOmm(value: unknown): string {
   if (!value || typeof value !== "object") {
     throw new AppError("validation_failed", "omm is required.");
@@ -23,7 +26,31 @@ function validateUserSavedOmm(value: unknown): string {
       "user_saved_omm cannot include masks, raw OCR evidence, or debug internals.",
     );
   }
-  return JSON.stringify(value);
+  const content = JSON.stringify(value);
+  if (Buffer.byteLength(content) > MAX_USER_SAVED_OMM_BYTES) {
+    throw new AppError("payload_too_large", "OMM payload is too large.");
+  }
+  return content;
+}
+
+async function withDocumentSaveLock<T>(
+  documentId: string,
+  action: () => Promise<T>,
+): Promise<T> {
+  const previous = saveLocks.get(documentId) ?? Promise.resolve();
+  let release!: () => void;
+  const current = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const chained = previous.then(() => current);
+  saveLocks.set(documentId, chained);
+  await previous;
+  try {
+    return await action();
+  } finally {
+    release();
+    if (saveLocks.get(documentId) === chained) saveLocks.delete(documentId);
+  }
 }
 
 function userSavedArtifact(params: {
@@ -122,59 +149,63 @@ async function handleSaveCurrentOmm(c: import("hono").Context) {
   if (!user) throw new AppError("unauthorized", "Authentication required.");
   const storage = c.get("storage");
   const documentId = String(c.req.param("documentId"));
-  const document = await storage.getDocument(documentId);
-  if (!document || document.ownerUserId !== user.id) {
-    throw new AppError("not_found", "Document not found.");
-  }
-
   const body: Record<string, unknown> = await c.req.json();
   const ommContent = validateUserSavedOmm(body?.omm);
-  const currentSource = await storage.resolveCurrentEditableSource(documentId);
 
-  if (
-    typeof body.baseArtifactId === "string" &&
-    currentSource &&
-    body.baseArtifactId !== currentSource.artifactId
-  ) {
-    throw new AppError(
-      "stale_document",
-      "Document has been modified since last load.",
-    );
-  }
+  return withDocumentSaveLock(documentId, async () => {
+    const document = await storage.getDocument(documentId);
+    if (!document || document.ownerUserId !== user.id) {
+      throw new AppError("not_found", "Document not found.");
+    }
 
-  const artifactId = createId("artifact_user_saved_omm");
-  const editableSource: EditableSource = {
-    kind: "user_saved_omm",
-    artifactId,
-  };
-  await storage.saveArtifact(
-    userSavedArtifact({
-      id: artifactId,
-      content: ommContent,
-      ownerUserId: user.id,
-      documentId,
-    }),
-    ommContent,
-  );
-  await storage.updateDocument(documentId, {
-    lifecycle: "saved",
-    artifacts: {
-      ...document.artifacts,
-      userSavedOmm: artifactId,
-    },
-    currentEditableSource: editableSource,
-  });
-  return c.json(
-    ok(
-      {
+    const currentSource =
+      await storage.resolveCurrentEditableSource(documentId);
+
+    if (
+      typeof body.baseArtifactId === "string" &&
+      currentSource &&
+      body.baseArtifactId !== currentSource.artifactId
+    ) {
+      throw new AppError(
+        "stale_document",
+        "Document has been modified since last load.",
+      );
+    }
+
+    const artifactId = createId("artifact_user_saved_omm");
+    const editableSource: EditableSource = {
+      kind: "user_saved_omm",
+      artifactId,
+    };
+    await storage.saveArtifact(
+      userSavedArtifact({
+        id: artifactId,
+        content: ommContent,
+        ownerUserId: user.id,
         documentId,
-        artifactId,
-        currentEditableSource: editableSource,
-        savedAt: nowIso(),
+      }),
+      ommContent,
+    );
+    await storage.updateDocument(documentId, {
+      lifecycle: "saved",
+      artifacts: {
+        ...document.artifacts,
+        userSavedOmm: artifactId,
       },
-      c.get("requestId"),
-    ),
-  );
+      currentEditableSource: editableSource,
+    });
+    return c.json(
+      ok(
+        {
+          documentId,
+          artifactId,
+          currentEditableSource: editableSource,
+          savedAt: nowIso(),
+        },
+        c.get("requestId"),
+      ),
+    );
+  });
 }
 
 async function handleArchiveDocument(c: import("hono").Context) {

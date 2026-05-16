@@ -155,6 +155,10 @@ export type UserRecord = {
   name: string;
   role: "user" | "admin";
   plan: "trial" | "paid";
+  generationQuotaRemaining?: number;
+  generationQuotaReserved?: number;
+  rateLimited?: boolean;
+  processedPaymentEventIds?: string[];
   createdAt: string;
 };
 

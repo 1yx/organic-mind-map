@@ -56,6 +56,9 @@ export function registerExportRoutes(app: AppHono) {
         `${format} exports require admin access.`,
       );
     }
+    if (format === "svg" && user.plan !== "paid") {
+      throw new AppError("forbidden", "SVG export requires paid plan.");
+    }
     const storage = c.get("storage");
     const documentId = String(body.documentId);
     const document = await storage.getDocument(documentId);

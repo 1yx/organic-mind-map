@@ -102,3 +102,15 @@
 - [x] 12.3 P1: Replace generation-job stubs with persisted job creation, quota reservation/finalization, `content-outline-text` parsing, provider calls, artifact writes, worker enqueue, cancellation state, and document creation only after a valid `prediction_omm`.
 - [x] 12.4 P1: Replace document, artifact, admin correction, and export route stubs with storage-backed implementations, ownership checks, admin-only internal artifact enforcement, source artifact/document validation, and real `currentEditableSource` resolution.
 - [x] 12.5 P1: Strengthen API tests so they verify real storage-backed behavior, authorization denial paths, worker/provider failure behavior, stale save behavior, and export source ownership instead of only stub response shapes or hard-coded arrays.
+
+## 13. API Test Coverage Completion
+
+- [x] 13.1 Add provider failure tests that mock LLM/image provider failures, assert stable `provider_failed`, and verify no product document is created before a valid `prediction_omm`.
+- [x] 13.2 Add worker completion/failure tests that cover worker output import, job stage transitions, retry-safe `worker_failed` diagnostics, and no user-visible document on pre-`prediction_omm` worker failure.
+- [x] 13.3 Add quota and rate-limit tests for exhausted generation quota, reservation release/consume behavior, and stable `quota_exhausted` / `rate_limited` envelopes.
+- [x] 13.4 Add billing webhook tests that verify paid plan/quota updates, ignored duplicate webhook events, and stable validation/authorization errors for malformed payment events.
+- [x] 13.5 Add large artifact delivery tests for immutable binary artifacts, cache headers, payload-size/content-type validation, and signed URL or streaming fallback behavior.
+- [x] 13.6 Add admin correction tests that verify `correction_omm` writes are admin-only, linked to the source `prediction_omm`, and do not mutate document lifecycle or `currentEditableSource`.
+- [x] 13.7 Add export entitlement tests for trial vs paid users across `.omm`, PNG, SVG, `debug_bundle`, and `phase3_dataset_seed`.
+- [x] 13.8 Add session cookie tests for `omm_user_id` authentication in addition to the internal `x-omm-user-id` test header path.
+- [x] 13.9 Add concurrent stale-save tests that simulate racing `baseArtifactId` saves and verify only the current source can be updated.

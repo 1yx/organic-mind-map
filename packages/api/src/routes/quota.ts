@@ -11,13 +11,19 @@ export function registerQuotaRoutes(app: AppHono) {
   app.get("/api/quota", (c) => {
     const user = c.get("user");
     if (!user) throw new AppError("unauthorized", "Authentication required.");
+    const remaining = user.generationQuotaRemaining ?? 10;
+    const reserved = user.generationQuotaReserved ?? 0;
     return c.json(
       ok(
         {
           plan: user.plan,
-          generation: { remaining: 10, reserved: 0, resetAt: null },
-          exports: { png: true, svg: false, debugBundle: false },
-          upgradeRequired: false,
+          generation: { remaining, reserved, resetAt: null },
+          exports: {
+            png: true,
+            svg: user.plan === "paid",
+            debugBundle: user.role === "admin",
+          },
+          upgradeRequired: user.plan !== "paid" && remaining <= 0,
         },
         c.get("requestId"),
       ),

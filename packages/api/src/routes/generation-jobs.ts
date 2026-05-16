@@ -121,6 +121,12 @@ async function handleCreateJob(c: import("hono").Context) {
   const replicate = c.get("replicate");
 
   const body: Record<string, unknown> = await c.req.json();
+  if (user.rateLimited) {
+    throw new AppError("rate_limited", "Generation rate limit reached.");
+  }
+  if ((user.generationQuotaRemaining ?? 10) <= 0) {
+    throw new AppError("quota_exhausted", "Generation quota exhausted.");
+  }
   if (!body?.input || typeof body.input !== "object") {
     throw new AppError(
       "validation_failed",
@@ -206,6 +212,10 @@ async function handleCreateJob(c: import("hono").Context) {
     jobId,
     status: "reserved",
     createdAt: timestamp,
+  });
+  await storage.updateUser(user.id, {
+    generationQuotaRemaining: (user.generationQuotaRemaining ?? 10) - 1,
+    generationQuotaReserved: (user.generationQuotaReserved ?? 0) + 1,
   });
 
   await storage.saveGenerationJob({
@@ -294,6 +304,9 @@ async function handleCreateJob(c: import("hono").Context) {
   await storage.updateQuotaReservation(quotaReservationId, {
     status: "consumed",
   });
+  await storage.updateUser(user.id, {
+    generationQuotaReserved: user.generationQuotaReserved ?? 0,
+  });
 
   await workerQueue.enqueue({
     referenceImagePath: storage.getArtifactContentPath(referenceArtifactId),
@@ -350,7 +363,7 @@ async function handleCancelJob(c: import("hono").Context) {
   const user = c.get("user");
   if (!user) throw new AppError("unauthorized", "Authentication required.");
   const storage = c.get("storage");
-  const jobId = c.req.param("jobId");
+  const jobId = String(c.req.param("jobId"));
   const job = await storage.getGenerationJob(jobId);
   if (!job || job.ownerUserId !== user.id) {
     throw new AppError("not_found", "Generation job not found.");
@@ -377,9 +390,138 @@ async function handleCancelJob(c: import("hono").Context) {
   return c.json(ok({ jobId, status: "canceled" }, c.get("requestId")));
 }
 
+async function handleWorkerResult(c: import("hono").Context) {
+  const user = c.get("user");
+  if (!user) throw new AppError("unauthorized", "Authentication required.");
+  if (user.role !== "admin") {
+    throw new AppError("forbidden", "Admin access required.");
+  }
+  const storage = c.get("storage");
+  const jobId = String(c.req.param("jobId"));
+  const job = await storage.getGenerationJob(jobId);
+  if (!job) throw new AppError("not_found", "Generation job not found.");
+
+  const body: Record<string, unknown> = await c.req.json();
+  const output = body.output as
+    | {
+        ok?: boolean;
+        predictionOmm?: unknown;
+        artifacts?: Array<{
+          kind: ArtifactRecord["kind"];
+          content: string;
+          mimeType: string;
+          name: string;
+        }>;
+        diagnostics?: Array<{ code: string; message: string }>;
+      }
+    | undefined;
+  if (!output || typeof output.ok !== "boolean") {
+    throw new AppError("validation_failed", "output.ok is required.");
+  }
+
+  if (!output.ok) {
+    await storage.updateGenerationJob(jobId, {
+      status: "failed",
+      diagnostics: [
+        ...job.diagnostics,
+        ...(output.diagnostics ?? [
+          { code: "worker_failed", message: "Worker failed." },
+        ]),
+      ],
+      stages: [
+        ...job.stages,
+        {
+          stage: "extracting",
+          status: "failed",
+          startedAt: nowIso(),
+          finishedAt: nowIso(),
+          message: "Worker failed.",
+        },
+      ],
+    });
+    return c.json(ok({ jobId, status: "failed" }, c.get("requestId")));
+  }
+
+  if (!output.predictionOmm) {
+    throw new AppError("validation_failed", "predictionOmm is required.");
+  }
+
+  const timestamp = nowIso();
+  const documentId = createId("doc");
+  const predictionArtifactId = createId("artifact_prediction_omm");
+  const predictionContent = JSON.stringify(output.predictionOmm);
+  await storage.saveArtifact(
+    artifactRecord({
+      id: predictionArtifactId,
+      kind: "prediction_omm",
+      mimeType: "application/vnd.omm+json",
+      name: "prediction.omm",
+      content: predictionContent,
+      ownerUserId: job.ownerUserId,
+      jobId,
+      documentId,
+    }),
+    predictionContent,
+  );
+
+  for (const artifact of output.artifacts ?? []) {
+    const artifactId = createId(`artifact_${artifact.kind}`);
+    await storage.saveArtifact(
+      artifactRecord({
+        id: artifactId,
+        kind: artifact.kind,
+        mimeType: artifact.mimeType,
+        name: artifact.name,
+        content: artifact.content,
+        ownerUserId: job.ownerUserId,
+        jobId,
+        documentId,
+        accessPolicy:
+          artifact.kind === "mask" || artifact.kind === "debug_overlay"
+            ? "admin"
+            : "owner",
+      }),
+      artifact.content,
+    );
+  }
+
+  await storage.saveDocument({
+    id: documentId,
+    name: job.title ?? "Generated Map",
+    ownerUserId: job.ownerUserId,
+    generationJobId: jobId,
+    lifecycle: "generated",
+    artifacts: {
+      ...job.artifacts,
+      predictionOmm: predictionArtifactId,
+    },
+    currentEditableSource: {
+      kind: "prediction_omm",
+      artifactId: predictionArtifactId,
+    },
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  });
+  await storage.updateGenerationJob(jobId, {
+    status: "completed",
+    documentId,
+    artifacts: {
+      ...job.artifacts,
+      predictionOmm: predictionArtifactId,
+    },
+    diagnostics: [...job.diagnostics, ...(output.diagnostics ?? [])],
+    stages: buildStages(timestamp),
+  });
+
+  return c.json(
+    ok({ jobId, status: "completed", documentId }, c.get("requestId")),
+  );
+}
+
 /** Registers generation job routes on the app. */
 export function registerGenerationJobRoutes(app: AppHono) {
   app.post("/api/generation-jobs", handleCreateJob);
   app.get("/api/generation-jobs/:jobId", handleGetJobStatus);
   app.post("/api/generation-jobs/:jobId/cancel", handleCancelJob);
+  app.post("/api/generation-jobs/:jobId/worker-result", handleWorkerResult);
 }

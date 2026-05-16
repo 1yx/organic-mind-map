@@ -5,7 +5,8 @@
  * reservations as JSON files on disk. Will be replaced with a real
  * database adapter for production.
  */
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+/* eslint-disable max-lines-per-function */
+import { mkdir, readdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { AppConfig } from "../config/index";
 import type {
@@ -26,6 +27,8 @@ export type Storage = {
   saveArtifact(record: ArtifactRecord, content: Buffer | string): Promise<void>;
   /** Reads artifact binary content, or null if not found. */
   readArtifactContent(artifactId: string): Promise<Buffer | null>;
+  /** Deletes artifact content while preserving metadata, for unavailable tests. */
+  deleteArtifactContent(artifactId: string): Promise<void>;
   /** Returns the local content path for an artifact ID. */
   getArtifactContentPath(artifactId: string): string;
   /** Reads artifact metadata, or null if not found. */
@@ -39,6 +42,8 @@ export type Storage = {
   saveDocument(record: DocumentRecord): Promise<void>;
   /** Reads a document record, or null if not found. */
   getDocument(documentId: string): Promise<DocumentRecord | null>;
+  /** Lists documents owned by a user. */
+  listDocumentsByOwner(ownerUserId: string): Promise<DocumentRecord[]>;
   /** Patches an existing document record. */
   updateDocument(
     documentId: string,
@@ -72,6 +77,8 @@ export type Storage = {
   saveUser(record: UserRecord): Promise<void>;
   /** Reads a user record, or null if not found. */
   getUser(userId: string): Promise<UserRecord | null>;
+  /** Patches an existing user record. */
+  updateUser(userId: string, patch: Partial<UserRecord>): Promise<void>;
   /** Persists a quota reservation. */
   saveQuotaReservation(record: QuotaReservation): Promise<void>;
   /** Reads a quota reservation, or null if not found. */
@@ -111,6 +118,14 @@ function createArtifactStore(ctx: StorageCtx) {
         return await readFile(artifactPath(artifactId));
       } catch {
         return null;
+      }
+    },
+
+    async deleteArtifactContent(artifactId: string) {
+      try {
+        await unlink(artifactPath(artifactId));
+      } catch {
+        // Missing content is the target state.
       }
     },
 
@@ -168,6 +183,20 @@ function createDocumentStore(ctx: StorageCtx) {
     },
 
     getDocument: getDocumentRaw,
+
+    async listDocumentsByOwner(ownerUserId: string) {
+      await ctx.ensureDir();
+      const files = await readdir(ctx.storageDir);
+      const documents = await Promise.all(
+        files
+          .filter((file) => file.startsWith("doc_") && file.endsWith(".json"))
+          .map(async (file) => {
+            const data = await readFile(join(ctx.storageDir, file), "utf-8");
+            return JSON.parse(data) as DocumentRecord;
+          }),
+      );
+      return documents.filter((doc) => doc.ownerUserId === ownerUserId);
+    },
 
     async updateDocument(documentId: string, patch: Partial<DocumentRecord>) {
       const existing = await getDocumentRaw(documentId);
@@ -275,6 +304,18 @@ function createExportStore(ctx: StorageCtx) {
 
 /** Creates user storage methods. */
 function createUserStore(ctx: StorageCtx) {
+  async function getUserRaw(userId: string) {
+    try {
+      const data = await readFile(
+        join(ctx.storageDir, `user_${userId}.json`),
+        "utf-8",
+      );
+      return JSON.parse(data) as UserRecord;
+    } catch {
+      return null;
+    }
+  }
+
   return {
     async saveUser(record: UserRecord) {
       await ctx.ensureDir();
@@ -283,16 +324,14 @@ function createUserStore(ctx: StorageCtx) {
         JSON.stringify(record),
       );
     },
-    async getUser(userId: string) {
-      try {
-        const data = await readFile(
-          join(ctx.storageDir, `user_${userId}.json`),
-          "utf-8",
-        );
-        return JSON.parse(data) as UserRecord;
-      } catch {
-        return null;
-      }
+    getUser: getUserRaw,
+    async updateUser(userId: string, patch: Partial<UserRecord>) {
+      const existing = await getUserRaw(userId);
+      if (!existing) throw new Error(`User not found: ${userId}`);
+      await writeFile(
+        join(ctx.storageDir, `user_${userId}.json`),
+        JSON.stringify({ ...existing, ...patch }),
+      );
     },
   };
 }

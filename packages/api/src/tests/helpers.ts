@@ -10,7 +10,10 @@ import type { Bindings } from "../types";
 import type { UserRecord } from "../models/index";
 import { loadConfig } from "../config/index";
 import { createStorage, type Storage } from "../services/storage";
-import { createReplicateProvider } from "../services/replicate-provider";
+import {
+  createReplicateProvider,
+  type ReplicateProvider,
+} from "../services/replicate-provider";
 import { createWorkerQueue } from "../services/worker-queue";
 import { requestIdMiddleware } from "../middleware/request-id";
 import { authMiddleware, SESSION_USER_ID_HEADER } from "../middleware/auth";
@@ -62,12 +65,22 @@ export type TestHarness = {
   adminHeaders: HeadersInit;
 };
 
+export type TestAppOptions = {
+  replicate?: ReplicateProvider;
+  useExternalModels?: boolean;
+};
+
 /** Creates an isolated test app wired through the real auth middleware. */
-export async function createTestApp(): Promise<TestHarness> {
+export async function createTestApp(
+  options: TestAppOptions = {},
+): Promise<TestHarness> {
   const config = loadConfig();
   config.storage.localDir = mkdtempSync(join(tmpdir(), "omm-api-test-"));
+  if (options.useExternalModels) {
+    config.models.apiToken = "r8-test-token";
+  }
   const storage = createStorage(config);
-  const replicate = createReplicateProvider(config.models);
+  const replicate = options.replicate ?? createReplicateProvider(config.models);
   const workerQueue = createWorkerQueue(config);
 
   await storage.saveUser(testUser);
