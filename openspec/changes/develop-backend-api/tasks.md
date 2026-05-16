@@ -79,11 +79,11 @@
 
 ## 10. Frontend Integration Hooks
 
-- [ ] 10.1 Add frontend API client methods for generation jobs, documents, artifacts, saves, exports, quota, and session.
-- [ ] 10.2 Load canvas state from document `currentEditableSource`.
-- [ ] 10.3 Keep unsaved edits in browser memory and optional local draft storage keyed by `documentId`.
-- [ ] 10.4 Save complete `user_saved_omm` snapshots only on explicit save/export.
-- [ ] 10.5 Hide masks/debug evidence from normal canvas object UI while preserving admin/debug visibility where authorized.
+- [x] 10.1 Add frontend API client methods for generation jobs, documents, artifacts, saves, exports, quota, and session.
+- [x] 10.2 Load canvas state from document `currentEditableSource`.
+- [x] 10.3 Keep unsaved edits in browser memory and optional local draft storage keyed by `documentId`.
+- [x] 10.4 Save complete `user_saved_omm` snapshots only on explicit save/export.
+- [x] 10.5 Hide masks/debug evidence from normal canvas object UI while preserving admin/debug visibility where authorized.
 
 ## 11. Tests And Validation
 
