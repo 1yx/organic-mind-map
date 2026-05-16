@@ -26,6 +26,8 @@ export type Storage = {
   saveArtifact(record: ArtifactRecord, content: Buffer | string): Promise<void>;
   /** Reads artifact binary content, or null if not found. */
   readArtifactContent(artifactId: string): Promise<Buffer | null>;
+  /** Returns the local content path for an artifact ID. */
+  getArtifactContentPath(artifactId: string): string;
   /** Reads artifact metadata, or null if not found. */
   getArtifact(artifactId: string): Promise<ArtifactRecord | null>;
   /** Patches an existing artifact metadata record. */
@@ -61,12 +63,19 @@ export type Storage = {
   saveExportJob(record: ExportJobRecord): Promise<void>;
   /** Reads an export job record, or null if not found. */
   getExportJob(jobId: string): Promise<ExportJobRecord | null>;
+  /** Patches an existing export job record. */
+  updateExportJob(
+    jobId: string,
+    patch: Partial<ExportJobRecord>,
+  ): Promise<void>;
   /** Persists a user record. */
   saveUser(record: UserRecord): Promise<void>;
   /** Reads a user record, or null if not found. */
   getUser(userId: string): Promise<UserRecord | null>;
   /** Persists a quota reservation. */
   saveQuotaReservation(record: QuotaReservation): Promise<void>;
+  /** Reads a quota reservation, or null if not found. */
+  getQuotaReservation(id: string): Promise<QuotaReservation | null>;
   /** Patches an existing quota reservation. */
   updateQuotaReservation(
     id: string,
@@ -104,6 +113,8 @@ function createArtifactStore(ctx: StorageCtx) {
         return null;
       }
     },
+
+    getArtifactContentPath: artifactPath,
 
     async getArtifact(artifactId: string) {
       try {
@@ -230,6 +241,18 @@ function createJobStore(ctx: StorageCtx) {
 
 /** Creates export job storage methods. */
 function createExportStore(ctx: StorageCtx) {
+  async function getExportRaw(jobId: string) {
+    try {
+      const data = await readFile(
+        join(ctx.storageDir, `export_${jobId}.json`),
+        "utf-8",
+      );
+      return JSON.parse(data) as ExportJobRecord;
+    } catch {
+      return null;
+    }
+  }
+
   return {
     async saveExportJob(record: ExportJobRecord) {
       await ctx.ensureDir();
@@ -238,16 +261,14 @@ function createExportStore(ctx: StorageCtx) {
         JSON.stringify(record),
       );
     },
-    async getExportJob(jobId: string) {
-      try {
-        const data = await readFile(
-          join(ctx.storageDir, `export_${jobId}.json`),
-          "utf-8",
-        );
-        return JSON.parse(data) as ExportJobRecord;
-      } catch {
-        return null;
-      }
+    getExportJob: getExportRaw,
+    async updateExportJob(jobId: string, patch: Partial<ExportJobRecord>) {
+      const existing = await getExportRaw(jobId);
+      if (!existing) throw new Error(`Export job not found: ${jobId}`);
+      await writeFile(
+        join(ctx.storageDir, `export_${jobId}.json`),
+        JSON.stringify({ ...existing, ...patch, updatedAt: nowIso() }),
+      );
     },
   };
 }
@@ -278,6 +299,18 @@ function createUserStore(ctx: StorageCtx) {
 
 /** Creates quota reservation storage methods. */
 function createQuotaStore(ctx: StorageCtx) {
+  async function getQuotaReservationRaw(id: string) {
+    try {
+      const data = await readFile(
+        join(ctx.storageDir, `quota_${id}.json`),
+        "utf-8",
+      );
+      return JSON.parse(data) as QuotaReservation;
+    } catch {
+      return null;
+    }
+  }
+
   return {
     async saveQuotaReservation(record: QuotaReservation) {
       await ctx.ensureDir();
@@ -286,12 +319,10 @@ function createQuotaStore(ctx: StorageCtx) {
         JSON.stringify(record),
       );
     },
+    getQuotaReservation: getQuotaReservationRaw,
     async updateQuotaReservation(id: string, patch: Partial<QuotaReservation>) {
-      const data = await readFile(
-        join(ctx.storageDir, `quota_${id}.json`),
-        "utf-8",
-      );
-      const existing = JSON.parse(data) as QuotaReservation;
+      const existing = await getQuotaReservationRaw(id);
+      if (!existing) throw new Error(`Quota reservation not found: ${id}`);
       await writeFile(
         join(ctx.storageDir, `quota_${id}.json`),
         JSON.stringify({ ...existing, ...patch }),

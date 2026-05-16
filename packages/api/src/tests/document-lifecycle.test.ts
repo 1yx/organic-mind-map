@@ -3,146 +3,146 @@
  * correction-does-not-mutate-user-state behavior.
  */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { describe, it, expect } from "vitest";
-import { createTestApp } from "./helpers";
+import { beforeEach, describe, it, expect } from "vitest";
+import { createTestApp, type TestHarness } from "./helpers";
 
-const app = createTestApp();
+let harness: TestHarness;
 
-describe("Document creation", () => {
-  it("creates a document from frontend-submitted omm", async () => {
-    const res = await app.request("/api/documents", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: "Test Map",
-        omm: { schema: "omm.document", version: 1 },
-      }),
-    });
-    expect(res.status).toBe(201);
-    const body = await res.json();
-    expect(body.ok).toBe(true);
-    expect(body.data).toHaveProperty("documentId");
-    expect(body.data).toHaveProperty("artifactId");
-    expect(body.data.currentEditableSource.kind).toBe("user_saved_omm");
+beforeEach(async () => {
+  harness = await createTestApp();
+});
+
+async function createSavedDocument() {
+  const res = await harness.app.request("/api/documents", {
+    method: "POST",
+    headers: { ...harness.authHeaders, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: "Test Map",
+      omm: { schema: "omm.document", version: 1 },
+    }),
+  });
+  const body = await res.json();
+  return body.data as {
+    documentId: string;
+    artifactId: string;
+    currentEditableSource: { kind: string; artifactId: string };
+  };
+}
+
+describe("Document creation and retrieval", () => {
+  it("creates and persists a document from frontend-submitted omm", async () => {
+    const data = await createSavedDocument();
+    const document = await harness.storage.getDocument(data.documentId);
+    const artifact = await harness.storage.getArtifact(data.artifactId);
+
+    expect(document?.lifecycle).toBe("saved");
+    expect(document?.artifacts.userSavedOmm).toBe(data.artifactId);
+    expect(artifact?.kind).toBe("user_saved_omm");
+    expect(data.currentEditableSource.kind).toBe("user_saved_omm");
   });
 
-  it("requires omm in document creation", async () => {
-    const res = await app.request("/api/documents", {
+  it("requires a valid OMM in document creation", async () => {
+    const res = await harness.app.request("/api/documents", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: "Test" }),
+      headers: { ...harness.authHeaders, "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "Test", omm: { schema: "bad" } }),
     });
     expect(res.status).toBe(422);
     const body = await res.json();
     expect(body.error.code).toBe("validation_failed");
   });
-});
 
-describe("Document retrieval", () => {
-  it("document response has required fields", async () => {
-    const res = await app.request("/api/documents/doc_test_001");
+  it("GET returns persisted artifact references and currentEditableSource", async () => {
+    const created = await createSavedDocument();
+    const res = await harness.app.request(
+      `/api/documents/${created.documentId}`,
+      {
+        headers: harness.authHeaders,
+      },
+    );
     expect(res.status).toBe(200);
     const body = await res.json();
-    const data = body.data;
-
-    const fields = [
-      "id",
-      "name",
-      "lifecycle",
-      "artifacts",
-      "currentEditableSource",
-    ];
-    for (const field of fields) {
-      expect(data).toHaveProperty(field);
-    }
-  });
-
-  it("document lifecycle values are restricted", () => {
-    expect(["generated", "saved", "archived"]).toHaveLength(3);
-  });
-
-  it("artifacts object has all expected keys", async () => {
-    const res = await app.request("/api/documents/doc_artifact_keys");
-    const body = await res.json();
-    const artifacts = body.data.artifacts;
-    const keys = [
-      "contentOutline",
-      "referenceImage",
-      "predictionOmm",
-      "userSavedOmm",
-      "correctionOmm",
-    ];
-    for (const key of keys) {
-      expect(artifacts).toHaveProperty(key);
-    }
-  });
-});
-
-describe("Document save", () => {
-  it("saves user_saved_omm with PUT current-omm", async () => {
-    const res = await app.request("/api/documents/doc_save_test/current-omm", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        omm: { schema: "omm.document", version: 1 },
-      }),
-    });
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.ok).toBe(true);
-    expect(body.data).toHaveProperty("artifactId");
-    expect(body.data).toHaveProperty("savedAt");
+    expect(body.data.id).toBe(created.documentId);
+    expect(body.data.lifecycle).toBe("saved");
     expect(body.data.currentEditableSource.kind).toBe("user_saved_omm");
   });
+
+  it("denies reads across owners", async () => {
+    const created = await createSavedDocument();
+    const res = await harness.app.request(
+      `/api/documents/${created.documentId}`,
+      {
+        headers: harness.otherAuthHeaders,
+      },
+    );
+    expect(res.status).toBe(404);
+  });
 });
 
-describe("Editable source resolution", () => {
-  it("currentEditableSource prefers user_saved_omm over prediction_omm", () => {
-    const doc = {
-      artifacts: { predictionOmm: "art_pred", userSavedOmm: "art_saved" },
-    };
-    const source = doc.artifacts.userSavedOmm
-      ? {
-          kind: "user_saved_omm" as const,
-          artifactId: doc.artifacts.userSavedOmm,
-        }
-      : doc.artifacts.predictionOmm
-        ? {
-            kind: "prediction_omm" as const,
-            artifactId: doc.artifacts.predictionOmm,
-          }
-        : null;
-    expect(source?.kind).toBe("user_saved_omm");
+describe("Document save and archive", () => {
+  it("saves user_saved_omm with PUT current-omm and updates current source", async () => {
+    const created = await createSavedDocument();
+    const res = await harness.app.request(
+      `/api/documents/${created.documentId}/current-omm`,
+      {
+        method: "PUT",
+        headers: { ...harness.authHeaders, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          omm: { schema: "omm.document", version: 2 },
+          baseArtifactId: created.artifactId,
+        }),
+      },
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.artifactId).not.toBe(created.artifactId);
+    const document = await harness.storage.getDocument(created.documentId);
+    expect(document?.artifacts.userSavedOmm).toBe(body.data.artifactId);
+    expect(document?.lifecycle).toBe("saved");
   });
 
-  it("currentEditableSource falls back to prediction_omm", () => {
-    const doc = {
-      artifacts: { predictionOmm: "art_pred", userSavedOmm: null },
-    };
-    const source = doc.artifacts.userSavedOmm
-      ? {
-          kind: "user_saved_omm" as const,
-          artifactId: doc.artifacts.userSavedOmm,
-        }
-      : doc.artifacts.predictionOmm
-        ? {
-            kind: "prediction_omm" as const,
-            artifactId: doc.artifacts.predictionOmm,
-          }
-        : null;
-    expect(source?.kind).toBe("prediction_omm");
+  it("rejects normal saves that include internal masks/debug evidence", async () => {
+    const created = await createSavedDocument();
+    const res = await harness.app.request(
+      `/api/documents/${created.documentId}/current-omm`,
+      {
+        method: "PUT",
+        headers: { ...harness.authHeaders, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          omm: { schema: "omm.document", version: 1, masks: [] },
+          baseArtifactId: created.artifactId,
+        }),
+      },
+    );
+    expect(res.status).toBe(422);
   });
 
-  it("correction_omm does not mutate document lifecycle", () => {
-    const doc = {
-      lifecycle: "saved",
-      artifacts: { userSavedOmm: "art_saved_v1", correctionOmm: null },
-    };
-    const after = {
-      ...doc,
-      artifacts: { ...doc.artifacts, correctionOmm: "art_correction_v1" },
-    };
-    expect(after.lifecycle).toBe("saved");
-    expect(after.artifacts.userSavedOmm).toBe("art_saved_v1");
+  it("archives without deleting linked artifacts", async () => {
+    const created = await createSavedDocument();
+    const res = await harness.app.request(
+      `/api/documents/${created.documentId}/archive`,
+      { method: "POST", headers: harness.authHeaders },
+    );
+    expect(res.status).toBe(200);
+    const document = await harness.storage.getDocument(created.documentId);
+    const artifact = await harness.storage.getArtifact(created.artifactId);
+    expect(document?.lifecycle).toBe("archived");
+    expect(artifact).toBeTruthy();
+  });
+});
+
+describe("Generated document editable source", () => {
+  it("generated document starts from prediction_omm", async () => {
+    const res = await harness.app.request("/api/generation-jobs", {
+      method: "POST",
+      headers: { ...harness.authHeaders, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        input: { kind: "content_outline_text", text: "Center\n  Branch" },
+      }),
+    });
+    const body = await res.json();
+    const document = await harness.storage.getDocument(body.data.documentId);
+    expect(document?.lifecycle).toBe("generated");
+    expect(document?.currentEditableSource?.kind).toBe("prediction_omm");
   });
 });

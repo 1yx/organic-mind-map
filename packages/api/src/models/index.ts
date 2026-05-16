@@ -18,7 +18,8 @@ export type ArtifactKind =
   | "debug_overlay"
   | "png_export"
   | "svg_export"
-  | "debug_bundle";
+  | "debug_bundle"
+  | "phase3_dataset_seed";
 
 /** Persisted metadata for a stored artifact. */
 export type ArtifactRecord = {

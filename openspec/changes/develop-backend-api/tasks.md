@@ -94,3 +94,11 @@
 - [x] 11.5 Add stale save tests for `baseArtifactId`.
 - [x] 11.6 Add export authorization tests for user exports and admin-only debug/dataset exports.
 - [x] 11.7 Add worker queue contract tests using fixture input/output artifacts.
+
+## 12. Review Remediation
+
+- [x] 12.1 P0: Remove committed Git conflict markers from `packages/api/src/config/index.ts` and restore `@omm/api` typecheck/test parsing.
+- [x] 12.2 P1: Replace stubbed auth context in the real app with session/auth middleware so protected routes can authenticate outside tests.
+- [x] 12.3 P1: Replace generation-job stubs with persisted job creation, quota reservation/finalization, `content-outline-text` parsing, provider calls, artifact writes, worker enqueue, cancellation state, and document creation only after a valid `prediction_omm`.
+- [x] 12.4 P1: Replace document, artifact, admin correction, and export route stubs with storage-backed implementations, ownership checks, admin-only internal artifact enforcement, source artifact/document validation, and real `currentEditableSource` resolution.
+- [x] 12.5 P1: Strengthen API tests so they verify real storage-backed behavior, authorization denial paths, worker/provider failure behavior, stale save behavior, and export source ownership instead of only stub response shapes or hard-coded arrays.

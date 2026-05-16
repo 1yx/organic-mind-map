@@ -1,15 +1,19 @@
 /**
  * Test helpers for creating isolated Hono app instances.
  */
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import type { Bindings } from "../types";
 import type { UserRecord } from "../models/index";
 import { loadConfig } from "../config/index";
-import { createStorage } from "../services/storage";
+import { createStorage, type Storage } from "../services/storage";
 import { createReplicateProvider } from "../services/replicate-provider";
 import { createWorkerQueue } from "../services/worker-queue";
 import { requestIdMiddleware } from "../middleware/request-id";
+import { authMiddleware, SESSION_USER_ID_HEADER } from "../middleware/auth";
 import { errorHandler } from "../middleware/error-handler";
 import { registerSessionRoutes } from "../routes/session";
 import { registerQuotaRoutes } from "../routes/quota";
@@ -30,6 +34,16 @@ export const testUser: UserRecord = {
   createdAt: "2026-01-01T00:00:00Z",
 };
 
+/** Second test user for ownership denial tests. */
+export const otherUser: UserRecord = {
+  id: "user_test_002",
+  email: "other@example.com",
+  name: "Other User",
+  role: "user",
+  plan: "trial",
+  createdAt: "2026-01-01T00:00:00Z",
+};
+
 /** Admin test user for admin-only route tests. */
 export const adminUser: UserRecord = {
   id: "user_admin_001",
@@ -40,22 +54,30 @@ export const adminUser: UserRecord = {
   createdAt: "2026-01-01T00:00:00Z",
 };
 
-/**
- * Creates a test Hono app with an optional pre-set user.
- *
- * @param user - User to inject, or null for unauthenticated, or omitted for testUser.
- */
-export function createTestApp(user?: UserRecord | null): Hono<Bindings> {
+export type TestHarness = {
+  app: Hono<Bindings>;
+  storage: Storage;
+  authHeaders: HeadersInit;
+  otherAuthHeaders: HeadersInit;
+  adminHeaders: HeadersInit;
+};
+
+/** Creates an isolated test app wired through the real auth middleware. */
+export async function createTestApp(): Promise<TestHarness> {
   const config = loadConfig();
+  config.storage.localDir = mkdtempSync(join(tmpdir(), "omm-api-test-"));
   const storage = createStorage(config);
   const replicate = createReplicateProvider(config.models);
   const workerQueue = createWorkerQueue(config);
+
+  await storage.saveUser(testUser);
+  await storage.saveUser(otherUser);
+  await storage.saveUser(adminUser);
 
   const app = new Hono<Bindings>();
 
   app.use("*", cors());
   app.use("*", async (c, next) => {
-    c.set("user", user === undefined ? testUser : user);
     c.set("config", config);
     c.set("storage", storage);
     c.set("replicate", replicate);
@@ -63,6 +85,7 @@ export function createTestApp(user?: UserRecord | null): Hono<Bindings> {
     await next();
   });
   app.use("*", requestIdMiddleware);
+  app.use("*", authMiddleware);
 
   registerSessionRoutes(app);
   registerQuotaRoutes(app);
@@ -76,5 +99,11 @@ export function createTestApp(user?: UserRecord | null): Hono<Bindings> {
   app.get("/api/health", (c) => c.json({ ok: true }));
   app.onError(errorHandler);
 
-  return app;
+  return {
+    app,
+    storage,
+    authHeaders: { [SESSION_USER_ID_HEADER]: testUser.id },
+    otherAuthHeaders: { [SESSION_USER_ID_HEADER]: otherUser.id },
+    adminHeaders: { [SESSION_USER_ID_HEADER]: adminUser.id },
+  };
 }

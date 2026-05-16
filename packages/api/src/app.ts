@@ -12,6 +12,7 @@ import { createStorage } from "./services/storage";
 import { createReplicateProvider } from "./services/replicate-provider";
 import { createWorkerQueue } from "./services/worker-queue";
 import { requestIdMiddleware } from "./middleware/request-id";
+import { authMiddleware } from "./middleware/auth";
 import { errorHandler } from "./middleware/error-handler";
 import { registerSessionRoutes } from "./routes/session";
 import { registerQuotaRoutes } from "./routes/quota";
@@ -31,7 +32,6 @@ const app = new Hono<Bindings>();
 
 app.use("*", cors());
 app.use("*", async (c, next) => {
-  c.set("user", null);
   c.set("config", config);
   c.set("storage", storage);
   c.set("replicate", replicate);
@@ -39,6 +39,7 @@ app.use("*", async (c, next) => {
   await next();
 });
 app.use("*", requestIdMiddleware);
+app.use("*", authMiddleware);
 
 registerSessionRoutes(app);
 registerQuotaRoutes(app);
