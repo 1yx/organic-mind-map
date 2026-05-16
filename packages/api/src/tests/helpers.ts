@@ -16,7 +16,11 @@ import {
 } from "../services/replicate-provider";
 import { createWorkerQueue } from "../services/worker-queue";
 import { requestIdMiddleware } from "../middleware/request-id";
-import { authMiddleware, SESSION_USER_ID_HEADER } from "../middleware/auth";
+import {
+  authMiddleware,
+  createSessionCookieValue,
+  SESSION_USER_ID_COOKIE,
+} from "../middleware/auth";
 import { errorHandler } from "../middleware/error-handler";
 import { registerSessionRoutes } from "../routes/session";
 import { registerQuotaRoutes } from "../routes/quota";
@@ -70,12 +74,19 @@ export type TestAppOptions = {
   useExternalModels?: boolean;
 };
 
+function authCookieHeader(userId: string, secret: string): HeadersInit {
+  return {
+    cookie: `${SESSION_USER_ID_COOKIE}=${createSessionCookieValue(userId, secret)}`,
+  };
+}
+
 /** Creates an isolated test app wired through the real auth middleware. */
 export async function createTestApp(
   options: TestAppOptions = {},
 ): Promise<TestHarness> {
   const config = loadConfig();
   config.storage.localDir = mkdtempSync(join(tmpdir(), "omm-api-test-"));
+  config.payment.stripeWebhookSecret = "whsec_test";
   if (options.useExternalModels) {
     config.models.apiToken = "r8-test-token";
   }
@@ -115,8 +126,8 @@ export async function createTestApp(
   return {
     app,
     storage,
-    authHeaders: { [SESSION_USER_ID_HEADER]: testUser.id },
-    otherAuthHeaders: { [SESSION_USER_ID_HEADER]: otherUser.id },
-    adminHeaders: { [SESSION_USER_ID_HEADER]: adminUser.id },
+    authHeaders: authCookieHeader(testUser.id, config.auth.sessionSecret),
+    otherAuthHeaders: authCookieHeader(otherUser.id, config.auth.sessionSecret),
+    adminHeaders: authCookieHeader(adminUser.id, config.auth.sessionSecret),
   };
 }

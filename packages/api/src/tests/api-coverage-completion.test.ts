@@ -2,10 +2,15 @@
  * Additional API coverage for failure, entitlement, and boundary cases.
  */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, max-lines-per-function */
+import { createHmac } from "node:crypto";
 import { beforeEach, describe, it, expect } from "vitest";
 import type { GenerationJobRecord } from "../models/index";
 import { contentHash } from "../services/ids";
 import { nowIso } from "../temporal";
+import {
+  createSessionCookieValue,
+  SESSION_USER_ID_COOKIE,
+} from "../middleware/auth";
 import {
   adminUser,
   createTestApp,
@@ -64,6 +69,17 @@ async function seedQueuedJob(jobId: string) {
     updatedAt: timestamp,
   };
   await harness.storage.saveGenerationJob(job);
+}
+
+function signedStripeHeaders(payload: string) {
+  const timestamp = "1778880000";
+  const signature = createHmac("sha256", "whsec_test")
+    .update(`${timestamp}.${payload}`)
+    .digest("hex");
+  return {
+    "Content-Type": "application/json",
+    "stripe-signature": `t=${timestamp},v1=${signature}`,
+  };
 }
 
 describe("Provider and worker failure coverage", () => {
@@ -145,6 +161,50 @@ describe("Provider and worker failure coverage", () => {
     const document = await harness.storage.getDocument(body.data.documentId);
     expect(document?.lifecycle).toBe("generated");
     expect(document?.currentEditableSource?.kind).toBe("prediction_omm");
+    expect(body.data.artifactIds).toHaveLength(1);
+    const job = await harness.storage.getGenerationJob("job_worker_success");
+    expect(job?.artifacts.workerArtifacts).toEqual(body.data.artifactIds);
+  });
+
+  it("keeps existing job document linkage on worker success", async () => {
+    await seedQueuedJob("job_worker_existing_doc");
+    await harness.storage.saveDocument({
+      id: "doc_existing_worker",
+      name: "Existing worker doc",
+      ownerUserId: testUser.id,
+      generationJobId: "job_worker_existing_doc",
+      lifecycle: "generated",
+      artifacts: {},
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    });
+    await harness.storage.updateGenerationJob("job_worker_existing_doc", {
+      documentId: "doc_existing_worker",
+    });
+
+    const res = await harness.app.request(
+      "/api/generation-jobs/job_worker_existing_doc/worker-result",
+      {
+        method: "POST",
+        headers: {
+          ...harness.adminHeaders,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          output: {
+            ok: true,
+            predictionOmm: { schema: "omm.document", version: 1 },
+          },
+        }),
+      },
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.documentId).toBe("doc_existing_worker");
+    const job = await harness.storage.getGenerationJob(
+      "job_worker_existing_doc",
+    );
+    expect(job?.documentId).toBe("doc_existing_worker");
   });
 });
 
@@ -216,6 +276,9 @@ describe("Quota, billing, and session coverage", () => {
     expect(
       (await harness.storage.getQuotaReservation("quota_release"))?.status,
     ).toBe("released");
+    const restoredUser = await harness.storage.getUser(testUser.id);
+    expect(restoredUser?.generationQuotaRemaining).toBe(2);
+    expect(restoredUser?.generationQuotaReserved).toBe(0);
   });
 
   it("updates paid plan from billing webhook and ignores duplicate events", async () => {
@@ -224,10 +287,11 @@ describe("Quota, billing, and session coverage", () => {
       userId: testUser.id,
       type: "checkout.session.completed",
     };
+    const payload = JSON.stringify(event);
     const first = await harness.app.request("/api/billing/webhooks/stripe", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(event),
+      headers: signedStripeHeaders(payload),
+      body: payload,
     });
     expect(first.status).toBe(200);
     expect((await harness.storage.getUser(testUser.id))?.plan).toBe("paid");
@@ -236,8 +300,8 @@ describe("Quota, billing, and session coverage", () => {
       "/api/billing/webhooks/stripe",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(event),
+        headers: signedStripeHeaders(payload),
+        body: payload,
       },
     );
     expect((await duplicate.json()).data.duplicate).toBe(true);
@@ -246,19 +310,45 @@ describe("Quota, billing, and session coverage", () => {
       "/api/billing/webhooks/stripe",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: signedStripeHeaders(JSON.stringify({ id: "bad" })),
         body: JSON.stringify({ id: "bad" }),
       },
     );
     expect(malformed.status).toBe(422);
   });
 
-  it("authenticates session through omm_user_id cookie", async () => {
+  it("authenticates only through signed omm_user_id cookie", async () => {
     const res = await harness.app.request("/api/session", {
-      headers: { cookie: `omm_user_id=${testUser.id}` },
+      headers: {
+        cookie: `${SESSION_USER_ID_COOKIE}=${createSessionCookieValue(
+          testUser.id,
+          "dev-secret-change-me",
+        )}`,
+      },
     });
     expect(res.status).toBe(200);
     expect((await res.json()).data.authenticated).toBe(true);
+
+    const rawCookie = await harness.app.request("/api/session", {
+      headers: { cookie: `${SESSION_USER_ID_COOKIE}=${testUser.id}` },
+    });
+    expect((await rawCookie.json()).data.authenticated).toBe(false);
+
+    const spoofedHeader = await harness.app.request("/api/session", {
+      headers: { "x-omm-user-id": testUser.id },
+    });
+    expect((await spoofedHeader.json()).data.authenticated).toBe(false);
+  });
+
+  it("clears the session cookie on logout", async () => {
+    const res = await harness.app.request("/api/auth/logout", {
+      method: "POST",
+      headers: harness.authHeaders,
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("set-cookie")).toContain(
+      `${SESSION_USER_ID_COOKIE}=; Max-Age=0`,
+    );
   });
 });
 

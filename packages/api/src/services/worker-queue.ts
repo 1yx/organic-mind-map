@@ -8,7 +8,11 @@
 import { mkdir, readdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { AppConfig } from "../config/index";
-import type { WorkerJobPayload, WorkerOutput } from "../models/index";
+import type {
+  ArtifactKind,
+  WorkerJobPayload,
+  WorkerOutput,
+} from "../models/index";
 
 /** Result of processing a queued worker job. */
 export type JobResult = {
@@ -66,21 +70,25 @@ export function createWorkerQueue(config: AppConfig): WorkerQueue {
   };
 }
 
-/** Invokes the Python CV extraction pipeline and collects outputs. */
-async function runExtractionPipeline(
-  config: AppConfig,
-  payload: WorkerJobPayload,
-): Promise<WorkerOutput> {
+type ExecFileAsync = (
+  file: string,
+  args: string[],
+  options: { timeout: number },
+) => Promise<unknown>;
+
+async function createExecFileAsync(): Promise<ExecFileAsync> {
   const { execFile } = await import("node:child_process");
   const { promisify } = await import("node:util");
-  const execFileAsync = promisify(execFile);
+  return promisify(execFile) as ExecFileAsync;
+}
 
-  const outputDir = payload.outputDir;
-  await mkdir(outputDir, { recursive: true });
-
+async function extractLayers(
+  config: AppConfig,
+  payload: WorkerJobPayload,
+  execFileAsync: ExecFileAsync,
+) {
   const secondPath = config.worker.phase2SecondPath;
   const extractLayersScript = join(secondPath, "extract_layers.py");
-
   await execFileAsync(
     "uv",
     [
@@ -91,15 +99,20 @@ async function runExtractionPipeline(
       extractLayersScript,
       payload.referenceImagePath,
       "--out",
-      outputDir,
+      payload.outputDir,
     ],
     { timeout: config.worker.jobTimeoutMs },
   );
+}
 
+async function extractBranches(
+  config: AppConfig,
+  payload: WorkerJobPayload,
+  execFileAsync: ExecFileAsync,
+) {
   const thirdPath = config.worker.phase2ThirdPath;
   const extractBranchesScript = join(thirdPath, "extract_editable_branches.py");
-  const branchesMaskPath = join(outputDir, "branches_mask.png");
-
+  const branchesMaskPath = join(payload.outputDir, "branches_mask.png");
   await execFileAsync(
     "uv",
     [
@@ -112,21 +125,57 @@ async function runExtractionPipeline(
       "--branches-mask",
       branchesMaskPath,
       "--out",
-      outputDir,
+      payload.outputDir,
     ],
     { timeout: config.worker.jobTimeoutMs },
   );
+}
 
+async function collectWorkerOutput(outputDir: string): Promise<WorkerOutput> {
   const files = await readdir(outputDir);
+  const predictionFile = files.find(
+    (f) =>
+      (f.includes("prediction") || f.endsWith(".omm")) &&
+      (f.endsWith(".json") || f.endsWith(".omm")),
+  );
+  const predictionOmm: unknown = predictionFile
+    ? JSON.parse(await readFile(join(outputDir, predictionFile), "utf-8"))
+    : undefined;
   const artifacts = files
-    .filter((f) => !f.endsWith(".meta.json"))
-    .map((f) => ({ kind: guessKind(f), path: join(outputDir, f) }));
+    .filter((f) => !f.endsWith(".meta.json") && f !== predictionFile)
+    .map(async (f) => {
+      const path = join(outputDir, f);
+      const content = await readFile(path);
+      return {
+        kind: guessKind(f),
+        contentBase64: content.toString("base64"),
+        mimeType: guessMimeType(f),
+        name: f,
+      };
+    });
 
-  return { ok: true, artifacts, diagnostics: [] };
+  return {
+    ok: true,
+    predictionOmm,
+    artifacts: await Promise.all(artifacts),
+    diagnostics: [],
+  };
+}
+
+/** Invokes the Python CV extraction pipeline and collects outputs. */
+async function runExtractionPipeline(
+  config: AppConfig,
+  payload: WorkerJobPayload,
+): Promise<WorkerOutput> {
+  const execFileAsync = await createExecFileAsync();
+  await mkdir(payload.outputDir, { recursive: true });
+  await extractLayers(config, payload, execFileAsync);
+  await extractBranches(config, payload, execFileAsync);
+  return collectWorkerOutput(payload.outputDir);
 }
 
 /** Guesses the artifact kind from a filename. */
-function guessKind(filename: string): string {
+function guessKind(filename: string): ArtifactKind {
   if (filename.includes("branch") && filename.endsWith(".svg"))
     return "debug_overlay";
   if (filename.includes("mask")) return "mask";
@@ -135,4 +184,13 @@ function guessKind(filename: string): string {
   if (filename.endsWith(".omm") || filename.endsWith(".json"))
     return "prediction_omm";
   return "debug_overlay";
+}
+
+function guessMimeType(filename: string): string {
+  if (filename.endsWith(".png")) return "image/png";
+  if (filename.endsWith(".svg")) return "image/svg+xml";
+  if (filename.endsWith(".json") || filename.endsWith(".omm")) {
+    return "application/json";
+  }
+  return "application/octet-stream";
 }

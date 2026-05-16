@@ -5,17 +5,21 @@
 import type { AppHono } from "../types";
 import { ok } from "../envelope/index";
 import { AppError } from "../errors/index";
-import { contentHash, createId } from "../services/ids";
+import { createId } from "../services/ids";
 import {
   parseContentOutlineText,
   type ContentOutline,
 } from "../services/content-outline";
-import type {
-  ArtifactRecord,
-  GenerationJobRecord,
-  StageEvent,
-} from "../models/index";
+import type { GenerationJobRecord } from "../models/index";
 import { nowIso } from "../temporal";
+import {
+  artifactRecord,
+  buildStages,
+  decodeWorkerArtifactContent,
+  fetchReferencePng,
+  referencePlaceholderPng,
+  type WorkerResultArtifact,
+} from "./generation-job-helpers";
 
 function requireText(value: unknown, field: string): string {
   if (typeof value !== "string" || value.trim().length === 0) {
@@ -35,80 +39,6 @@ function outlineFromTextPrompt(text: string): ContentOutline {
 
 function shouldUseExternalModels(apiToken: string): boolean {
   return !apiToken.startsWith("r8-placeholder");
-}
-
-function buildStages(timestamp: string): StageEvent[] {
-  return [
-    {
-      stage: "validating_input",
-      status: "completed",
-      startedAt: timestamp,
-      finishedAt: timestamp,
-      message: "Input validated.",
-    },
-    {
-      stage: "outlining",
-      status: "completed",
-      startedAt: timestamp,
-      finishedAt: timestamp,
-      message: "Content outline assembled.",
-    },
-    {
-      stage: "generating_reference",
-      status: "completed",
-      startedAt: timestamp,
-      finishedAt: timestamp,
-      message: "Reference artifact prepared.",
-    },
-    {
-      stage: "extracting",
-      status: "completed",
-      startedAt: timestamp,
-      finishedAt: timestamp,
-      message: "CV extraction payload enqueued.",
-    },
-    {
-      stage: "assembling_artifacts",
-      status: "completed",
-      startedAt: timestamp,
-      finishedAt: timestamp,
-      message: "Managed artifacts assembled.",
-    },
-    {
-      stage: "completed",
-      status: "completed",
-      startedAt: timestamp,
-      finishedAt: timestamp,
-      message: "Generation completed.",
-    },
-  ];
-}
-
-function artifactRecord(params: {
-  id: string;
-  kind: ArtifactRecord["kind"];
-  mimeType: string;
-  name: string;
-  content: Buffer | string;
-  ownerUserId: string;
-  jobId: string;
-  documentId?: string;
-  accessPolicy?: ArtifactRecord["accessPolicy"];
-}): ArtifactRecord {
-  return {
-    id: params.id,
-    kind: params.kind,
-    mimeType: params.mimeType,
-    name: params.name,
-    byteSize: Buffer.byteLength(params.content),
-    contentHash: contentHash(params.content),
-    ownerUserId: params.ownerUserId,
-    jobId: params.jobId,
-    documentId: params.documentId,
-    accessPolicy: params.accessPolicy ?? "owner",
-    cachePolicy: "immutable",
-    createdAt: nowIso(),
-  };
 }
 
 /** Creates a new generation job. */
@@ -155,7 +85,7 @@ async function handleCreateJob(c: import("hono").Context) {
       : {};
 
   let outline: ContentOutline;
-  let referenceContent = Buffer.from("");
+  let referenceContent: Buffer = Buffer.from("");
   try {
     outline =
       inputKind === "content_outline_text"
@@ -175,13 +105,9 @@ async function handleCreateJob(c: import("hono").Context) {
         outline,
         options.stylePreset ?? "handdrawn-organic",
       );
-      referenceContent = Buffer.from(
-        JSON.stringify({ imageUrl: reference.imageUrl }),
-      );
+      referenceContent = await fetchReferencePng(reference.imageUrl);
     } else {
-      referenceContent = Buffer.from(
-        `OMM reference placeholder for ${outline.center.concept}`,
-      );
+      referenceContent = referencePlaceholderPng();
     }
   } catch (_error) {
     throw new AppError("provider_failed", "Outline or image provider failed.", {
@@ -382,9 +308,25 @@ async function handleCancelJob(c: import("hono").Context) {
     ],
   });
   if (job.quotaReservationId) {
-    await storage.updateQuotaReservation(job.quotaReservationId, {
-      status: "released",
-    });
+    const reservation = await storage.getQuotaReservation(
+      job.quotaReservationId,
+    );
+    if (reservation?.status === "reserved") {
+      await storage.updateQuotaReservation(job.quotaReservationId, {
+        status: "released",
+      });
+      const currentUser = await storage.getUser(reservation.userId);
+      if (currentUser) {
+        await storage.updateUser(reservation.userId, {
+          generationQuotaRemaining:
+            (currentUser.generationQuotaRemaining ?? 0) + 1,
+          generationQuotaReserved: Math.max(
+            (currentUser.generationQuotaReserved ?? 0) - 1,
+            0,
+          ),
+        });
+      }
+    }
   }
 
   return c.json(ok({ jobId, status: "canceled" }, c.get("requestId")));
@@ -406,12 +348,7 @@ async function handleWorkerResult(c: import("hono").Context) {
     | {
         ok?: boolean;
         predictionOmm?: unknown;
-        artifacts?: Array<{
-          kind: ArtifactRecord["kind"];
-          content: string;
-          mimeType: string;
-          name: string;
-        }>;
+        artifacts?: Array<WorkerResultArtifact>;
         diagnostics?: Array<{ code: string; message: string }>;
       }
     | undefined;
@@ -447,7 +384,7 @@ async function handleWorkerResult(c: import("hono").Context) {
   }
 
   const timestamp = nowIso();
-  const documentId = createId("doc");
+  const documentId = job.documentId ?? createId("doc");
   const predictionArtifactId = createId("artifact_prediction_omm");
   const predictionContent = JSON.stringify(output.predictionOmm);
   await storage.saveArtifact(
@@ -464,15 +401,17 @@ async function handleWorkerResult(c: import("hono").Context) {
     predictionContent,
   );
 
+  const workerArtifactIds: string[] = [];
   for (const artifact of output.artifacts ?? []) {
     const artifactId = createId(`artifact_${artifact.kind}`);
+    const content = decodeWorkerArtifactContent(artifact);
     await storage.saveArtifact(
       artifactRecord({
         id: artifactId,
         kind: artifact.kind,
         mimeType: artifact.mimeType,
         name: artifact.name,
-        content: artifact.content,
+        content,
         ownerUserId: job.ownerUserId,
         jobId,
         documentId,
@@ -481,40 +420,63 @@ async function handleWorkerResult(c: import("hono").Context) {
             ? "admin"
             : "owner",
       }),
-      artifact.content,
+      content,
     );
+    workerArtifactIds.push(artifactId);
   }
 
-  await storage.saveDocument({
-    id: documentId,
-    name: job.title ?? "Generated Map",
-    ownerUserId: job.ownerUserId,
-    generationJobId: jobId,
-    lifecycle: "generated",
-    artifacts: {
-      ...job.artifacts,
-      predictionOmm: predictionArtifactId,
-    },
-    currentEditableSource: {
-      kind: "prediction_omm",
-      artifactId: predictionArtifactId,
-    },
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  });
+  const document = await storage.getDocument(documentId);
+  const documentArtifacts = {
+    ...(document?.artifacts ?? job.artifacts),
+    predictionOmm: predictionArtifactId,
+    workerArtifacts: workerArtifactIds,
+  };
+  if (document) {
+    await storage.updateDocument(documentId, {
+      artifacts: documentArtifacts,
+      currentEditableSource: {
+        kind: "prediction_omm",
+        artifactId: predictionArtifactId,
+      },
+    });
+  } else {
+    await storage.saveDocument({
+      id: documentId,
+      name: job.title ?? "Generated Map",
+      ownerUserId: job.ownerUserId,
+      generationJobId: jobId,
+      lifecycle: "generated",
+      artifacts: documentArtifacts,
+      currentEditableSource: {
+        kind: "prediction_omm",
+        artifactId: predictionArtifactId,
+      },
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
+  }
   await storage.updateGenerationJob(jobId, {
     status: "completed",
     documentId,
     artifacts: {
       ...job.artifacts,
       predictionOmm: predictionArtifactId,
+      workerArtifacts: workerArtifactIds,
     },
     diagnostics: [...job.diagnostics, ...(output.diagnostics ?? [])],
     stages: buildStages(timestamp),
   });
 
   return c.json(
-    ok({ jobId, status: "completed", documentId }, c.get("requestId")),
+    ok(
+      {
+        jobId,
+        status: "completed",
+        documentId,
+        artifactIds: workerArtifactIds,
+      },
+      c.get("requestId"),
+    ),
   );
 }
 

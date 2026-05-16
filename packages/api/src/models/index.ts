@@ -61,6 +61,7 @@ export type DocumentRecord = {
     predictionOmm?: string;
     userSavedOmm?: string;
     correctionOmm?: string;
+    workerArtifacts?: string[];
   };
   currentEditableSource?: EditableSource;
   createdAt: string;
@@ -111,6 +112,7 @@ export type GenerationJobRecord = {
     contentOutline?: string;
     referenceImage?: string;
     predictionOmm?: string;
+    workerArtifacts?: string[];
   };
   documentId?: string;
   quotaReservationId?: string;
@@ -203,8 +205,14 @@ export type WorkerJobPayload = {
 /** Output returned by the CV worker after extraction. */
 export type WorkerOutput = {
   ok: boolean;
-  predictionOmmPath?: string;
-  artifacts: Array<{ kind: string; path: string }>;
+  predictionOmm?: unknown;
+  artifacts: Array<{
+    kind: ArtifactKind;
+    content?: string;
+    contentBase64?: string;
+    mimeType: string;
+    name: string;
+  }>;
   diagnostics: Array<{ code: string; message: string }>;
   error?: string;
 };

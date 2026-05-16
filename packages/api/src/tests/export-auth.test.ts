@@ -22,9 +22,11 @@ async function createGeneratedDocument() {
   const body = await res.json();
   const job = await harness.storage.getGenerationJob(body.data.jobId);
   if (!job?.artifacts.predictionOmm) throw new Error("missing source artifact");
+  if (!job.artifacts.referenceImage) throw new Error("missing reference image");
   return {
     documentId: body.data.documentId as string,
     sourceArtifactId: job.artifacts.predictionOmm,
+    referenceArtifactId: job.artifacts.referenceImage,
   };
 }
 
@@ -84,6 +86,21 @@ describe("Export job creation", () => {
     expect(res.status).toBe(422);
     const body = await res.json();
     expect(body.error.code).toBe("validation_failed");
+  });
+
+  it("rejects non-OMM source artifacts for omm export", async () => {
+    const doc = await createGeneratedDocument();
+    const res = await harness.app.request("/api/exports", {
+      method: "POST",
+      headers: { ...harness.authHeaders, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        documentId: doc.documentId,
+        sourceArtifactId: doc.referenceArtifactId,
+        format: "omm",
+      }),
+    });
+    expect(res.status).toBe(422);
+    expect((await res.json()).error.code).toBe("validation_failed");
   });
 });
 

@@ -2,9 +2,51 @@
  * Payment checkout and webhook routes.
  */
 /* eslint-disable complexity, max-lines-per-function */
+import { createHmac, timingSafeEqual } from "node:crypto";
 import type { AppHono } from "../types";
 import { ok } from "../envelope/index";
 import { AppError } from "../errors/index";
+
+function extractStripeSignature(header: string | undefined): {
+  timestamp: string;
+  signature: string;
+} | null {
+  if (!header) return null;
+  const parts = Object.fromEntries(
+    header.split(",").map((part) => {
+      const [key, value] = part.split("=");
+      return [key, value];
+    }),
+  );
+  if (!parts.t || !parts.v1) return null;
+  return { timestamp: parts.t, signature: parts.v1 };
+}
+
+function verifyStripeSignature(params: {
+  payload: string;
+  header: string | undefined;
+  secret: string | undefined;
+}): void {
+  if (!params.secret) {
+    throw new AppError("provider_failed", "STRIPE_WEBHOOK_SECRET is required.");
+  }
+  const parsed = extractStripeSignature(params.header);
+  if (!parsed) {
+    throw new AppError("unauthorized", "Invalid Stripe webhook signature.");
+  }
+  const signedPayload = `${parsed.timestamp}.${params.payload}`;
+  const expected = createHmac("sha256", params.secret)
+    .update(signedPayload)
+    .digest("hex");
+  const actualBuffer = Buffer.from(parsed.signature);
+  const expectedBuffer = Buffer.from(expected);
+  if (
+    actualBuffer.byteLength !== expectedBuffer.byteLength ||
+    !timingSafeEqual(actualBuffer, expectedBuffer)
+  ) {
+    throw new AppError("unauthorized", "Invalid Stripe webhook signature.");
+  }
+}
 
 /** Registers billing routes on the app. */
 export function registerBillingRoutes(app: AppHono) {
@@ -28,7 +70,13 @@ export function registerBillingRoutes(app: AppHono) {
 
   /** Receives Stripe webhook events. */
   app.post("/api/billing/webhooks/stripe", async (c) => {
-    const body: Record<string, unknown> = await c.req.json();
+    const rawBody = await c.req.text();
+    verifyStripeSignature({
+      payload: rawBody,
+      header: c.req.header("stripe-signature"),
+      secret: c.get("config").payment.stripeWebhookSecret,
+    });
+    const body = JSON.parse(rawBody) as Record<string, unknown>;
     const eventId =
       typeof body.id === "string"
         ? body.id

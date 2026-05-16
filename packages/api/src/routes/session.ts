@@ -3,6 +3,7 @@
  */
 import type { AppHono } from "../types";
 import { ok } from "../envelope/index";
+import { SESSION_USER_ID_COOKIE } from "../middleware/auth";
 
 /** Registers session and auth routes on the app. */
 export function registerSessionRoutes(app: AppHono) {
@@ -27,6 +28,10 @@ export function registerSessionRoutes(app: AppHono) {
 
   /** Logs the current user out. */
   app.post("/api/auth/logout", (c) => {
+    c.header(
+      "Set-Cookie",
+      `${SESSION_USER_ID_COOKIE}=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax`,
+    );
     return c.json(ok({ loggedOut: true }, c.get("requestId")));
   });
 }

@@ -5,6 +5,28 @@ import { describe, it, expect } from "vitest";
 import type { WorkerJobPayload, WorkerOutput } from "../models/index";
 import { parseContentOutlineText } from "../services/content-outline";
 
+function successOutput(): WorkerOutput {
+  return {
+    ok: true,
+    predictionOmm: { schema: "omm.document", version: 1 },
+    artifacts: [
+      {
+        kind: "mask",
+        contentBase64: "bWFzaw==",
+        mimeType: "image/png",
+        name: "branches_mask.png",
+      },
+      {
+        kind: "debug_overlay",
+        contentBase64: "b3ZlcmxheQ==",
+        mimeType: "image/png",
+        name: "debug_overlay.png",
+      },
+    ],
+    diagnostics: [],
+  };
+}
+
 describe("Worker queue payload/output contract", () => {
   it("WorkerJobPayload has required fields", () => {
     const payload: WorkerJobPayload = {
@@ -22,22 +44,16 @@ describe("Worker queue payload/output contract", () => {
   });
 
   it("WorkerOutput has expected shape for success", () => {
-    const output: WorkerOutput = {
-      ok: true,
-      predictionOmmPath: "output/prediction.omm",
-      artifacts: [
-        { kind: "mask", path: "output/branches_mask.png" },
-        { kind: "debug_overlay", path: "output/debug_overlay.png" },
-      ],
-      diagnostics: [],
-    };
+    const output = successOutput();
     expect(output.ok).toBe(true);
-    expect(output.predictionOmmPath).toBeTruthy();
+    expect(output.predictionOmm).toBeTruthy();
     expect(Array.isArray(output.artifacts)).toBe(true);
     expect(output.artifacts.length).toBeGreaterThan(0);
     for (const art of output.artifacts) {
       expect(art).toHaveProperty("kind");
-      expect(art).toHaveProperty("path");
+      expect(art).toHaveProperty("contentBase64");
+      expect(art).toHaveProperty("mimeType");
+      expect(art).toHaveProperty("name");
     }
   });
 

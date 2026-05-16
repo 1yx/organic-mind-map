@@ -28,6 +28,14 @@ function resultArtifactKind(format: ExportFormat): ArtifactKind {
   return format;
 }
 
+function isOmmArtifactKind(kind: ArtifactKind): boolean {
+  return (
+    kind === "prediction_omm" ||
+    kind === "user_saved_omm" ||
+    kind === "correction_omm"
+  );
+}
+
 /** Registers export routes on the app. */
 export function registerExportRoutes(app: AppHono) {
   /** Creates a new export job. */
@@ -87,6 +95,12 @@ export function registerExportRoutes(app: AppHono) {
       throw new AppError(
         "validation_failed",
         "sourceArtifactId does not belong to document.",
+      );
+    }
+    if (format === "omm" && !isOmmArtifactKind(sourceArtifact.kind)) {
+      throw new AppError(
+        "validation_failed",
+        "OMM exports require an OMM source artifact.",
       );
     }
 
