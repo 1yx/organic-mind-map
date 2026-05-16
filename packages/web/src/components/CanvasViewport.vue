@@ -23,5 +23,16 @@ watch(
 </script>
 
 <template>
-  <canvas ref="canvasRef" :width="width" :height="height" class="block" />
+  <div
+    id="workspace"
+    class="flex-shrink-0"
+    :style="{ width: `${width}px`, height: `${height}px` }"
+  >
+    <canvas
+      ref="canvasRef"
+      :width="width"
+      :height="height"
+      class="block"
+    />
+  </div>
 </template>

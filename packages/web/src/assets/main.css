@@ -1,1 +1,25 @@
 @import "tailwindcss";
+
+@theme {
+  /* Apple HIG dark hues, saturation 45%, balanced lightness */
+  --color-red: hsl(3, 45%, 55%);
+  --color-orange: hsl(36, 45%, 55%);
+  --color-yellow: hsl(50, 45%, 55%);
+  --color-green: hsl(135, 45%, 45%);
+  --color-teal: hsl(197, 45%, 55%);
+  --color-blue: hsl(210, 45%, 55%);
+  --color-indigo: hsl(241, 45%, 55%);
+  --color-purple: hsl(280, 45%, 55%);
+  --color-pink: hsl(348, 45%, 55%);
+
+  /* Surfaces */
+  --color-surface: #1e1e1e;
+  --color-surface-raised: #2c2c2e;
+  --color-surface-border: #38383a;
+
+  /* Foreground hierarchy */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: rgba(235, 235, 245, 0.6);
+  --color-text-tertiary: rgba(235, 235, 245, 0.3);
+  --color-text-placeholder: rgba(235, 235, 245, 0.18);
+}

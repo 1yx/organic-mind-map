@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { ref } from "vue";
 
-defineProps<{ width: number; height: number }>();
+defineProps<{
+  width: number;
+  height: number;
+  horizontal?: boolean;
+  fill?: boolean;
+}>();
 
 const outlineText = ref(`Anthropic 产品之道
   极速交付
@@ -13,9 +18,33 @@ const outlineText = ref(`Anthropic 产品之道
 </script>
 
 <template>
+  <!-- Portrait (bottom bar): horizontal layout, border on top -->
   <div
-    class="flex flex-col border-r border-gray-700"
-    :style="{ width: `${width}px`, height: `${height}px`, background: '#1e1e1e' }"
+    v-if="horizontal"
+    id="sidebar"
+    class="flex border-t border-surface-border bg-surface-raised"
+    :style="{ width: `${width}px`, height: `${height}px` }"
+  >
+    <!-- Collapsed tool options label -->
+    <div class="flex items-center px-3 border-r border-gray-700">
+      <span class="text-xs text-gray-500 select-none whitespace-nowrap"
+        >Tools</span
+      >
+    </div>
+    <!-- Outline textarea fills remaining width -->
+    <textarea
+      class="flex-1 resize-none bg-transparent text-gray-200 p-3 text-sm leading-relaxed focus:outline-none"
+      style="font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', Menlo, monospace"
+      spellcheck="false"
+      v-model="outlineText"
+    />
+  </div>
+  <!-- Landscape (left sidebar): vertical layout, border on right -->
+  <div
+    v-else
+    id="sidebar"
+    class="flex flex-col border-r border-surface-border bg-surface-raised"
+    :style="{ width: `${width}px`, height: fill ? '100%' : `${height}px` }"
   >
     <!-- Tool options panel (top section) -->
     <div class="border-b border-gray-700">
@@ -24,10 +53,11 @@ const outlineText = ref(`Anthropic 产品之道
         <div class="text-xs text-gray-600 select-none">No tool selected</div>
       </div>
     </div>
-
     <!-- Content outline editor (bottom, fills remaining space) -->
     <div class="flex flex-col flex-1 min-h-0">
-      <div class="px-3 py-1.5 text-xs text-gray-400 border-b border-gray-700 select-none">
+      <div
+        class="px-3 py-1.5 text-xs text-gray-400 border-b border-gray-700 select-none"
+      >
         Content Outline
       </div>
       <textarea
