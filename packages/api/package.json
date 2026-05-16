@@ -16,6 +16,7 @@
   "dependencies": {
     "@hono/node-server": "^1.14.0",
     "@omm/core": "workspace:*",
+    "dotenv": "^17.4.2",
     "hono": "^4.7.0",
     "replicate": "^1.4.0",
     "temporal-polyfill": "^0.3.0"

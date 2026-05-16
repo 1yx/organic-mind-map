@@ -99,8 +99,22 @@ async function handleCreateJob(c: import("hono").Context) {
   }
 
   try {
-    if (shouldUseExternalModels(config.models.apiToken)) {
+    // LLM enrichment: prefer zhipu, fall back to replicate
+    const zhipu = c.get("zhipu");
+    if (zhipu) {
+      outline = await zhipu.enrichOutline(outline, options.locale ?? "en");
+    } else if (shouldUseExternalModels(config.models.apiToken)) {
       outline = await replicate.enrichOutline(outline, options.locale ?? "en");
+    }
+  } catch (_error) {
+    throw new AppError("provider_failed", "LLM outline enrichment failed.", {
+      retryable: true,
+    });
+  }
+
+  try {
+    // Image generation: replicate
+    if (shouldUseExternalModels(config.models.apiToken)) {
       const reference = await replicate.generateReferenceImage(
         outline,
         options.stylePreset ?? "handdrawn-organic",
@@ -110,7 +124,7 @@ async function handleCreateJob(c: import("hono").Context) {
       referenceContent = referencePlaceholderPng();
     }
   } catch (_error) {
-    throw new AppError("provider_failed", "Outline or image provider failed.", {
+    throw new AppError("provider_failed", "Image generation failed.", {
       retryable: true,
     });
   }
@@ -182,8 +196,8 @@ async function handleCreateJob(c: import("hono").Context) {
     artifactRecord({
       id: referenceArtifactId,
       kind: "reference_image",
-      mimeType: "image/png",
-      name: "reference.png",
+      mimeType: "image/webp",
+      name: "reference.webp",
       content: referenceContent,
       ownerUserId: user.id,
       jobId,

@@ -87,15 +87,11 @@ export function artifactRecord(params: {
   };
 }
 
-/** Fetches generated reference image bytes and enforces the PNG contract. */
+/** Fetches generated reference image bytes. Accepts PNG or WebP. */
 export async function fetchReferencePng(imageUrl: string): Promise<Buffer> {
   const response = await fetch(imageUrl);
   if (!response.ok) {
     throw new Error(`Failed to fetch generated reference image: ${imageUrl}`);
-  }
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.startsWith("image/png")) {
-    throw new Error(`Generated reference image is not PNG: ${contentType}`);
   }
   return Buffer.from(new Uint8Array(await response.arrayBuffer()));
 }

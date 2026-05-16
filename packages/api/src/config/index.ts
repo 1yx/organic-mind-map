@@ -45,6 +45,8 @@ export type ModelProviderConfig = {
   apiToken: string;
   llmModel: string;
   imageModel: string;
+  zhipuApiKey?: string;
+  zhipuModel: string;
 };
 
 /** Payment provider configuration. */
@@ -187,7 +189,9 @@ function loadModelsConfig(): ModelProviderConfig {
     provider: "replicate",
     apiToken: env("REPLICATE_API_TOKEN", `r8-placeholder-${nowEpochMs()}`),
     llmModel: env("REPLICATE_LLM_MODEL", "meta/llama-4-maverick"),
-    imageModel: env("REPLICATE_IMAGE_MODEL", "black-forest-labs/flux-1.1-pro"),
+    imageModel: env("REPLICATE_IMAGE_MODEL", "openai/gpt-image-2"),
+    zhipuApiKey: envOpt("GLM_API_KEY"),
+    zhipuModel: env("ZHIPU_MODEL", "glm-4.7"),
   };
 }
 

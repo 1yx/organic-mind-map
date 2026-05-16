@@ -4,6 +4,8 @@
 
 Current goal: turn the Phase 2 experiments into a SaaS web app while preserving the strict organic mind map identity.
 
+The canonical Phase 2 text/article-to-editable-canvas flow is defined in `docs/PHASE_2.md`. This file tracks execution order and follow-up work only.
+
 Recommended execution order:
 
 1. **Done: Unify frontend technical direction.**
@@ -45,15 +47,7 @@ Recommended execution order:
    - correction recording
 
 6. **Add generation orchestration.**
-   Wire the backend flow:
-
-   ```text
-   text or content-outline-text
-     -> LLM structure generation if needed
-     -> GPT-Image-2 visual reference
-     -> CV worker extraction
-     -> editable web artifact
-   ```
+   Wire the backend flow defined in `docs/PHASE_2.md`.
 
 7. **Add auth, quotas, and payments.**
    Implement SSO, trial quota, paid quota, and payment gating after the core generation/editing loop is functional.

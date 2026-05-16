@@ -10,6 +10,7 @@ import type { Bindings } from "./types";
 import { loadConfig } from "./config/index";
 import { createStorage } from "./services/storage";
 import { createReplicateProvider } from "./services/replicate-provider";
+import { createZhipuProvider } from "./services/zhipu-provider";
 import { createWorkerQueue } from "./services/worker-queue";
 import { requestIdMiddleware } from "./middleware/request-id";
 import { authMiddleware } from "./middleware/auth";
@@ -26,6 +27,9 @@ import { registerBillingRoutes } from "./routes/billing";
 const config = loadConfig();
 const storage = createStorage(config);
 const replicate = createReplicateProvider(config.models);
+const zhipu = config.models.zhipuApiKey
+  ? createZhipuProvider(config.models.zhipuApiKey, config.models.zhipuModel)
+  : null;
 const workerQueue = createWorkerQueue(config);
 
 const app = new Hono<Bindings>();
@@ -35,6 +39,7 @@ app.use("*", async (c, next) => {
   c.set("config", config);
   c.set("storage", storage);
   c.set("replicate", replicate);
+  c.set("zhipu", zhipu);
   c.set("workerQueue", workerQueue);
   await next();
 });

@@ -5,6 +5,7 @@ import type { Hono } from "hono";
 import type { UserRecord } from "./models/index";
 import type { Storage } from "./services/storage";
 import type { ReplicateProvider } from "./services/replicate-provider";
+import type { ZhipuProvider } from "./services/zhipu-provider";
 import type { WorkerQueue } from "./services/worker-queue";
 import type { AppConfig } from "./config/index";
 
@@ -16,6 +17,7 @@ export type Bindings = {
     config: AppConfig;
     storage: Storage;
     replicate: ReplicateProvider;
+    zhipu: ZhipuProvider | null;
     workerQueue: WorkerQueue;
   };
 };

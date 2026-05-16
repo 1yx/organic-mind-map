@@ -105,6 +105,7 @@ export async function createTestApp(
     c.set("config", config);
     c.set("storage", storage);
     c.set("replicate", replicate);
+    c.set("zhipu", null);
     c.set("workerQueue", workerQueue);
     await next();
   });

@@ -4,6 +4,7 @@
  * Starts the Hono app using the Node.js HTTP adapter.
  * Production deployments may use a different adapter.
  */
+import "dotenv/config";
 import { serve } from "@hono/node-server";
 import app from "./app";
 import { loadConfig } from "./config/index";

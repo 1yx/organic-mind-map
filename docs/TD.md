@@ -87,60 +87,7 @@ Tailwind CSS is allowed for the Vue application shell: toolbars, panels, inspect
 
 ## Mind Map Creation Logic
 
-Phase 2 creates an editable organic mind map through an artifact-first generation pipeline:
-
-```text
-User input
-  |
-  |-- content-outline-text ---------------------.
-  |                                             |
-  |-- natural language prompt                   |
-        |                                      |
-        v                                      |
-  LLM outline generation                       |
-        |                                      |
-        '---------------> content_outline.json <'
-                            |
-                            v
-      prompt builder / generation policy
-      uses concept text + doodle prompts
-                            |
-                            v
-                   GPT-Image-2 reference
-                            |
-                            v
-                       reference.png
-                            |
-                            v
-              Python CV worker extraction
-                            |
-        .-------------------+-------------------.
-        |                   |                   |
-        v                   v                   v
-  branch extraction    OCR/text extraction   doodle extraction
-        |                   |                   |
-        v                   v                   v
-  editable branches   text classification    visual groups
-        |                   |                   |
-        '-------------------+-------------------'
-                            |
-                            v
-                     prediction_omm
-                            |
-                            v
-                   Vue/Paper.js editable canvas
-                            |
-        .-------------------+-------------------.
-        |                                       |
-        v                                       v
- user edits / save                  admin correction workflow
-        |                                       |
-        v                                       v
-        .omm                      correction_omm
-         |                              |
-         v                              v
-   PNG / SVG export          Phase 3 dataset seeds
-```
+Phase 2 creates an editable organic mind map through the artifact-first generation pipeline defined in `docs/PHASE_2.md`. This technical design describes the implementation boundaries and rendering/storage rules for that pipeline.
 
 Key rules:
 

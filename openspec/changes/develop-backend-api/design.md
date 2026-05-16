@@ -1,17 +1,6 @@
 ## Context
 
-Phase 2 moves Organic Mind Map from local prototypes and read-only preview toward a hosted SaaS generation and editing loop:
-
-```text
-content-outline-text or text prompt
-  -> TypeScript API backend
-  -> LLM/content outline enrichment
-  -> GPT-Image-2 reference image
-  -> queued Python CV extraction
-  -> prediction_omm + artifacts
-  -> Vue/Paper.js editable canvas
-  -> explicit user-saved-omm save/export
-```
+Phase 2 moves Organic Mind Map from local prototypes and read-only preview toward a hosted SaaS generation and editing loop. The canonical text/article-to-editable-canvas flow is defined in `docs/PHASE_2.md`; this design records backend API decisions for that flow.
 
 The backend must be the product control plane. It owns authentication, sessions, quota, payment gating, generation job state, artifact ownership, model calls, queue dispatch, document records, exports, and admin correction access. Python workers are execution units only; the browser never calls them directly.
 

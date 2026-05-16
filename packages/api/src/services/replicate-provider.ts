@@ -27,18 +27,45 @@ export type ReplicateProvider = {
   ): Promise<{ imageUrl: string }>;
 };
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 /** Creates a Replicate provider from the given model configuration. */
 export function createReplicateProvider(
   config: ModelProviderConfig,
 ): ReplicateProvider {
   const client = new Replicate({ auth: config.apiToken });
 
+  async function runWithPolling(
+    model: `${string}/${string}`,
+    input: Record<string, unknown>,
+  ): Promise<unknown> {
+    const prediction = await client.predictions.create({ model, input });
+    if (!prediction.urls?.get) throw new Error("No polling URL returned");
+
+    for (let i = 0; i < 60; i++) {
+      await sleep(2000);
+      const res = await fetch(prediction.urls.get, {
+        headers: { Authorization: `Bearer ${config.apiToken}` },
+      });
+      const polled = (await res.json()) as {
+        status?: string;
+        output?: unknown;
+        error?: string;
+      };
+      if (polled.status === "succeeded") return polled.output;
+      if (polled.status === "failed") {
+        throw new Error(`Replicate prediction failed: ${polled.error}`);
+      }
+    }
+    throw new Error("Replicate prediction timed out");
+  }
+
   return {
     async enrichOutline(outline, locale) {
       const prompt = buildEnrichmentPrompt(outline, locale);
       const model = config.llmModel;
       if (!isModelId(model)) throw new Error(`Invalid model: ${model}`);
-      const output = await client.run(model, { input: { prompt } });
+      const output = await runWithPolling(model, { prompt });
       const text = extractTextOutput(output);
       return parseEnrichedOutline(text, outline);
     },
@@ -47,7 +74,7 @@ export function createReplicateProvider(
       const prompt = buildImagePrompt(outline, stylePreset);
       const model = config.imageModel;
       if (!isModelId(model)) throw new Error(`Invalid model: ${model}`);
-      const output = await client.run(model, { input: { prompt } });
+      const output = await runWithPolling(model, { prompt });
       const urls = extractImageUrls(output);
       if (urls.length === 0) {
         throw new Error("Image model returned no output URLs");
@@ -99,6 +126,8 @@ function extractTextOutput(output: unknown): string {
 /** Extracts image URLs from various Replicate output formats. */
 function extractImageUrls(output: unknown): string[] {
   if (!output) return [];
+  // Single string URL
+  if (typeof output === "string") return [output];
   if (!Array.isArray(output)) return [];
 
   const results: string[] = [];

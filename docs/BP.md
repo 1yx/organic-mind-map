@@ -4,17 +4,7 @@
 
 Organic Mind Map is a SaaS product for turning text prompts or `content-outline-text` into editable, structured organic mind map assets.
 
-Phase 1 proved the validated preview/export path. Phase 2 changes the product center of gravity to a full web application:
-
-```text
-user text or content-outline-text input
-  -> LLM structure generation (if text)
-  -> GPT-Image-2 visual reference generation
-  -> backend CV layer extraction
-  -> semantic text alignment
-  -> editable doodle/text/branch groups
-  -> web-based human-correctable canvas
-```
+Phase 1 proved the validated preview/export path. Phase 2 changes the product center of gravity to a full web application. The canonical Phase 2 generation and editing flow is defined in `docs/PHASE_2.md`.
 
 The goal is not a generic whiteboard. The product remains focused on Buzan-style organic mind maps: center visual, thick organic colored branches, concise keywords, doodle illustrations, and spatial memory anchors. The final product is an interactive web app, similar to Excalidraw, where the landing page itself is the functional canvas.
 
@@ -69,13 +59,7 @@ Capabilities:
 
 ## Phase 2 Success
 
-Phase 2 succeeds when a user can start from:
-
-```text
-natural language text input OR content-outline-text
-```
-
-and the system automatically coordinates LLMs, GPT-Image-2, and backend CV extraction to produce a fully rendered, editable map in the browser with:
+Phase 2 succeeds when a user can start from natural language text, article content, or `content-outline-text`, and the system automatically coordinates LLMs, GPT-Image-2, and backend CV extraction to produce a fully rendered, editable map in the browser with:
 
 ```text
 semantic structure
