@@ -22,13 +22,13 @@ const {
 <template>
   <div class="flex justify-center w-screen h-screen overflow-hidden bg-surface">
     <div
-      class="flex flex-col h-full"
+      class="flex flex-col h-full bg-white"
       :style="{ maxWidth: `${contentMaxWidth}px` }"
     >
       <AppToolbar :height="toolbarHeight" :width="contentMaxWidth" />
       <!-- Landscape: sidebar left, canvas right -->
       <div v-if="!isPortrait" class="flex flex-1 min-h-0">
-        <OutlineSidebar :width="sidebarWidth" :height="canvasHeight" />
+        <OutlineSidebar :width="sidebarWidth" :height="0" fill />
         <CanvasViewport :width="canvasWidth" :height="canvasHeight" />
       </div>
       <!-- Portrait: canvas top, sidebar bottom -->

@@ -5,6 +5,7 @@ defineProps<{
   width: number;
   height: number;
   horizontal?: boolean;
+  fill?: boolean;
 }>();
 
 const outlineText = ref(`Anthropic 产品之道
@@ -20,8 +21,9 @@ const outlineText = ref(`Anthropic 产品之道
   <!-- Portrait (bottom bar): horizontal layout, border on top -->
   <div
     v-if="horizontal"
-    class="flex border-t border-gray-700"
-    :style="{ width: `${width}px`, height: `${height}px`, background: '#1e1e1e' }"
+    id="sidebar"
+    class="flex border-t border-surface-border bg-surface-raised"
+    :style="{ width: `${width}px`, height: `${height}px` }"
   >
     <!-- Collapsed tool options label -->
     <div class="flex items-center px-3 border-r border-gray-700">
@@ -40,8 +42,9 @@ const outlineText = ref(`Anthropic 产品之道
   <!-- Landscape (left sidebar): vertical layout, border on right -->
   <div
     v-else
-    class="flex flex-col border-r border-gray-700"
-    :style="{ width: `${width}px`, height: `${height}px`, background: '#1e1e1e' }"
+    id="sidebar"
+    class="flex flex-col border-r border-surface-border bg-surface-raised"
+    :style="{ width: `${width}px`, height: fill ? '100%' : `${height}px` }"
   >
     <!-- Tool options panel (top section) -->
     <div class="border-b border-gray-700">

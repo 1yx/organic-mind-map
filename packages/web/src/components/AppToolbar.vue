@@ -33,6 +33,7 @@ const tools = [
 
 <template>
   <div
+    id="toolbar"
     class="flex items-center bg-white border-b border-gray-200 px-1"
     :style="{
       height: `${height}px`,

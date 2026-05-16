@@ -1,6 +1,7 @@
 import { ref, computed, onMounted, onUnmounted, type Ref } from "vue";
 
 const TOOLBAR_MIN_H = 48;
+const TOOLBAR_MAX_H = 56;
 const SIDEBAR_MIN_W = 240;
 const SIDEBAR_MAX_W = 360;
 const SIDEBAR_MIN_H = 200;
@@ -29,16 +30,17 @@ export function computeLandscape(
   let idealSidebarW = vw - sa * (vh - toolbarH);
   if (idealSidebarW < SIDEBAR_MIN_W) {
     idealSidebarW = SIDEBAR_MIN_W;
-    toolbarH = Math.max(
-      TOOLBAR_MIN_H,
-      Math.round(vh - (vw - idealSidebarW) / sa),
+    toolbarH = Math.min(
+      TOOLBAR_MAX_H,
+      Math.max(TOOLBAR_MIN_H, Math.round(vh - (vw - idealSidebarW) / sa)),
     );
   }
   const sidebarW = Math.min(
     SIDEBAR_MAX_W,
     Math.max(SIDEBAR_MIN_W, Math.round(idealSidebarW)),
   );
-  const canvasH = Math.max(1, vh - toolbarH);
+  const availableH = vh - toolbarH;
+  const canvasH = Math.max(1, Math.min(availableH, (vw - sidebarW) / sa));
   const canvasW = Math.round(canvasH * sa);
   return {
     toolbarH,
@@ -59,9 +61,9 @@ export function computePortrait(
   let idealSidebarH = vh - toolbarH - vw / sa;
   if (idealSidebarH < SIDEBAR_MIN_H) {
     idealSidebarH = SIDEBAR_MIN_H;
-    toolbarH = Math.max(
-      TOOLBAR_MIN_H,
-      Math.round(vh - idealSidebarH - vw / sa),
+    toolbarH = Math.min(
+      TOOLBAR_MAX_H,
+      Math.max(TOOLBAR_MIN_H, Math.round(vh - idealSidebarH - vw / sa)),
     );
   }
   const sidebarH = Math.min(
@@ -69,7 +71,7 @@ export function computePortrait(
     Math.max(SIDEBAR_MIN_H, Math.round(idealSidebarH)),
   );
   const canvasW = Math.max(1, vw);
-  const canvasH = Math.max(1, vh - toolbarH - sidebarH);
+  const canvasH = Math.max(1, Math.min(vh - toolbarH - sidebarH, vw / sa));
   return {
     toolbarH,
     sidebarW: 0,
