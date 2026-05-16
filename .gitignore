@@ -31,3 +31,6 @@ node_modules/
 dist/
 build/
 *.log
+
+# Runtime storage
+.omm-storage/
