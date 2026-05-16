@@ -14,7 +14,7 @@ import {
   Eraser,
 } from "lucide-vue-next";
 
-defineProps<{ height: number }>();
+defineProps<{ height: number; width?: number }>();
 
 const tools = [
   { name: "Select", icon: MousePointer2 },
@@ -34,7 +34,10 @@ const tools = [
 <template>
   <div
     class="flex items-center bg-white border-b border-gray-200 px-1"
-    :style="{ height: `${height}px` }"
+    :style="{
+      height: `${height}px`,
+      ...(width ? { width: `${width}px` } : {}),
+    }"
   >
     <!-- Hamburger menu -->
     <button

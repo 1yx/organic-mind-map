@@ -1,70 +1,120 @@
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, type Ref } from "vue";
 
 const TOOLBAR_MIN_H = 48;
 const SIDEBAR_MIN_W = 240;
+const SIDEBAR_MAX_W = 360;
 const SIDEBAR_MIN_H = 200;
+const SIDEBAR_MAX_H = 320;
+const DEFAULT_SURFACE_ASPECT = Math.SQRT2;
 
 const getWindowSize = () => ({
   w: typeof window !== "undefined" ? window.innerWidth : 1280,
   h: typeof window !== "undefined" ? window.innerHeight : 800,
 });
 
-export function usePanelSizing() {
+type DimOpts = {
+  toolbarH: number;
+  sidebarW: number;
+  sidebarH: number;
+  canvasW: number;
+  canvasH: number;
+};
+
+export function computeLandscape(
+  vw: number,
+  vh: number,
+  sa: number,
+): DimOpts & { contentMaxWidth: number } {
+  let toolbarH = TOOLBAR_MIN_H;
+  let idealSidebarW = vw - sa * (vh - toolbarH);
+  if (idealSidebarW < SIDEBAR_MIN_W) {
+    idealSidebarW = SIDEBAR_MIN_W;
+    toolbarH = Math.max(
+      TOOLBAR_MIN_H,
+      Math.round(vh - (vw - idealSidebarW) / sa),
+    );
+  }
+  const sidebarW = Math.min(
+    SIDEBAR_MAX_W,
+    Math.max(SIDEBAR_MIN_W, Math.round(idealSidebarW)),
+  );
+  const canvasH = Math.max(1, vh - toolbarH);
+  const canvasW = Math.round(canvasH * sa);
+  return {
+    toolbarH,
+    sidebarW,
+    sidebarH: 0,
+    canvasW,
+    canvasH,
+    contentMaxWidth: sidebarW + canvasW,
+  };
+}
+
+export function computePortrait(
+  vw: number,
+  vh: number,
+  sa: number,
+): DimOpts & { contentMaxWidth: number } {
+  let toolbarH = TOOLBAR_MIN_H;
+  let idealSidebarH = vh - toolbarH - vw / sa;
+  if (idealSidebarH < SIDEBAR_MIN_H) {
+    idealSidebarH = SIDEBAR_MIN_H;
+    toolbarH = Math.max(
+      TOOLBAR_MIN_H,
+      Math.round(vh - idealSidebarH - vw / sa),
+    );
+  }
+  const sidebarH = Math.min(
+    SIDEBAR_MAX_H,
+    Math.max(SIDEBAR_MIN_H, Math.round(idealSidebarH)),
+  );
+  const canvasW = Math.max(1, vw);
+  const canvasH = Math.max(1, vh - toolbarH - sidebarH);
+  return {
+    toolbarH,
+    sidebarW: 0,
+    sidebarH,
+    canvasW,
+    canvasH,
+    contentMaxWidth: vw,
+  };
+}
+
+export function usePanelSizing(surfaceAspect?: Ref<number>) {
   const initial = getWindowSize();
-  const viewportW = ref(initial.w);
-  const viewportH = ref(initial.h);
+  const vw = ref(initial.w);
+  const vh = ref(initial.h);
 
   function onResize() {
     const size = getWindowSize();
-    viewportW.value = size.w;
-    viewportH.value = size.h;
+    vw.value = size.w;
+    vh.value = size.h;
   }
 
   onMounted(() => window.addEventListener("resize", onResize));
   onUnmounted(() => window.removeEventListener("resize", onResize));
 
-  // aspect > 1 (wide): sidebar grows, toolbar stays near min
-  // aspect < 1 (tall): toolbar grows, sidebar stays near min
-  const aspect = computed(() => viewportW.value / viewportH.value);
-  const isPortrait = computed(() => aspect.value < 1);
+  const sa = computed(() => surfaceAspect?.value ?? DEFAULT_SURFACE_ASPECT);
+  const isPortrait = computed(() => vw.value < vh.value);
 
-  const toolbarHeight = computed(() =>
-    Math.max(
-      TOOLBAR_MIN_H,
-      Math.round(viewportH.value * 0.06 * Math.min(1, 1 / aspect.value)),
-    ),
+  const landscape = computed(() =>
+    computeLandscape(vw.value, vh.value, sa.value),
+  );
+  const portrait = computed(() =>
+    computePortrait(vw.value, vh.value, sa.value),
   );
 
-  // Landscape: sidebar on the left
-  const sidebarWidth = computed(() =>
-    isPortrait.value
-      ? 0
-      : Math.max(
-          SIDEBAR_MIN_W,
-          Math.round(viewportW.value * 0.12 * Math.min(1, aspect.value)),
-        ),
-  );
-
-  // Portrait: sidebar at the bottom
-  const sidebarHeight = computed(() =>
-    isPortrait.value
-      ? Math.max(SIDEBAR_MIN_H, Math.round(viewportH.value * 0.2))
-      : 0,
-  );
-
-  const canvasWidth = computed(() =>
-    Math.max(1, viewportW.value - sidebarWidth.value),
-  );
-  const canvasHeight = computed(() =>
-    Math.max(1, viewportH.value - toolbarHeight.value - sidebarHeight.value),
+  const dims = computed(() =>
+    isPortrait.value ? portrait.value : landscape.value,
   );
 
   return {
-    toolbarHeight,
-    sidebarWidth,
-    sidebarHeight,
-    canvasWidth,
-    canvasHeight,
+    toolbarHeight: computed(() => dims.value.toolbarH),
+    sidebarWidth: computed(() => dims.value.sidebarW),
+    sidebarHeight: computed(() => dims.value.sidebarH),
+    canvasWidth: computed(() => dims.value.canvasW),
+    canvasHeight: computed(() => dims.value.canvasH),
+    contentMaxWidth: computed(() => dims.value.contentMaxWidth),
     isPortrait,
   };
 }
