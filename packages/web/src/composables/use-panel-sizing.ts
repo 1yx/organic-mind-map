@@ -2,6 +2,7 @@ import { ref, computed, onMounted, onUnmounted } from "vue";
 
 const TOOLBAR_MIN_H = 48;
 const SIDEBAR_MIN_W = 240;
+const SIDEBAR_MIN_H = 200;
 
 const getWindowSize = () => ({
   w: typeof window !== "undefined" ? window.innerWidth : 1280,
@@ -25,6 +26,7 @@ export function usePanelSizing() {
   // aspect > 1 (wide): sidebar grows, toolbar stays near min
   // aspect < 1 (tall): toolbar grows, sidebar stays near min
   const aspect = computed(() => viewportW.value / viewportH.value);
+  const isPortrait = computed(() => aspect.value < 1);
 
   const toolbarHeight = computed(() =>
     Math.max(
@@ -33,19 +35,36 @@ export function usePanelSizing() {
     ),
   );
 
+  // Landscape: sidebar on the left
   const sidebarWidth = computed(() =>
-    Math.max(
-      SIDEBAR_MIN_W,
-      Math.round(viewportW.value * 0.12 * Math.min(1, aspect.value)),
-    ),
+    isPortrait.value
+      ? 0
+      : Math.max(
+          SIDEBAR_MIN_W,
+          Math.round(viewportW.value * 0.12 * Math.min(1, aspect.value)),
+        ),
+  );
+
+  // Portrait: sidebar at the bottom
+  const sidebarHeight = computed(() =>
+    isPortrait.value
+      ? Math.max(SIDEBAR_MIN_H, Math.round(viewportH.value * 0.2))
+      : 0,
   );
 
   const canvasWidth = computed(() =>
     Math.max(1, viewportW.value - sidebarWidth.value),
   );
   const canvasHeight = computed(() =>
-    Math.max(1, viewportH.value - toolbarHeight.value),
+    Math.max(1, viewportH.value - toolbarHeight.value - sidebarHeight.value),
   );
 
-  return { toolbarHeight, sidebarWidth, canvasWidth, canvasHeight };
+  return {
+    toolbarHeight,
+    sidebarWidth,
+    sidebarHeight,
+    canvasWidth,
+    canvasHeight,
+    isPortrait,
+  };
 }
